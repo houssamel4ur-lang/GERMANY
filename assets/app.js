@@ -266,7 +266,7 @@ function initSyllabus(){
  ['القواعد','المفردات والتواصل','المهارات الأربع'].map(function(section){
  var subset=course.filter(function(x){return x.section===section});
  return '<section class="section" style="padding-top:20px"><span class="overline">'+level+'</span><h2>'+section+'</h2><div class="lessongrid">'+subset.map(function(x){
- return '<a class="lessoncard" href="syllabus.html?level='+level+'&unit='+x.number+'"><span class="badge">المحور '+String(x.number).padStart(2,'0')+'</span><h3>'+escapeHTML(x.title)+'</h3><p>'+x.points.slice(0,2).map(escapeHTML).join(' • ')+'</p><small>تفاصيل المحور ←</small></a>'
+ return '<a class="lessoncard" href="'+(x.level==='A1'&&x.number===1?'alphabet.html':'syllabus.html?level='+level+'&unit='+x.number)+'"><span class="badge">المحور '+String(x.number).padStart(2,'0')+'</span><h3>'+escapeHTML(x.title)+'</h3><p>'+x.points.slice(0,2).map(escapeHTML).join(' • ')+'</p><small>تفاصيل المحور ←</small></a>'
  }).join('')+'</div></section>';
  }).join('')+
  '<div class="caution">هذه 64 محاور منهجية مستخرجة من ملف الفهرس، وليست 64 درساً مكتمل المحتوى. <a href="index.html#levels">الدروس التدريبية الحالية</a> منفصلة عن قائمة المتطلبات وسيجري توحيدها تدريجياً.</div>';
