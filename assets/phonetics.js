@@ -65,8 +65,8 @@ try{localStorage.setItem("deutsch-mastery-phonetics-result",JSON.stringify(resul
 function loadResult(){try{return JSON.parse(localStorage.getItem("deutsch-mastery-phonetics-result")||"null")}catch(e){return null}}
 host.addEventListener("click",function(e){
 var b=e.target.closest("[data-tab]");if(b){section=b.dataset.tab;render();return}
-b=e.target.closest("[data-say]");if(b){say(b.dataset.say);return}
-b=e.target.closest("[data-stop]");if(b){stop();status("توقف الاستماع.");return}
+b=e.target.closest("[data-say]");if(b){e.stopPropagation();say(b.dataset.say);return}
+b=e.target.closest("[data-stop]");if(b){e.stopPropagation();stop();status("توقف الاستماع.");return}
 b=e.target.closest("[data-restart]");if(b){current=0;firstTry=0;errors=0;wrong=false;section="quiz";render();return}
 b=e.target.closest("[data-answer]");
 if(!b||section!=="quiz")return;
