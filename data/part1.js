@@ -1,0 +1,116 @@
+(()=>{
+"use strict";
+const vocabulary={
+ A1:[
+["التحيات والتعارف","Hallo! Ich heiße Sara.","مرحباً! اسمي سارة.","Hallo=مرحباً;Guten Morgen=صباح الخير;Guten Tag=نهارك سعيد;Wie heißt du?=ما اسمك؟;Ich heiße ...=اسمي ...;Auf Wiedersehen=إلى اللقاء;Danke=شكراً;Bitte=من فضلك"],
+["الحروف والأصوات","Mein Name ist Ali.","اسمي علي.","der Buchstabe=الحرف;der Name=الاسم;buchstabieren=يتهجّى;langsam=ببطء;wiederholen=يكرر;hören=يسمع;sprechen=يتحدث;verstehen=يفهم"],
+["الأرقام من صفر إلى مئة","Ich habe zwei Bücher.","لدي كتابان.","null=صفر;eins=واحد;zwei=اثنان;drei=ثلاثة;zehn=عشرة;zwanzig=عشرون;hundert=مئة;die Zahl=العدد"],
+["البلدان واللغات","Ich komme aus Marokko.","أنا من المغرب.","Deutschland=ألمانيا;Marokko=المغرب;kommen=يأتي;wohnen=يسكن;sprechen=يتحدث;Deutsch=الألمانية;Arabisch=العربية;die Sprache=اللغة"],
+["العمر والمعلومات الشخصية","Ich bin zwanzig Jahre alt.","عمري عشرون سنة.","alt=كبير في السن;das Alter=العمر;das Jahr=السنة;jung=شاب;geboren=مولود;ledig=أعزب;verheiratet=متزوج;die Adresse=العنوان"],
+["الأسرة والأقارب","Meine Schwester wohnt in Berlin.","أختي تسكن في برلين.","die Mutter=الأم;der Vater=الأب;der Bruder=الأخ;die Schwester=الأخت;die Eltern=الوالدان;das Kind=الطفل;die Familie=الأسرة;der Sohn=الابن"],
+["الضمائر والفعل sein","Wir sind heute zu Hause.","نحن اليوم في المنزل.","ich=أنا;du=أنت;er=هو;sie=هي;wir=نحن;ihr=أنتم;sind=نكون;ist=يكون"],
+["الفعل haben والملكية","Ich habe einen Computer.","لدي حاسوب.","haben=يملك;der Computer=الحاسوب;das Handy=الهاتف;das Buch=الكتاب;die Tasche=الحقيبة;mein=لي;dein=لك;kein=لا شيء من"],
+["المنزل والغرف","Die Küche ist neben dem Bad.","المطبخ بجانب الحمام.","das Haus=المنزل;die Wohnung=الشقة;das Zimmer=الغرفة;die Küche=المطبخ;das Bad=الحمام;die Tür=الباب;das Fenster=النافذة;das Bett=السرير"],
+["الأشياء وأدوات التعريف","Der Tisch ist groß.","الطاولة كبيرة.","der Tisch=الطاولة;der Stuhl=الكرسي;die Lampe=المصباح;das Heft=الدفتر;der Schlüssel=المفتاح;die Uhr=الساعة;groß=كبير;klein=صغير"],
+["الألوان والصفات","Mein Auto ist blau.","سيارتي زرقاء.","rot=أحمر;blau=أزرق;grün=أخضر;schwarz=أسود;weiß=أبيض;schön=جميل;neu=جديد;alt=قديم"],
+["الطعام والشراب","Ich trinke Wasser und esse Brot.","أشرب الماء وآكل الخبز.","das Wasser=الماء;das Brot=الخبز;die Milch=الحليب;der Kaffee=القهوة;der Tee=الشاي;essen=يأكل;trinken=يشرب;der Hunger=الجوع"],
+["السوق والتسوق","Wie viel kostet das Brot?","كم ثمن الخبز؟","kaufen=يشتري;kosten=يكلّف;teuer=غالٍ;billig=رخيص;das Geld=المال;der Preis=السعر;der Laden=المحل;bezahlen=يدفع"],
+["أيام الأسبوع","Am Montag arbeite ich.","أعمل يوم الاثنين.","Montag=الاثنين;Dienstag=الثلاثاء;Mittwoch=الأربعاء;Donnerstag=الخميس;Freitag=الجمعة;Samstag=السبت;Sonntag=الأحد;heute=اليوم"],
+["الوقت والساعة","Es ist halb acht.","الساعة السابعة والنصف.","die Uhrzeit=الوقت;die Stunde=الساعة;die Minute=الدقيقة;früh=مبكراً;spät=متأخراً;halb=نصف;viertel=ربع;um=عند الساعة"],
+["الروتين اليومي","Ich stehe jeden Morgen um sieben Uhr auf.","أستيقظ كل صباح الساعة السابعة.","aufstehen=ينهض;frühstücken=يتناول الفطور;duschen=يستحم;arbeiten=يعمل;lernen=يتعلم;schlafen=ينام;abends=مساءً;morgens=صباحاً"],
+["الأفعال في المضارع","Du lernst jeden Tag Deutsch.","أنت تتعلم الألمانية كل يوم.","lernen=يتعلم;machen=يفعل;spielen=يلعب;arbeiten=يعمل;lesen=يقرأ;schreiben=يكتب;fragen=يسأل;antworten=يجيب"],
+["طرح الأسئلة","Wo wohnst du?","أين تسكن؟","wer=من;was=ماذا;wo=أين;woher=من أين;wann=متى;wie=كيف;warum=لماذا;welche=أيّ"],
+["النفي بـ nicht و kein","Ich habe heute keine Zeit.","ليس لدي وقت اليوم.","nicht=لا;kein=ليس أي;die Zeit=الوقت;frei=متفرغ;heute=اليوم;leider=للأسف;nie=أبداً;immer=دائماً"],
+["الاتجاهات والأماكن","Der Bahnhof ist links.","محطة القطار على اليسار.","links=يسار;rechts=يمين;geradeaus=مباشرة;der Bahnhof=محطة القطار;die Straße=الشارع;die Schule=المدرسة;die Bank=المصرف;die Apotheke=الصيدلية"],
+["المواصلات والتذاكر","Ich fahre mit dem Bus zur Arbeit.","أذهب إلى العمل بالحافلة.","der Bus=الحافلة;der Zug=القطار;die Fahrkarte=التذكرة;fahren=يسافر بوسيلة نقل;einsteigen=يركب;aussteigen=ينزل;die Haltestelle=الموقف;die Fahrt=الرحلة"],
+["الملابس والشراء","Ich suche eine schwarze Jacke.","أبحث عن سترة سوداء.","die Jacke=السترة;das Hemd=القميص;die Hose=السروال;die Schuhe=الأحذية;die Größe=المقاس;anprobieren=يجرّب اللباس;tragen=يرتدي;passen=يناسب"],
+["الهوايات وأوقات الفراغ","Am Wochenende spiele ich Fußball.","ألعب كرة القدم في نهاية الأسبوع.","das Hobby=الهواية;schwimmen=يسبح;kochen=يطبخ;tanzen=يرقص;reisen=يسافر;lesen=يقرأ;gern=بسرور;das Wochenende=عطلة نهاية الأسبوع"],
+["الصحة والموعد الطبي","Ich habe Kopfschmerzen und brauche einen Termin.","أعاني من صداع وأحتاج إلى موعد.","der Arzt=الطبيب;die Ärztin=الطبيبة;krank=مريض;der Schmerz=الألم;der Termin=الموعد;die Apotheke=الصيدلية;das Fieber=الحمّى;gesund=بصحة جيدة"]
+ ],
+ A2:[
+["مراجعة الماضي Perfekt","Gestern habe ich meine Freundin besucht.","زرت صديقتي أمس.","gestern=أمس;besuchen=يزور;gearbeitet=عمل;gelernt=تعلّم;gekauft=اشترى;gemacht=فعل;das Wochenende=نهاية الأسبوع;letzte Woche=الأسبوع الماضي"],
+["السفر والتخطيط للرحلة","Wir haben ein Hotel am Meer gebucht.","حجزنا فندقاً قرب البحر.","buchen=يحجز;das Hotel=الفندق;die Reise=السفر;der Urlaub=العطلة;der Koffer=الحقيبة;der Flughafen=المطار;der Pass=جواز السفر;ankommen=يصل"],
+["الوصف في الماضي","Früher wohnte ich auf dem Land.","كنت أسكن في الريف سابقاً.","früher=سابقاً;damals=آنذاك;war=كان;hatte=كان لديه;das Dorf=القرية;die Stadt=المدينة;umziehen=ينتقل للسكن;die Erinnerung=الذكرى"],
+["السكن والبحث عن شقة","Die Wohnung ist hell, aber die Miete ist hoch.","الشقة مضيئة لكن الإيجار مرتفع.","die Miete=الإيجار;der Vermieter=المالك;hell=مضيء;die Nebenkosten=المصاريف الإضافية;möbliert=مفروش;die Anzeige=الإعلان;der Umzug=الانتقال;die Kaution=الوديعة"],
+["المواعيد وتغيير الخطط","Können wir den Termin auf Freitag verschieben?","هل يمكننا تأجيل الموعد إلى الجمعة؟","verschieben=يؤجل;absagen=يلغي;vereinbaren=يتفق على موعد;der Kalender=التقويم;pünktlich=في الوقت;die Verspätung=التأخير;dringend=عاجل;frei haben=يكون متفرغاً"],
+["العمل والمهنة","Ich arbeite seit zwei Jahren in einer Firma.","أعمل منذ سنتين في شركة.","der Beruf=المهنة;die Stelle=الوظيفة;die Firma=الشركة;das Gehalt=الراتب;der Vertrag=العقد;die Bewerbung=طلب التوظيف;die Erfahrung=الخبرة;die Schicht=نوبة العمل"],
+["الشراء والإرجاع","Ich möchte dieses Gerät zurückgeben.","أود إرجاع هذا الجهاز.","zurückgeben=يرجع;umtauschen=يستبدل;die Quittung=الإيصال;kaputt=معطّل;die Garantie=الضمان;die Reklamation=الشكوى;der Kunde=الزبون;bestellen=يطلب"],
+["الصحة والنصائح","Du solltest mehr Wasser trinken.","ينبغي لك شرب مزيد من الماء.","sollte=ينبغي;die Untersuchung=الفحص;der Blutdruck=ضغط الدم;die Medizin=الدواء;die Tablette=القرص الدوائي;der Husten=السعال;die Übung=التمرين;die Erholung=الراحة"],
+["الطعام والوصفات","Zuerst schneide ich das Gemüse, dann koche ich die Suppe.","أقطع الخضار أولاً ثم أطبخ الحساء.","zuerst=أولاً;danach=بعد ذلك;schneiden=يقطع;kochen=يطبخ;backen=يخبز;die Zutat=المكوّن;das Rezept=الوصفة;die Suppe=الحساء"],
+["التعليم والدورات","Ich lerne Deutsch, weil ich in Deutschland studieren möchte.","أتعلم الألمانية لأنني أريد الدراسة في ألمانيا.","der Kurs=الدورة;die Prüfung=الامتحان;bestehen=ينجح;das Zeugnis=الشهادة;der Unterricht=الدرس;die Aufgabe=الواجب;üben=يتدرب;die Note=النقطة"],
+["الطقس والفصول","Obwohl es regnet, gehen wir spazieren.","رغم أن الجو ممطر، سنخرج للمشي.","der Regen=المطر;die Wolke=السحابة;die Temperatur=درجة الحرارة;der Frühling=الربيع;der Sommer=الصيف;der Herbst=الخريف;der Winter=الشتاء;der Wind=الرياح"],
+["التواصل عبر الهاتف","Kannst du mir später eine Nachricht schicken?","هل تستطيع إرسال رسالة لي لاحقاً؟","anrufen=يتصل هاتفياً;die Nachricht=الرسالة;schicken=يرسل;der Empfang=التغطية;das Passwort=كلمة المرور;die Verbindung=الاتصال;erreichbar=متاح للاتصال;das Gespräch=المحادثة"],
+["الهوايات والرياضة","Seit einem Jahr gehe ich regelmäßig ins Fitnessstudio.","منذ سنة أذهب بانتظام إلى النادي الرياضي.","regelmäßig=بانتظام;trainieren=يتدرب;die Mannschaft=الفريق;gewinnen=يفوز;verlieren=يخسر;die Bewegung=الحركة;anstrengend=متعب;das Ziel=الهدف"],
+["المشاعر والعلاقات","Ich freue mich auf unseren Besuch.","أتطلع إلى زيارتنا.","sich freuen=يفرح;traurig=حزين;zufrieden=راضٍ;wütend=غاضب;die Freundschaft=الصداقة;vertrauen=يثق;streiten=يتشاجر;sich entschuldigen=يعتذر"],
+["الأعياد والمناسبات","Wir laden unsere Freunde zum Fest ein.","ندعو أصدقاءنا إلى الاحتفال.","einladen=يدعو;feiern=يحتفل;das Geschenk=الهدية;der Geburtstag=عيد الميلاد;die Einladung=الدعوة;die Hochzeit=الزفاف;der Feiertag=العطلة الرسمية;gratulieren=يهنئ"],
+["الخدمات العامة","Ich muss meinen neuen Wohnsitz anmelden.","يجب أن أسجل محل إقامتي الجديد.","das Bürgeramt=مكتب شؤون المواطنين;anmelden=يسجل;der Ausweis=بطاقة الهوية;das Formular=الاستمارة;unterschreiben=يوقع;die Behörde=الإدارة;die Unterlage=المستند;die Öffnungszeit=ساعات العمل"],
+["المقارنة والتفضيل","Dieser Zug ist schneller als der Bus.","هذا القطار أسرع من الحافلة.","schneller=أسرع;besser=أفضل;günstiger=أقل سعراً;am besten=الأفضل;vergleichen=يقارن;die Auswahl=الاختيار;praktisch=عملي;bequem=مريح"],
+["الرسائل والبريد الإلكتروني","Ich schreibe Ihnen, weil ich eine Frage habe.","أكتب إليكم لأن لدي سؤالاً.","die E-Mail=البريد الإلكتروني;der Betreff=الموضوع;die Anrede=التحية الافتتاحية;mit freundlichen Grüßen=مع خالص التحية;die Antwort=الرد;die Bitte=الطلب;die Anfrage=الاستفسار;die Anlage=المرفق"],
+["حوادث ومواقف يومية","Ich habe meinen Schlüssel verloren.","فقدت مفتاحي.","verlieren=يفقد;finden=يجد;der Unfall=الحادث;die Polizei=الشرطة;die Hilfe=المساعدة;vergessen=ينسى;passieren=يحدث;vorsichtig=حذر"],
+["التسوق الإلكتروني","Die Bestellung ist noch nicht angekommen.","لم يصل الطلب بعد.","die Bestellung=الطلب;die Lieferung=التوصيل;das Paket=الطرد;der Versand=الشحن;der Warenkorb=سلة التسوق;die Rückgabe=الإرجاع;überweisen=يحوّل مالاً;das Konto=الحساب"],
+["البيئة اليومية","Wir trennen zu Hause Papier und Plastik.","نفصل الورق والبلاستيك في المنزل.","der Müll=القمامة;trennen=يفصل;recyceln=يعيد التدوير;das Papier=الورق;die Umwelt=البيئة;sparen=يوفر;der Strom=الكهرباء;die Energie=الطاقة"],
+["المدينة والريف","Auf dem Land ist es ruhiger als in der Stadt.","الريف أهدأ من المدينة.","das Land=الريف;die Gegend=المنطقة;ruhig=هادئ;laut=صاخب;die Nachbarschaft=الحيّ;die Natur=الطبيعة;die Infrastruktur=البنية التحتية;das Dorf=القرية"],
+["الخطط المستقبلية","Nächstes Jahr möchte ich eine Ausbildung beginnen.","أريد أن أبدأ تدريباً مهنياً السنة القادمة.","nächstes Jahr=السنة القادمة;die Ausbildung=التكوين المهني;der Plan=الخطة;vorhaben=ينوي;entscheiden=يقرر;die Zukunft=المستقبل;vorbereiten=يستعد;hoffen=يأمل"],
+["التعامل مع المواقف الطارئة","Wenn du Hilfe brauchst, ruf mich an.","إذا احتجت إلى مساعدة فاتصل بي.","die Notrufnummer=رقم الطوارئ;der Notfall=الطوارئ;die Gefahr=الخطر;helfen=يساعد;retten=ينقذ;dringend=عاجل;die Verletzung=الإصابة;die Feuerwehr=الإطفاء"]
+ ]
+};
+const grammar={
+A1:[
+"التحيات الرسمية وغير الرسمية: استخدم Hallo مع الأصدقاء، وGuten Tag في المواقف الرسمية. اسأل عن الاسم بـ Wie heißt du? أو Wie heißen Sie? للصيغة الرسمية.",
+"الأسماء الألمانية تبدأ بحرف كبير. للتأكد من التهجئة قل: Wie schreibt man das? ثم استمع إلى الأحرف واحداً واحداً.",
+"الأعداد المركبة بين 21 و99 تُقرأ عادة بالآحاد ثم und ثم العشرات، مثل einundzwanzig = 21.",
+"الفعل kommen يأتي: ich komme, du kommst, er kommt. للسؤال عن الأصل قل Woher kommst du?",
+"يُعبَّر عن العمر بـ sein: Ich bin 20 Jahre alt. لا تستخدم haben مباشرة للتعبير عن العمر.",
+"الملكية: mein Bruder, meine Schwester. يتغيّر شكل ضمير الملكية حسب جنس الاسم وحالته.",
+"تصريف sein: ich bin, du bist, er/sie/es ist, wir sind, ihr seid, sie/Sie sind.",
+"تصريف haben: ich habe, du hast, er/sie/es hat. المفعول به المذكر يأتي غالباً einen.",
+"مواقع الأشياء: in, auf, neben, unter. قد تتطلب حروف الجر حالة الداتيف أو الأكوزاتيف حسب الحركة أو الثبات.",
+"أدوات التعريف في حالة الرفع: der للمذكر، die للمؤنث، das للمحايد، die للجمع. احفظ كل اسم مع أداته.",
+"الصِّفة الخبرية بعد sein لا تتغير: Das Auto ist blau. أما قبل الاسم فتنتهي بنهايات بحسب الجنس والحالة.",
+"الفعل المصرف عادة في المرتبة الثانية بالجملة الخبرية: Ich trinke Wasser. في سؤال نعم/لا يتقدم الفعل: Trinkst du Wasser?",
+"للسؤال عن السعر: Wie viel kostet ...? وللتعبير عن رغبة مهذبة: Ich möchte ...",
+"أيام الأسبوع أسماء وتبدأ بحرف كبير: am Montag، am Freitag. تُستعمل am مع اليوم.",
+"لذكر الساعة استعمل um: um acht Uhr. نصف الثامنة بالألمانية halb acht = 7:30.",
+"الأفعال القابلة للفصل: aufstehen ← ich stehe ... auf. الجزء المنفصل ينتقل إلى آخر الجملة.",
+"نهايات المضارع للأفعال المنتظمة: ich -e, du -st, er -t, wir -en, ihr -t, sie -en.",
+"أسئلة W تبدأ بأداة السؤال ثم الفعل المصرف: Wo wohnst du? Wann kommst du?",
+"استعمل kein لنفي اسم غير معرّف: Ich habe kein Auto؛ وnicht لنفي الفعل أو الصفة أو ظرف.",
+"الاتجاهات: Gehen Sie geradeaus. Biegen Sie rechts ab. صيغة Sie مهذبة في الإرشاد.",
+"الفعل fahren يُستعمل غالباً مع وسائل النقل، ويمكن استخدام mit + Dativ: mit dem Bus.",
+"صيغة المفعول للمذكر: einen Mantel. مع مقاس الملابس نسأل: Welche Größe haben Sie?",
+"الظروف gern, lieber, am liebsten تعبر عن درجة التفضيل: Ich spiele gern Fußball.",
+"عبارات الصحة الأساسية: Ich habe Kopfschmerzen. Ich brauche einen Termin. لا تُعد هذه العبارات بديلاً عن نصيحة طبية."
+],
+A2:[
+"زمن Perfekt: haben/sein المصرف + Partizip II في آخر الجملة: Ich habe gelernt. استخدم sein مع كثير من أفعال الحركة والتغير.",
+"في الماضي يُستعمل haben/sein مع التصريف الثالث. انتبه للفعل buchen → gebucht.",
+"الفعلان sein وhaben شائعان بصيغة Präteritum: ich war, ich hatte. ويُستخدم الماضي في وصف العادات القديمة.",
+"الجملة التابعة بـ aber تظل جملة رئيسية عادية: Die Miete ist hoch, aber die Wohnung ist hell.",
+"الأفعال المركبة: einen Termin vereinbaren/verschieben/absagen؛ وافعال modal: Können wir ...?",
+"حرف الجر seit مع Dativ للدلالة على بداية مدة مستمرة: seit zwei Jahren.",
+"الفعل möchten للتعبير المهذب عن الرغبة؛ والفعل zurückgeben قابل للفصل: ich gebe ... zurück.",
+"لإبداء نصيحة استخدم sollte: Du solltest zum Arzt gehen. تبقى صيغة المصدر في نهاية الجملة.",
+"عبارات التسلسل الزمني: zuerst, danach, dann, schließlich؛ مع الحفاظ على موضع الفعل.",
+"weil تُدخل جملة تابعة والفعل المصرف يذهب لآخرها: ..., weil ich Deutsch lernen möchte.",
+"obwohl تُدخل جملة تنازلية والفعل في النهاية: Obwohl es regnet, gehen wir spazieren.",
+"الأفعال مع Dativ وAkkusativ: Ich schicke dir eine Nachricht. dir للمستفيد وeine Nachricht للمفعول.",
+"seit مع المدة المستمرة حتى الآن: seit einem Jahr؛ ومع الزمن الماضي المنتهي استخدم vor einem Jahr.",
+"الأفعال الانعكاسية: Ich freue mich; Du freust dich؛ انتبه للضمير الصحيح.",
+"الأفعال المنفصلة: einladen → Ich lade meine Freunde ein; eingeladen في Perfekt.",
+"الأفعال مع المفعول: Ich muss das Formular ausfüllen. يجب وضع مصدر الفعل بعد müssen.",
+"المقارنة: schnell → schneller → am schnellsten؛ مع als: schneller als.",
+"الرسائل الرسمية تبدأ بـ Sehr geehrte Damen und Herren أو بصيغة محددة، وتنتهي غالباً بـ Mit freundlichen Grüßen.",
+"Perfekt مع haben: Ich habe den Schlüssel verloren. الترتيب: فعل مساعد في المرتبة الثانية وتصريف ثالث في النهاية.",
+"النفي الزمني بـ noch nicht: Die Bestellung ist noch nicht angekommen.",
+"في الأمر الجمعي مع wir: Trennen wir den Müll. ومع müssen: Wir müssen Müll trennen.",
+"الصفات المقارنة تتبع نمط ruhiger als؛ وتُستعمل als عند المقارنة بين شيئين مختلفين.",
+"الخطة المستقبلية يمكن التعبير عنها بالمضارع مع ظرف زمن: Nächstes Jahr beginne ich eine Ausbildung.",
+"جملة الشرط بـ wenn: Wenn du Hilfe brauchst, ruf mich an. انتبه للفعل في آخر جملة الشرط."
+]
+};
+function make(level,records){return records.map((v,i)=>{
+let [title,example,exampleAr,raw]=v;let words=raw.split(';').map(x=>{let ix=x.indexOf('=');return {de:x.slice(0,ix),ar:x.slice(ix+1)}}).filter(x=>x.de&&x.ar);
+return {id:level.toLowerCase()+'-'+String(i+1).padStart(2,'0'),n:i+1,level,title,focus:'تعلّم مفردات وتراكيب '+title+' واستخدمها في جمل صحيحة.',grammar:grammar[level]?.[i]||'',example,exampleAr,reading:example,textAr:exampleAr,words,dialogue:[[example,exampleAr],[words[0].de,words[0].ar]],minutes:40};
+})}
+window.DM_PART1=[...make('A1',vocabulary.A1),...make('A2',vocabulary.A2)];
+})();
