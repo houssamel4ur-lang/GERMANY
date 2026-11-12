@@ -28,4 +28,23 @@ for(const file of ['index.html','lesson.html','dashboard.html','review.html','as
   assert.ok(html.includes('lang="ar"')&&html.includes('dir="rtl"'),file+' missing Arabic locale');
 }
 for(const file of ['assets/style.css','assets/app.js','data/lessons.js'])assert.ok(existsSync(new URL(file,root)),file+' missing');
-console.log('PASS: '+lessons.length+' unique lessons, '+lessons.reduce((n,x)=>n+x.words.length,0)+' vocabulary entries, 4 levels, HTML assets and data structure.');
+
+const syllabusWin={};
+runInNewContext(read('data/syllabus.js'),{window:syllabusWin});
+const syllabus=syllabusWin.DM_SYLLABUS;
+assert.equal(syllabus.length,64,'PDF syllabus requires 64 units');
+for(const level of levels){
+  const entries=syllabus.filter(x=>x.level===level);
+  assert.equal(entries.length,16,level+' requires 16 syllabus units');
+  assert.deepEqual(entries.map(x=>x.number),Array.from({length:16},(_,i)=>i+1));
+}
+assert.equal(new Set(syllabus.map(x=>x.id)).size,64,'syllabus unit IDs must be unique');
+assert.ok(syllabus.every(x=>x.title.length>2&&x.points.length>=2&&x.sourcePage>=2&&x.sourcePage<=17),'syllabus missing PDF details');
+assert.ok(read('syllabus.html').includes('data/syllabus.js'),'syllabus HTML missing data file');
+const application=read('assets/app.js');
+assert.match(application,/function isGermanVoice\(/,'require explicit German voice validator');
+assert.match(application,/\.filter\(isGermanVoice\)/,'audio must filter German voices');
+assert.match(application,/if\(!voice\)\{/,'audio must reject missing German voice');
+assert.match(application,/function initSyllabus\(/,'curriculum page should be interactive');
+
+console.log('PASS: 64 PDF syllabus units, German-only speech policy, and '+lessons.length+' unique lessons, '+lessons.reduce((n,x)=>n+x.words.length,0)+' vocabulary entries, 4 levels, HTML assets and data structure.');
