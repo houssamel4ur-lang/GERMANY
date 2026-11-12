@@ -32,7 +32,7 @@ function stopAudio(){if('speechSynthesis' in window)speechSynthesis.cancel();act
 document.addEventListener('click',function(e){var b=e.target.closest('[data-say]');if(b)speak(b.dataset.say);if(e.target.closest('[data-stop]'))stopAudio()});
 function audioControls(){return '<div class="controls"><label>السرعة <select id="speed"><option value=".65">بطيئة</option><option value=".85" selected>متوسطة</option><option value="1">طبيعية</option></select></label><label>التكرار <select id="repeat"><option value="1">مرة</option><option value="2">مرتان</option><option value="3">ثلاث مرات</option></select></label><button class="outline" data-stop type="button">■ إيقاف</button></div><p class="tiny" id="audioStatus" role="status">الصوت يستخدم محرك النطق المتاح في الجهاز، وليس تسجيلات بشرية.</p>'}
 function wordRow(w,lesson,index,bookmark){var id=lesson.id+':'+index,card=progress.cards[id];
-return '<div class="wordrow"><div>'+german(w.de)+'<small>'+escapeHTML(w.ar)+'</small></div><div class="rowactions"><button class="speak" data-say="'+escapeHTML(w.de)+'" aria-label="الاستماع للكلمة" type="button">🔊</button>'+(bookmark?'<button class="outline" data-save="'+escapeHTML(id)+'" type="button">'+(card?'★ محفوظة':'☆ احفظ')+'</button>':'')+'</div></div>'
+return '<div class="wordrow"><div>'+german(w.de)+'<small>'+escapeHTML(w.ar)+(w.pron?' — '+escapeHTML(w.pron):'')+'</small></div><div class="rowactions"><button class="speak" data-say="'+escapeHTML(w.de)+'" aria-label="الاستماع للكلمة" type="button">🔊</button>'+(bookmark?'<button class="outline" data-save="'+escapeHTML(id)+'" type="button">'+(card?'★ محفوظة':'☆ احفظ')+'</button>':'')+'</div></div>'
 }
 function initHome(){var level='A1',query='';
 var grid=$('#lessonGrid'),levelGrid=$('#levelGrid');
