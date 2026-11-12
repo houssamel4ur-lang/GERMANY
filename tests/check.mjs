@@ -36,7 +36,7 @@ assert.equal(syllabus.length,64,'PDF syllabus requires 64 units');
 for(const level of levels){
   const entries=syllabus.filter(x=>x.level===level);
   assert.equal(entries.length,16,level+' requires 16 syllabus units');
-  assert.deepEqual(entries.map(x=>x.number),Array.from({length:16},(_,i)=>i+1));
+  assert.deepEqual(Array.from(entries,x=>x.number),Array.from({length:16},(_,i)=>i+1));
 }
 assert.equal(new Set(syllabus.map(x=>x.id)).size,64,'syllabus unit IDs must be unique');
 assert.ok(syllabus.every(x=>x.title.length>2&&x.points.length>=2&&x.sourcePage>=2&&x.sourcePage<=17),'syllabus missing PDF details');
