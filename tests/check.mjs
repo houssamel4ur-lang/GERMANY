@@ -41,6 +41,11 @@ for(const level of levels){
 assert.equal(new Set(syllabus.map(x=>x.id)).size,64,'syllabus unit IDs must be unique');
 assert.ok(syllabus.every(x=>x.title.length>2&&x.points.length>=2&&x.sourcePage>=2&&x.sourcePage<=17),'syllabus missing PDF details');
 assert.ok(read('syllabus.html').includes('data/syllabus.js'),'syllabus HTML missing data file');
+assert.ok(read('alphabet.html').includes('data/phonetics.js'),'alphabet page must load lesson data');
+assert.ok(read('alphabet.html').includes('assets/phonetics.js'),'alphabet page must load interactive script');
+const audioLesson=read('assets/phonetics.js');
+assert.match(audioLesson,/^.*filter\(function\(v\).*\^de/m,'phonetics must filter de voices');
+assert.match(audioLesson,/if\(!v\)\{/,'phonetics audio must reject missing German voice');
 const application=read('assets/app.js');
 assert.match(application,/function isGermanVoice\(/,'require explicit German voice validator');
 assert.match(application,/\.filter\(isGermanVoice\)/,'audio must filter German voices');
