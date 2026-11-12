@@ -16,21 +16,86 @@ var progress=load();
 function save(){try{localStorage.setItem(KEY,JSON.stringify(progress))}catch(e){console.warn('Storage is not available',e)}}
 function shuffled(items){var a=items.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t}return a}
 function normalize(s){return String(s||'').normalize('NFKC').toLowerCase().trim().replace(/[.!?؟،,;:]+$/g,'').replace(/\s+/g,' ')}
-var activeSpeech=null;
-function speak(text){var status=$('#audioStatus');if(!('speechSynthesis' in window)){if(status)status.textContent='المتصفح لا يدعم تحويل النص إلى صوت.';return}
-try{speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(text);u.lang='de-DE';u.rate=Number($('#speed')?$('#speed').value:.85);
-var voices=speechSynthesis.getVoices(),deVoice=voices.find(function(v){return v.lang.toLowerCase()==='de-de'})||voices.find(function(v){return v.lang.toLowerCase().startsWith('de')});
-if(deVoice)u.voice=deVoice;else if(status)status.textContent='لم يظهر صوت ألماني مثبت؛ سيتم استخدام اختيار المتصفح وقد يختلف النطق.';
-var remaining=Number($('#repeat')?$('#repeat').value:1);activeSpeech=u;
-u.onend=function(){remaining--;if(remaining>0&&activeSpeech===u)speechSynthesis.speak(u);else if(status)status.textContent='انتهى الاستماع.'};
-u.onerror=function(){if(status)status.textContent='تعذر تشغيل الصوت. ثبّت صوتاً ألمانياً أو جرّب Chrome أو Edge.'};
-if(status&&deVoice)status.textContent='جارٍ تشغيل النطق بالألمانية.';
-speechSynthesis.speak(u)}
-catch(e){if(status)status.textContent='فشل تشغيل الصوت: '+e.message}
+var activeSpeech=null, speechRun=0;
+var voiceChoiceKey='deutsch-mastery-german-voice-v1';
+function isGermanVoice(v){return v&&/^de(?:[-_]|$)/i.test(String(v.lang||''))}
+function germanVoices(){
+ if(!('speechSynthesis' in window))return [];
+ try{return Array.from(window.speechSynthesis.getVoices()).filter(isGermanVoice)}
+ catch(e){return []}
 }
-function stopAudio(){if('speechSynthesis' in window)speechSynthesis.cancel();activeSpeech=null;var x=$('#audioStatus');if(x)x.textContent='أُوقف الصوت.'}
-document.addEventListener('click',function(e){var b=e.target.closest('[data-say]');if(b)speak(b.dataset.say);if(e.target.closest('[data-stop]'))stopAudio()});
-function audioControls(){return '<div class="controls"><label>السرعة <select id="speed"><option value=".65">بطيئة</option><option value=".85" selected>متوسطة</option><option value="1">طبيعية</option></select></label><label>التكرار <select id="repeat"><option value="1">مرة</option><option value="2">مرتان</option><option value="3">ثلاث مرات</option></select></label><button class="outline" data-stop type="button">■ إيقاف</button></div><p class="tiny" id="audioStatus" role="status">الصوت يستخدم محرك النطق المتاح في الجهاز، وليس تسجيلات بشرية.</p>'}
+function chosenGermanVoice(){
+ var voices=germanVoices(),choice='';
+ try{choice=localStorage.getItem(voiceChoiceKey)||''}catch(e){}
+ return voices.find(function(v){return v.voiceURI===choice})||
+ voices.find(function(v){return v.lang.toLowerCase().replace('_','-')==='de-de'})||voices[0]||null;
+}
+function audioMessage(message){
+ var s=$('#audioStatus');if(s)s.textContent=message;
+ var floating=$('#globalAudioNotice');
+ if(!floating){floating=document.createElement('div');floating.id='globalAudioNotice';floating.setAttribute('role','status');
+ floating.style.cssText='position:fixed;bottom:20px;right:20px;z-index:60;background:#123934;color:white;max-width:390px;padding:13px 17px;border-radius:12px;font-size:13px;line-height:1.8;box-shadow:0 10px 30px #12393440';
+ document.body.appendChild(floating)}
+ floating.textContent=message;floating.hidden=false;
+ clearTimeout(audioMessage.timer);audioMessage.timer=setTimeout(function(){floating.hidden=true},7000);
+}
+function updateGermanVoiceSelect(){
+ var select=$('#germanVoice');if(!select)return;
+ var voices=germanVoices(),active=chosenGermanVoice();
+ select.innerHTML='';
+ if(!voices.length){
+  var none=document.createElement('option');none.value='';none.textContent='لا يوجد صوت ألماني في المتصفح';select.appendChild(none);
+  select.disabled=true;
+  var msg=$('#audioStatus');if(msg)msg.textContent='لا يمكن تشغيل النطق دون صوت ألماني. ثبّت صوت German (Germany) في إعدادات Windows، ثم أعد تشغيل المتصفح.';
+  return;
+ }
+ select.disabled=false;
+ voices.forEach(function(v){var op=document.createElement('option');op.value=v.voiceURI;op.textContent=v.name+' — '+v.lang;select.appendChild(op)});
+ select.value=active.voiceURI;
+}
+if('speechSynthesis' in window){
+ try{window.speechSynthesis.addEventListener('voiceschanged',updateGermanVoiceSelect)}catch(e){}
+}
+document.addEventListener('change',function(e){
+ if(e.target&&e.target.id==='germanVoice'){
+  var v=germanVoices().find(function(x){return x.voiceURI===e.target.value});
+  if(v)try{localStorage.setItem(voiceChoiceKey,v.voiceURI)}catch(err){}
+ }
+});
+function speak(text){
+ if(!text||!String(text).trim())return;
+ if(!('speechSynthesis' in window)){
+  audioMessage('متصفحك لا يدعم تشغيل النطق الألماني.');return;
+ }
+ var voice=chosenGermanVoice();
+ if(!voice){
+  audioMessage('لا يوجد صوت ألماني (de-DE) متاح حالياً. أوقفنا التشغيل حتى لا تسمع نطقاً عربياً أو إنجليزياً غير صحيح. ثبّت صوت German في Windows أو افتح الموقع على متصفح يوفر صوتاً ألمانياً.');
+  updateGermanVoiceSelect();return;
+ }
+ stopAudio(true);
+ var run=++speechRun,remaining=Number($('#repeat')?$('#repeat').value:1),rate=Number($('#speed')?$('#speed').value:.85);
+ function sayOnce(){
+  if(run!==speechRun||remaining<=0)return;
+  var u=new SpeechSynthesisUtterance(String(text));u.lang='de-DE';u.voice=voice;u.rate=rate;u.pitch=1;
+  activeSpeech=u;
+  u.onend=function(){if(run!==speechRun)return;remaining--;if(remaining>0)sayOnce();else{activeSpeech=null;var s=$('#audioStatus');if(s)s.textContent='انتهى تشغيل الصوت الألماني.'}};
+  u.onerror=function(){if(run!==speechRun)return;activeSpeech=null;audioMessage('فشل تشغيل الصوت الألماني المحدد. جرّب صوتاً ألمانياً آخر أو ثبّت حزمة German في جهازك.')};
+  try{window.speechSynthesis.speak(u)}catch(e){audioMessage('فشل تشغيل الصوت الألماني: '+e.message)}
+ }
+ var s=$('#audioStatus');if(s)s.textContent='يُشغّل الصوت الألماني: '+voice.name+' ('+voice.lang+')';
+ sayOnce();
+}
+function stopAudio(silent){
+ speechRun++;
+ if('speechSynthesis' in window)try{window.speechSynthesis.cancel()}catch(e){}
+ activeSpeech=null;
+ if(!silent){var x=$('#audioStatus');if(x)x.textContent='أُوقف الصوت.'}
+}
+document.addEventListener('click',function(e){
+ var b=e.target.closest('[data-say]');if(b)speak(b.dataset.say);
+ if(e.target.closest('[data-stop]'))stopAudio(false);
+});
+function audioControls(){return '<div class="controls"><label>صوت ألماني <select id="germanVoice" aria-label="اختر صوتاً ألمانياً فقط"><option>تحميل الأصوات الألمانية…</option></select></label><label>السرعة <select id="speed"><option value=".65">بطيئة</option><option value=".85" selected>متوسطة</option><option value="1">طبيعية</option></select></label><label>التكرار <select id="repeat"><option value="1">مرة</option><option value="2">مرتان</option><option value="3">ثلاث مرات</option></select></label><button class="outline" data-say="Guten Morgen" type="button">🔊 اختبر النطق</button><button class="outline" data-stop type="button">■ إيقاف</button></div><p class="tiny" id="audioStatus" role="status">تُعرض الأصوات ذات اللغة الألمانية فقط؛ إذا لم تتوفر فلن نستعمل صوتاً بلغة أخرى.</p>'}
 function wordRow(w,lesson,index,bookmark){var id=lesson.id+':'+index,card=progress.cards[id];
 return '<div class="wordrow"><div>'+german(w.de)+'<small>'+escapeHTML(w.ar)+(w.pron?' — '+escapeHTML(w.pron):'')+'</small></div><div class="rowactions"><button class="speak" data-say="'+escapeHTML(w.de)+'" aria-label="الاستماع للكلمة" type="button">🔊</button>'+(bookmark?'<button class="outline" data-save="'+escapeHTML(id)+'" type="button">'+(card?'★ محفوظة':'☆ احفظ')+'</button>':'')+'</div></div>'
 }
@@ -62,7 +127,7 @@ function renderTab(){
 $$('[data-tab]').forEach(function(b){b.classList.toggle('active',b.dataset.tab===tab)});
 var text='';
 if(tab==='intro')text=titleBlock(lesson.title,lesson.focus)+'<div class="panel article"><h3>هدف هذا الدرس</h3><p>'+escapeHTML(lesson.focus)+'</p><p>استمع إلى المفردات، اقرأ مثال الدرس، ثم انتقل إلى القواعد والتمارين. دوّن العبارات الجديدة واستخدمها في حديثك.</p><p>الوقت المقترح: '+lesson.minutes+' دقيقة.</p></div><div class="story">'+german(lesson.reading)+'<p>'+escapeHTML(lesson.textAr)+'</p></div><button class="primary" data-next-tab="vocab">ابدأ بالمفردات ←</button>';
-if(tab==='vocab')text=titleBlock('مفردات الدرس','استمع واحفظ الكلمات الصعبة للمراجعة المتباعدة.')+lesson.words.map(function(w,i){return wordRow(w,lesson,i,true)}).join('')+'<p class="tiny">النطق بالحروف العربية عند توفره هو مساعد فقط؛ تعلّم النطق بالاستماع.</p>';
+if(tab==='vocab')text=titleBlock('مفردات الدرس','استمع واحفظ الكلمات الصعبة للمراجعة المتباعدة.')+audioControls()+lesson.words.map(function(w,i){return wordRow(w,lesson,i,true)}).join('')+'<p class="tiny">النطق بالحروف العربية عند توفره هو مساعد فقط؛ تعلّم النطق بالاستماع.</p>';
 if(tab==='audio')text=titleBlock('الصوتيات','هذا القسم خاص بالكلمات والجمل المسموعة في هذا الدرس.')+audioControls()+lesson.words.map(function(w,i){return wordRow(w,lesson,i,false)}).join('')+'<h3>استماع إلى الجملة</h3><div class="wordrow"><div>'+german(lesson.reading)+'<small>'+escapeHTML(lesson.textAr)+'</small></div><button class="speak" data-say="'+escapeHTML(lesson.reading)+'">🔊</button></div>';
 if(tab==='grammar')text=titleBlock('قواعد اللغة','قاعدة مرتبطة بموضوع الدرس مع مثال تطبيقي.')+'<div class="panel article"><h3>'+escapeHTML(lesson.title)+'</h3><p>'+escapeHTML(lesson.grammar)+'</p></div><div class="story">'+german(lesson.example)+'<p>'+escapeHTML(lesson.exampleAr)+'</p></div><button class="primary" data-next-tab="quiz">تدرّب على القاعدة ←</button>';
 if(tab==='dialogue'){var d=lesson.dialogue||[[lesson.example,lesson.exampleAr]];text=titleBlock('المحادثة','استمع إلى الجمل وحاول تقليد النطق والإيقاع.')+audioControls()+d.map(function(x,i){return '<div class="wordrow"><div><small>المتحدث '+(i%2?'ب':'أ')+'</small>'+german(x[0])+'<small>'+escapeHTML(x[1])+'</small></div><button class="speak" data-say="'+escapeHTML(x[0])+'">🔊</button></div>'}).join('')+'<p class="notice">لا يتضمن هذا الإصدار تسجيل الصوت أو تقييماً آلياً موثوقاً للنطق.</p>'}
@@ -70,6 +135,7 @@ if(tab==='reading')text=titleBlock('قراءة وفهم','اقرأ النص قب
 if(tab==='quiz')text=titleBlock('تمارين الدرس','سؤال واحد تلو الآخر؛ يجري تصحيح الإجابة فوراً.')+'<div id="quizMount"></div>';
 if(tab==='results'){var attempts=progress.attempts[lesson.id]||[],last=attempts[attempts.length-1];text=titleBlock('التقييم','النتائج من محاولاتك الحقيقية محفوظة على هذا الجهاز.')+(last?'<div class="panel"><h3>آخر محاولة</h3><p>إجابات صحيحة من أول محاولة: <b>'+last.first+' / '+last.total+'</b></p><p>إجابات خاطئة قبل التصحيح: '+last.errors+'</p><p>تاريخ المحاولة: '+new Date(last.ts).toLocaleString('ar')+'</p></div>':'<div class="notice">لم تنه اختبار الدرس بعد.</div>')+'<button class="primary" data-next-tab="quiz">إعادة التدريب ←</button>'}
 $('#study').innerHTML=text;
+updateGermanVoiceSelect();
 $$('[data-next-tab]',$('#study')).forEach(function(b){b.onclick=function(){tab=b.dataset.nextTab;renderTab()}});
 $$('[data-save]',$('#study')).forEach(function(b){b.onclick=function(){var k=b.dataset.save,i=Number(k.split(':').pop()),w=lesson.words[i];if(progress.cards[k])delete progress.cards[k];else progress.cards[k]={de:w.de,ar:w.ar,interval:0,due:Date.now(),lesson:lesson.id};save();renderTab()}});
 if(tab==='quiz'){questions=makeQuestions(lesson);questionIndex=0;firstTry=0;wrongTotal=0;drawQuestion()}
