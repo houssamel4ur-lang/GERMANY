@@ -362,7 +362,7 @@ lesson.dialogue=[[lesson.example,lesson.exampleAr],[entry[0],entry[1]]];
 });
 (function(){
 const pron={
-'Hallo':'هالو','Guten Morgen':'غوتِن مورغِن','Guten Tag':'غوتِن تاك',
+'Hallo':'هالو','Guten Morgen':'گوتِن مورگِن','Guten Tag':'گوتِن تاك',
 'Wie heißt du?':'ڤي هايسْت دو؟','Ich heiße ...':'إيش هايسَه','Auf Wiedersehen':'آوف ڤيدرزيهن',
 'Danke':'دانكَه','Bitte':'بِتّه','null':'نول','eins':'آينس','zwei':'تسڤاي',
 'drei':'دراي','zehn':'تسين','zwanzig':'تسڤانتسِش','hundert':'هونْدَرت',
