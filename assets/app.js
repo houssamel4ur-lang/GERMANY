@@ -242,6 +242,36 @@ $('#assessLevel').onchange=function(e){level=e.target.value;setup()};
 $$('[data-opt]').forEach(function(b){b.onclick=function(){var good=b.dataset.opt===item.ar;if(good)correct++;$$('[data-opt]').forEach(function(btn){btn.disabled=true});$('#assessFeedback').innerHTML='<div class="feedback '+(good?'':'err')+'">'+(good?'✓ صحيح':'الإجابة الصحيحة: '+escapeHTML(item.ar))+'</div>';setTimeout(function(){i++;render()},900)}})
 }setup()
 }
+
+function initSyllabus(){
+ var data=window.DM_SYLLABUS||[],node=$('#syllabusMount'),params=new URLSearchParams(location.search),
+ level=String(params.get('level')||'A1').toUpperCase(),unit=Number(params.get('unit'));
+ if(!LEVELS.includes(level))level='A1';
+ if(!data.length){node.innerHTML='<div class="notice">تعذر تحميل فهرس المنهج.</div>';return}
+ var course=data.filter(function(x){return x.level===level}),picked=course.find(function(x){return x.number===unit});
+ if(picked){
+ document.title= picked.title+' ('+level+') | منهج Deutsch Mastery';
+ var next=course.find(function(x){return x.number===unit+1});
+ node.innerHTML='<div class="crumb"><a href="index.html">الرئيسية</a> / <a href="syllabus.html?level='+level+'">فهرس '+level+'</a> / '+escapeHTML(picked.title)+'</div>'+
+ '<div class="lessonhero"><span class="eyebrow">الفهرس المعتمد · '+level+' / '+String(picked.number).padStart(2,'0')+'</span><h1>'+escapeHTML(picked.title)+'</h1><p>'+escapeHTML(picked.section)+' — حسب الملف المرجعي، الصفحة '+picked.sourcePage+'</p></div>'+
+ '<div class="panel article"><h2>ما الذي يجب أن تتعلمه في هذا المحور؟</h2><ol>'+picked.points.map(function(p){return '<li>'+escapeHTML(p)+'</li>'}).join('')+'</ol>'+
+ '<div class="notice">هذه صفحة أهداف وفهرس كما ورد في ملفك، وليست درساً تعليمياً مكتملاً. سنُطوّر الشرح والأمثلة والاستماع والتمارين لكل نقطة، دون احتساب المحور مكتملاً قبل ذلك.</div></div>'+
+ '<div class="controls" style="justify-content:space-between"><a class="outline" href="syllabus.html?level='+level+'">← العودة إلى فهرس '+level+'</a>'+(next?'<a class="primary" href="syllabus.html?level='+level+'&unit='+next.number+'">المحور التالي ←</a>':'<a class="primary" href="index.html#levels">الدروس التطبيقية الموجودة ←</a>')+'</div>';
+ return;
+ }
+ document.title='المنهج المعتمد A1–B2 | Deutsch Mastery';
+ node.innerHTML='<div class="pagehead"><span class="overline">PDF-BASED LEARNING ROADMAP</span><h1>المنهج المعتمد من A1 إلى B2</h1><p>الفهرس الذي قدمته: 16 محوراً لكل مستوى، مع النقاط التفصيلية المطلوبة. هذه خطة المحتوى المعتمدة من الآن فصاعداً.</p></div>'+
+ '<div class="levelgrid">'+LEVELS.map(function(x){return '<a class="levelcard '+(x===level?'active':'')+'" href="syllabus.html?level='+x+'"><span class="lv">'+x+'</span><h3>'+({A1:'الأساسيات والتواصل البسيط',A2:'المواقف اليومية وتوسيع التعبير',B1:'الاستقلالية والتعبير المترابط',B2:'النقاش والفهم والتعبير المفصل'})[x]+'</h3><small>16 محوراً مفصلاً ←</small></a>'}).join('')+'</div>'+
+ '<div class="panel" style="margin-top:22px"><h2>محتويات مستوى '+level+'</h2><p class="tiny">الترتيب مطابق للفهرس المرجعي، ومقسّم إلى القواعد، المفردات والتواصل، ثم المهارات الأربع.</p></div>'+
+ ['القواعد','المفردات والتواصل','المهارات الأربع'].map(function(section){
+ var subset=course.filter(function(x){return x.section===section});
+ return '<section class="section" style="padding-top:20px"><span class="overline">'+level+'</span><h2>'+section+'</h2><div class="lessongrid">'+subset.map(function(x){
+ return '<a class="lessoncard" href="syllabus.html?level='+level+'&unit='+x.number+'"><span class="badge">المحور '+String(x.number).padStart(2,'0')+'</span><h3>'+escapeHTML(x.title)+'</h3><p>'+x.points.slice(0,2).map(escapeHTML).join(' • ')+'</p><small>تفاصيل المحور ←</small></a>'
+ }).join('')+'</div></section>';
+ }).join('')+
+ '<div class="caution">هذه 64 محاور منهجية مستخرجة من ملف الفهرس، وليست 64 درساً مكتمل المحتوى. <a href="index.html#levels">الدروس التدريبية الحالية</a> منفصلة عن قائمة المتطلبات وسيجري توحيدها تدريجياً.</div>';
+}
+
 if(!LESSONS.length){console.error('Missing curriculum data');return}
 var page=document.body.dataset.page;
 if(page==='home')initHome();
@@ -249,4 +279,5 @@ if(page==='lesson')initLesson();
 if(page==='dashboard')initDashboard();
 if(page==='review')initReview();
 if(page==='assessment')initAssessment();
+if(page==='syllabus')initSyllabus();
 })();
