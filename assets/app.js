@@ -88,6 +88,7 @@ var sentence=l.example.trim(),tokens=sentence.split(/\s+/);
 if(tokens.length>=3&&tokens.length<=13)qs.push({kind:'order',prompt:'رتب الكلمات لتكوين الجملة.',tokens:shuffled(tokens),answer:sentence,hint:sentence});
 var distractors=shuffled(LESSONS.filter(function(x){return x.level===l.level&&x.id!==l.id&&x.textAr!==l.textAr})).slice(0,3).map(function(x){return x.textAr});
 qs.push({kind:'read',prompt:'اقرأ النص واختر الترجمة الصحيحة.',reading:l.reading,options:shuffled([l.textAr].concat(distractors)),answer:l.textAr,hint:l.textAr});
+if(Array.isArray(l.comprehension)){l.comprehension.forEach(function(c){qs.push({kind:'read',prompt:c.q,reading:l.reading,options:shuffled(c.options),answer:c.answer,hint:c.explain||''})})}
 return qs;
 }
 var questionSerial=0;
