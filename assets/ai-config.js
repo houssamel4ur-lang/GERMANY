@@ -1,2 +1,2 @@
-/* Local model deployment. Point apiBase to YOUR OWN HTTPS selfhost-ai server; never put secrets here. */
-window.DEUTSCH_AI_CONFIG={apiBase:"",maxTurns:12};
+/* Deutsch Mastery LOCAL MODE. Ollama stays on user's own PC. No paid API. */
+window.DEUTSCH_AI_CONFIG={apiBase:"http://127.0.0.1:8787",maxTurns:12,localOnly:true};
