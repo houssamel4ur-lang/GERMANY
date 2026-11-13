@@ -37,6 +37,9 @@ jobs:
           node --check data/advanced-grammar-b1-more.js
           node --check data/advanced-grammar-b2-more.js
           node --check data/advanced-merge.js
+          node --check data/learning-modules.js
+          node --check assets/module-study.js
+          node --check assets/master-curriculum.js
           node --check data/foundation-a1.js
           node --check data/foundation-a2.js
           node --check data/foundation-merge.js
