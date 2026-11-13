@@ -16,6 +16,8 @@ jobs:
           node --check assets/app.js
           node --check data/lessons.js
           node --check data/syllabus.js
+          node --check data/master-curriculum.js
+          node --check assets/master-curriculum.js
           node --check data/phonetics.js
           node --check assets/phonetics.js
       - name: Validate curriculum and site
