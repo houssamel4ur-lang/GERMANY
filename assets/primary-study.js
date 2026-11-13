@@ -37,14 +37,16 @@ return '<div class="wordrow"><div>'+iso(word.de)+'<small>'+esc(word.ar)+'</small
 }
 const tabs=[["intro","📘 المقدمة"],["vocab","📗 المفردات"],["audio","🔊 الصوتيات"],["grammar","📐 الشرح"],["conversation","💬 المحادثة"],["reading","📖 القراءة"],["exercise","🎯 التمارين"],["result","🏆 النتيجة"]];
 function detailPage(){
+const parentModule=window.DM_LEARNING_MODULES?.find(x=>x.id===window.DM_MODULE_BY_TOPIC?.[topic.id]);
+const parentUrl=parentModule?"module.html?module="+encodeURIComponent(parentModule.id)+"#"+topic.id:"syllabus.html?level="+topic.level;
 document.title=topic.title+" | Deutsch Mastery";
 const same=topics.filter(x=>x.level===topic.level),ix=same.findIndex(x=>x.id===topic.id);
 const next=same.slice(ix+1).find(x=>lessonMap.has(x.id));
 const prev=same.slice(0,ix).reverse().find(x=>lessonMap.has(x.id));
-root.innerHTML='<div class="crumb"><a href="syllabus.html?level='+topic.level+'">فهرس '+topic.level+'</a> / '+esc(topic.section)+' / '+String(topic.number).padStart(2,"0")+'</div>'+
+root.innerHTML='<div class="crumb"><a href="syllabus.html?level='+topic.level+'">فهرس '+topic.level+'</a> / <a href="'+parentUrl+'">'+esc(parentModule?.title||topic.section)+'</a> / الجزء '+String(topic.number).padStart(2,"0")+'</div>'+
 '<div class="lessonhero"><span class="eyebrow">'+topic.level+' · المحور '+topic.section_number+'.'+String(topic.number).padStart(2,"0")+' · تدريب تفاعلي</span><h1>'+esc(topic.title)+'</h1><p>من الفهرس المعتمد، صفحة '+topic.page+'. مادة أولية للتعلم والمراجعة، وليست تدريباً نهائياً معتمداً.</p></div>'+
 '<div class="lessonlayout"><aside class="side" aria-label="أقسام الدرس"><b>أقسام مستقلة</b>'+tabs.map(t=>'<button class="tab" type="button" data-tab="'+t[0]+'">'+t[1]+'</button>').join("")+'</aside><article class="study" id="courseSection"></article></div>'+
-'<div class="controls" style="justify-content:space-between;margin:22px 0"><a class="outline" href="syllabus.html?level='+topic.level+'">كل الدروس</a><div class="controls">'+(prev?'<a class="outline" href="'+courseLink(prev.id)+'">الدرس السابق</a>':"")+(next?'<a class="primary" href="'+courseLink(next.id)+'">الدرس التالي ←</a>':"")+'</div></div>'+
+'<div class="controls" style="justify-content:space-between;margin:22px 0"><a class="outline" href="'+parentUrl+'">العودة للوحدة المتكاملة</a><div class="controls">'+(prev?'<a class="outline" href="'+courseLink(prev.id)+'">الدرس السابق</a>':"")+(next?'<a class="primary" href="'+courseLink(next.id)+'">الدرس التالي ←</a>':"")+'</div></div>'+
 '<div class="tiny" id="courseNotice" role="status"></div>';
 state.last=topic.id;store();
 }
