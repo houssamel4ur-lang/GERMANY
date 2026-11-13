@@ -1,61 +1,97 @@
 <!doctype html>
 <html lang="ar" dir="rtl"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#123934"><meta name="description" content="تحدث بالألمانية مع شريك محادثة بالذكاء الاصطناعي يتكيف مع مستواك A1 حتى B2">
-<title>محادثة ألمانية بالذكاء الاصطناعي | Deutsch Mastery</title>
-<link rel="stylesheet" href="assets/style.css"><link rel="stylesheet" href="assets/ai-chat.css">
+<meta name="theme-color" content="#102d31">
+<meta name="description" content="تدرّب على الألمانية مع Deutsch Partner، مساعد محادثة محلي بمستويات A1 إلى B2.">
+<title>Deutsch Partner — استوديو المحادثة بالذكاء الاصطناعي | Deutsch Mastery</title>
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/ai-chat.css">
 </head>
 <body data-page="german-coach">
 <a class="skip" href="#main">تجاوز إلى المحتوى</a>
 <header class="top"><div class="wrap nav">
 <a class="brand" href="index.html"><span class="mark">D.</span><span>Deutsch Mastery</span></a>
-<nav aria-label="التنقل"><a href="syllabus.html">المنهج</a><a href="module.html">الوحدات</a><a href="journey.html">تقدمي</a><a href="ai.html" aria-current="page">المحادثة بالذكاء الاصطناعي</a></nav>
-<a class="navstart" href="index.html">الرئيسية ←</a></div></header>
-<main id="main"><div class="wrap ai-page">
-<div class="ai-heading"><div><span class="overline">DEUTSCH SPRECHEN · A1 – B2</span><h1>تحدّث بالألمانية مع ذكائنا الاصطناعي</h1><p>محادثة طبيعية تناسب مستواك. غيّر الموضوع، تكلم أو اكتب، واطلب تصحيحاً لطيفاً متى احتجت.</p></div>
-<span class="ai-status" id="connectionBadge" role="status">التحقق من الاتصال…</span></div>
+<nav aria-label="التنقل"><a href="syllabus.html">المنهج</a><a href="module.html">الوحدات</a><a href="journey.html">تقدمي</a><a href="ai.html" aria-current="page">Deutsch Partner</a></nav>
+<a class="navstart" href="index.html">الرئيسية ←</a>
+</div></header>
+<main id="main">
+<div class="ai-page">
+<section class="ai-heading" aria-labelledby="aiTitle">
+<div class="ai-heading-title">
+<div class="ai-eyebrow"><span class="ai-spark" aria-hidden="true">✦</span> DEUTSCH MASTERY <span class="ai-dotsep" aria-hidden="true">/</span> AI LANGUAGE PARTNER</div>
+<h1 id="aiTitle">مساحة المحادثة <span>بالألمانية.</span></h1>
+<p>تدرّب براحتك مع مساعد يتكيف مع مستواك، يصحح أخطاءك وكيخليك تستعمل الألمانية يومياً.</p>
+</div>
+<div class="ai-heading-actions">
+<div class="ai-local-pill"><span aria-hidden="true" class="ai-local-icon">◈</span><span><strong>Qwen3 4B</strong><small>على جهازك · بدون API مدفوعة</small></span></div>
+<span class="ai-status" id="connectionBadge" role="status">التحقق من الاتصال…</span>
+</div>
+</section>
 <div class="ai-layout">
-<aside class="ai-options">
-<section class="ai-panel"><h2>إعداد المحادثة</h2>
-<label for="levelSelect">مستواك في اللغة</label>
-<select id="levelSelect"><option value="A1">A1 — مبتدئ</option><option value="A2">A2 — أساسي</option><option value="B1">B1 — متوسط</option><option value="B2">B2 — متقدم</option></select>
-<label for="scenarioSelect">موضوع الحوار</label>
-<select id="scenarioSelect"><option value="free">محادثة حرة</option><option value="introductions">التعارف</option><option value="cafe">في المقهى</option><option value="shopping">التسوق</option><option value="travel">السفر</option><option value="job">مقابلة العمل</option><option value="daily">الحياة اليومية</option><option value="debate">مناقشة فكرة</option></select>
-<label class="ai-switch"><input type="checkbox" id="correctToggle" checked> <span>تصحيح الأخطاء بلطف</span></label>
-<label class="ai-switch"><input type="checkbox" id="autoSpeak" checked> <span>الرد بصوت ألماني تلقائياً</span></label>
-<div class="ai-buttons"><button class="outline" id="newChat" type="button">محادثة جديدة</button><button class="outline" id="stopAudio" type="button">إيقاف الصوت</button></div>
+<aside class="ai-options" aria-label="إعدادات مساعد اللغة">
+<section class="ai-panel ai-settings">
+<div class="ai-panel-head"><div class="ai-panel-icon" aria-hidden="true">⚙</div><div><h2>إعدادات المحادثة</h2><p>خصص التجربة حسب احتياجك</p></div></div>
+<div class="ai-fields">
+<div class="ai-field"><label for="levelSelect">المستوى اللغوي <span class="ai-field-hint">CEFR</span></label>
+<select id="levelSelect"><option value="A1">A1 — مبتدئ</option><option value="A2">A2 — أساسي</option><option value="B1">B1 — متوسط</option><option value="B2">B2 — متقدم</option></select></div>
+<div class="ai-field"><label for="scenarioSelect">موضوع المحادثة</label>
+<select id="scenarioSelect"><option value="free">محادثة حرة</option><option value="introductions">التعارف وتقديم النفس</option><option value="cafe">في المقهى</option><option value="shopping">التسوق</option><option value="travel">السفر والتنقل</option><option value="job">مقابلة العمل</option><option value="daily">الحياة اليومية</option><option value="debate">مناقشة فكرة</option></select></div>
+</div>
+<div class="ai-toggle-group">
+<label class="ai-switch"><input type="checkbox" id="correctToggle" checked><span class="ai-switch-text"><strong>تصحيح الأخطاء</strong><small>تصحيح لطيف مع أمثلة أوضح</small></span></label>
+<label class="ai-switch"><input type="checkbox" id="autoSpeak"><span class="ai-switch-text"><strong>الرد بصوت ألماني</strong><small>يتفعّل عند تثبيت محرك الصوت</small></span></label>
+</div>
 </section>
-<section class="ai-panel"><h2>تشغيل AI محلياً بـ0$</h2>
-<p class="tiny">شغّل START-DEUTSCH-AI.cmd على Windows (بعد فك الضغط). البرنامج يربط هاد الصفحة بالموديل Qwen3 4B اللي حمّلتي في Ollama، بدون حساب أو API مدفوعة. في هاد النسخة المحادثة كتابية؛ الصوت قيد التجهيز.</p>
+<section class="ai-panel ai-connection">
+<div class="ai-panel-head"><div class="ai-panel-icon ai-panel-icon-soft" aria-hidden="true">⌘</div><div><h2>الاتصال المحلي</h2><p>الخصوصية أولاً، بلا اشتراك</p></div></div>
+<div class="ai-device"><span class="ai-device-light" aria-hidden="true"></span><span><strong>Ollama + Qwen3 4B</strong><small>الرسائل كتعالج محلياً على PC ديالك</small></span></div>
+<p class="tiny ai-connection-note">شغّل <code>START-DEUTSCH-AI.cmd</code> وخلي النافذة مفتوحة باش المحادثة تخدم على نفس الحاسوب.</p>
 <label for="accessCode">رمز الدخول إلى المساعد</label><input id="accessCode" type="password" placeholder="رمز الدخول الخاص بالسيرفر" autocomplete="off">
-<button class="outline" id="testConnection" type="button">اختبار الاتصال</button>
-<p class="tiny" id="configHint">حمّل حزمة التشغيل المحلية وشغّل الملف START-DEUTSCH-AI.cmd على PC ديالك. خاص Python 3 وOllama يكونو مثبتين.</p>
+<button class="ai-test-button" id="testConnection" type="button"><span aria-hidden="true">↻</span> اختبار الاتصال</button>
+<p class="tiny ai-config-hint" id="configHint">جاري التحقق من تشغيل المساعد المحلي...</p>
 </section>
+<div class="ai-side-tip"><span class="ai-tip-star" aria-hidden="true">✦</span><p><strong>نصيحة للتعلّم</strong> حاول تجاوب بجملة كاملة حتى إلا كنت فـA1. الهدف هو الممارسة، ماشي الكمال.</p></div>
 </aside>
-<section class="ai-chat" aria-label="المحادثة">
-<div class="ai-chatbar"><div><strong>Deutsch Partner</strong><span>موديل محلي خاص بمنصة Deutsch Mastery — ماشي إنسان حقيقي</span></div><span id="sessionLevel">A1</span></div>
+<section class="ai-chat" aria-label="المحادثة بالألمانية">
+<div class="ai-chatbar">
+<div class="ai-bot-heading">
+<div class="ai-avatar" aria-hidden="true"><span>✦</span></div>
+<div><strong>Deutsch Partner <span class="ai-bot-check" aria-hidden="true">✓</span></strong>
+<span class="ai-chatbar-sub">أستاذك الافتراضي في اللغة الألمانية <span aria-hidden="true">·</span> ذكاء اصطناعي</span></div>
+</div>
+<div class="ai-chatbar-tools"><span class="ai-level-chip" id="sessionLevel">A1</span><button class="ai-new-button" id="newChat" type="button" title="بدء محادثة جديدة"><span aria-hidden="true">＋</span> <span>محادثة جديدة</span></button></div>
+</div>
+<div class="ai-live-wrap">
+<details class="ai-voice-details"><summary><span aria-hidden="true">♫</span> المحادثة الصوتية <span class="ai-voice-soon">قريباً في النسخة المحلية</span></summary>
 <div class="ai-live" aria-label="مكالمة صوتية مباشرة">
-<div><b>مكالمة مباشرة بالألمانية</b><span>المحرك كيسمع الجملة، كيتعرف على نهاية الكلام بالصمت، ومن بعد كيجاوب بالألمانية من السيرفر ديالك</span></div>
-<button class="primary" id="startLive" type="button" disabled>بدء المكالمة <span aria-hidden="true">📞</span></button>
+<div><b>مكالمة صوتية بالألمانية</b><span>تحتاج تثبيت Whisper وPiper محلياً. المحادثة الكتابية خدامة بوحدها.</span></div>
+<button class="primary" id="startLive" type="button" disabled>بدء المكالمة</button>
 <button class="outline" id="endLive" type="button" disabled>إنهاء المكالمة</button>
 <audio id="liveOutput" autoplay playsinline></audio>
-<span class="ai-live-status" id="liveStatus" role="status">متوقفة حتى يتم الاتصال بالخادم</span>
+<span class="ai-live-status" id="liveStatus" role="status">الصوت غير مفعّل بعد</span>
+</div>
+</details>
 </div>
 <div class="ai-messages" id="messages" role="log" aria-live="polite" aria-relevant="additions text"></div>
-<div class="ai-suggestions" id="suggestions" aria-label="جمل للبدء"></div>
+<div class="ai-bottom">
+<div class="ai-suggestions-title">ابدأ بجملة بسيطة <span aria-hidden="true">✦</span></div>
+<div class="ai-suggestions" id="suggestions" aria-label="جمل مقترحة للبدء"></div>
 <form id="chatForm" class="ai-compose">
 <label class="sr-only" for="userMessage">رسالتك بالألمانية</label>
-<textarea id="userMessage" rows="2" maxlength="1500" placeholder="Schreib etwas auf Deutsch … أو استعمل الميكروفون" dir="auto"></textarea>
+<textarea id="userMessage" rows="1" maxlength="1500" placeholder="Schreibe deine Nachricht auf Deutsch ..." dir="auto"></textarea>
 <div class="ai-compose-actions">
-<button class="ai-mic" id="recordBtn" type="button" title="اضغط لتسجيل صوتك"><span aria-hidden="true">🎙️</span> <span id="recordLabel">تسجيل</span></button>
-<small id="recordTimer" aria-live="polite"></small>
-<button class="primary" id="sendBtn" type="submit">أرسل بالألمانية ←</button></div>
+<div class="ai-compose-tools"><button class="ai-mic" id="recordBtn" type="button" title="التسجيل الصوتي بعد التفعيل" aria-label="تسجيل صوتي"><span aria-hidden="true">♩</span><span id="recordLabel">تسجيل</span></button>
+<button class="ai-audio-stop" id="stopAudio" type="button" title="إيقاف تشغيل الصوت" aria-label="إيقاف تشغيل الصوت">◼</button><small id="recordTimer" aria-live="polite"></small></div>
+<div class="ai-send-group"><span class="ai-enter-hint">Enter للإرسال · Shift+Enter لسطر جديد</span><button class="primary ai-send" id="sendBtn" type="submit"><span>إرسال</span><span aria-hidden="true">↗</span></button></div>
+</div>
 </form>
-<p class="ai-footnote" id="chatStatus" role="status">الصوت الناتج اصطناعي. لا يتم تشغيل صوت متصفح بلغة أخرى.</p>
+<p class="ai-footnote" id="chatStatus" role="status">جاري التحقق من المساعد المحلي…</p>
+</div>
 </section>
 </div>
-<div class="ai-notice">المحادثات لا تُستخدم لمنح شهادة لغوية، وقد يخطئ الذكاء الاصطناعي في بعض التصحيحات. الصوت يحتاج مكونات محلية إضافية؛ مازال غير مفعّل في حزمة التشغيل النصية.  المكالمة تقدر تكون أبطأ حسب قوة الجهاز.</div>
-</div></main>
+<p class="ai-notice">Deutsch Partner مساعد ذكاء اصطناعي للتدريب، وقد يخطئ في بعض التصحيحات. الربط الحالي يخدم على نفس الكمبيوتر اللي فيه Ollama؛ الصوت والمكالمات كيحتاجو أدوات محلية إضافية.</p>
+</div>
+</main>
 <footer><div class="wrap foot"><b>Deutsch Mastery</b><span>تعلّم الألمانية بالتدرّج والممارسة</span><a href="quality.html">حدود المشروع</a></div></footer>
 <script src="data/master-curriculum.js"></script>
 <script src="assets/ai-config.js"></script>

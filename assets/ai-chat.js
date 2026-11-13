@@ -35,16 +35,29 @@ function errorMessage(err){if(err.name==="AbortError")return "العملية ت�
 function append(role,text,kind){const wrapper=document.createElement("div");wrapper.className="ai-bubble "+(role==="assistant"?"bot":"you")+" de-text"+(kind==="pending"?" pending":"");wrapper.dir="ltr";
 const meta=document.createElement("span");meta.className="ai-meta";meta.textContent=role==="assistant"?"Deutsch Partner":"Du";wrapper.appendChild(meta);
 const msg=document.createElement("span");msg.textContent=text;wrapper.appendChild(msg);
-if(role==="assistant"&&kind!=="pending"&&connected){
- const play=document.createElement("button");play.className="ai-play";play.type="button";play.textContent="🔊 استمع بالصوت الألماني";play.addEventListener("click",()=>speak(text));wrapper.appendChild(play);
+if(role==="assistant"&&kind!=="pending"){
+ if(speechReady){
+  const play=document.createElement("button");play.className="ai-play";play.type="button";
+  play.textContent="🔊 استمع بالألمانية";play.addEventListener("click",()=>speak(text));wrapper.appendChild(play);
+ }
+ const copy=document.createElement("button");copy.className="ai-copy";copy.type="button";
+ copy.textContent="⧉ نسخ الرد";copy.setAttribute("aria-label","نسخ رد المساعد");
+ copy.addEventListener("click",async()=>{
+  try{await navigator.clipboard.writeText(text);copy.textContent="✓ تم النسخ";setTimeout(()=>{copy.textContent="⧉ نسخ الرد"},1800)}
+  catch(_){setStatus("تعذر النسخ تلقائياً. يمكنك تحديد النص ونسخه يدوياً.")}
+ });wrapper.appendChild(copy);
 }
 body.appendChild(wrapper);body.scrollTop=body.scrollHeight;return wrapper;
 }
 function showWelcome(){
  body.innerHTML="";
+ const intro=document.createElement("div");intro.className="ai-intro";
+ const mark=document.createElement("div");mark.className="ai-intro-mark";mark.setAttribute("aria-hidden","true");mark.textContent="✦";
+ const title=document.createElement("h3");title.textContent="Willkommen! مستعد تتدرّب؟";
+ const description=document.createElement("p");description.textContent="بدأنا بمستوى "+pick("#levelSelect")+". اكتب أول جملة بالألمانية، والمساعد غادي يكمل معاك الحوار بطريقة طبيعية.";
+ intro.append(mark,title,description);body.appendChild(intro);
  append("assistant",greetings[pick("#levelSelect")]||greetings.A1);
  if(lessonFocus){const note=document.createElement("div");note.className="ai-alert";note.textContent="محادثة مركزة على درس "+lessonFocus.title+" ("+lessonFocus.level+") من فهرس الموقع.";body.appendChild(note)}
- const tip=document.createElement("div");tip.className="ai-alert";tip.dir="rtl";tip.textContent="جمل البداية للتدرب فقط. الردود الحرة كيولّدها نموذج ألماني محلي على السيرفر ديالك؛ الصوت اصطناعي وماشي ديال شخص حقيقي.";body.appendChild(tip);
  body.scrollTop=0;
 }
 function suggestions(){
@@ -52,6 +65,7 @@ const subject=pick("#scenarioSelect"),level=pick("#levelSelect");
 const phrases=previews[subject]?.[level]||previews[subject]?.A2||previews.free[level]||previews.free.A1;
 $("#suggestions").innerHTML=phrases.map(p=>'<button type="button" data-prompt="'+esc(p)+'" lang="de" dir="ltr">'+esc(p)+'</button>').join("");
 }
+function resizeInput(){textBox.style.height="auto";textBox.style.height=Math.min(190,Math.max(43,textBox.scrollHeight))+"px";}
 function isLocked(){return busy||!connected||liveActive}
 function applyControls(){sendBtn.disabled=isLocked();micBtn.disabled=(isLocked()||!transcriptionReady)&&!recorder;$("#newChat").disabled=busy||liveActive;$("#testConnection").disabled=busy;$("#sessionLevel").textContent=pick("#levelSelect")}
 async function call(path,options={}){
@@ -92,8 +106,9 @@ message=String(message||"").trim();if(!message)return;
 if(message.length>1500){setStatus("الرسالة طويلة؛ الحد الأقصى 1500 حرف.");return;}
 if(message.includes("\u0000"))return;
 stopPlaying();busy=true;applyControls();
+body.querySelector(".ai-intro")?.remove();
 append("user",message);
-textBox.value="";
+textBox.value="";resizeInput();
 const pending=append("assistant","Ich denke nach …","pending");
 setStatus("كيتم إعداد رد ألماني مناسب لمستوى "+pick("#levelSelect")+"...");
 const current={role:"user",content:message};
@@ -107,7 +122,7 @@ try{
  if(!text)throw new Error("الخادم ما رجّعش أي جواب.");
  pending.remove();append("assistant",text);
  turns.push(current,{role:"assistant",content:text});turns=turns.slice(-(maxTurns*2));
- setStatus("يمكنك تغيير الموضوع أو مواصلة الحوار. الاستماع بالصوت الاصطناعي اختياري.");
+ setStatus(speechReady?"المحادثة مستمرة. تقدر تسمع الرد أو تكمل الكتابة.":"المحادثة مستمرة مع Qwen3 4B المحلي. اكتب جوابك بالألمانية.");
  if($("#autoSpeak").checked)speak(text);
 }catch(e){
  pending.remove();
@@ -171,7 +186,8 @@ try{
 }
 window.addEventListener("coach-live-state",event=>{liveActive=Boolean(event.detail?.active);applyControls()});
 $("#chatForm").addEventListener("submit",e=>{e.preventDefault();respond(textBox.value)});
-textBox.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();respond(textBox.value)}});
+textBox.addEventListener("input",resizeInput);
+textBox.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){e.preventDefault();respond(textBox.value)}});
 micBtn.addEventListener("click",microphone);
 $("#stopAudio").addEventListener("click",()=>{stopPlaying();setStatus("توقف تشغيل الصوت.")});
 $("#newChat").addEventListener("click",()=>{
@@ -179,9 +195,9 @@ $("#newChat").addEventListener("click",()=>{
 });
 $("#levelSelect").addEventListener("change",()=>{if(busy)return;turns=[];stopPlaying();showWelcome();suggestions();applyControls();setStatus("تم اختيار "+pick("#levelSelect")+". يبدأ الحوار الجديد حسب المستوى.")});
 $("#scenarioSelect").addEventListener("change",()=>{if(busy)return;turns=[];showWelcome();suggestions();setStatus("بدأت محادثة بموضوع جديد.")});
-$("#suggestions").addEventListener("click",e=>{const btn=e.target.closest("[data-prompt]");if(btn){textBox.value=btn.dataset.prompt;textBox.focus()}});
+$("#suggestions").addEventListener("click",e=>{const btn=e.target.closest("[data-prompt]");if(btn){textBox.value=btn.dataset.prompt;resizeInput();textBox.focus()}});
 $("#testConnection").addEventListener("click",check);
 $("#accessCode").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();check()}});
 window.addEventListener("pagehide",()=>{recordStream?.getTracks().forEach(t=>t.stop());stopPlaying()});
-showWelcome();suggestions();if(window.DEUTSCH_AI_CONFIG?.localOnly){const code=$("#accessCode");if(code){const label=document.querySelector("label[for=accessCode]");code.hidden=true;if(label)label.hidden=true;}$("#configHint").textContent="للتشغيل على نفس PC، فتح START-DEUTSCH-AI.cmd من الحزمة المحلية، بلا رمز دخول وبلا API مدفوعة.";}applyControls();check();
+showWelcome();suggestions();resizeInput();if(window.DEUTSCH_AI_CONFIG?.localOnly){const code=$("#accessCode");if(code){const label=document.querySelector("label[for=accessCode]");code.hidden=true;if(label)label.hidden=true;}$("#configHint").textContent="للتشغيل على نفس PC، فتح START-DEUTSCH-AI.cmd من الحزمة المحلية، بلا رمز دخول وبلا API مدفوعة.";}applyControls();check();
 })();
