@@ -16,6 +16,7 @@ on:
       - 'data/curriculum-lessons-2026.js'
       - 'data/curated-primary-2026.js'
       - 'tests/browser-smoke.mjs'
+      - 'tests/browser-smoke.mjs'
       - '.github/workflows/browser-smoke.yml'
   workflow_dispatch:
 jobs:
