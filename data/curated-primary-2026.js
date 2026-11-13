@@ -7,6 +7,15 @@ const enrichment=window.DM_CURRICULUM_LESSONS||{};
 const source=window.DM_PRIMARY_LESSONS||[];
 if(!catalog||!source)throw new Error("Load master curriculum and primary lessons before enrichment");
 const byId=new Map(source.map(l=>[l.id,l]));
+
+const additionalVocabulary={
+"A1-02-01":[["Guten Abend!","مساء الخير!"],["Gute Nacht!","تصبح على خير!"],["Bis morgen!","إلى الغد!"],["Bis bald!","إلى لقاء قريب!"]],
+"A1-02-03":[["der Vorname","الاسم الشخصي"],["der Nachname","اسم العائلة"],["die Nationalität","الجنسية"],["das Geburtsdatum","تاريخ الميلاد"],["Jahre alt","سنة من العمر"]],
+"A1-02-05":[["wohnen","يسكن"],["kommen","يأتي"],["die Stadt","المدينة"],["das Land","البلد"],["die Wohnung","الشقة"]],
+"A1-02-06":[["Bitte schön!","تفضل / على الرحب!"],["Kein Problem!","لا مشكلة!"],["Danke schön!","شكراً جزيلاً!"],["Verzeihung!","عذراً!"]],
+"A1-02-07":[["bitte","من فضلك"],["Entschuldigung!","عذراً!"],["Vielen Dank!","شكراً جزيلاً!"],["Darf ich ...?","هل يُسمح لي أن ...؟"],["Ich möchte ...","أود ..."]],
+"A1-02-09":[["drei","ثلاثة"],["vier","أربعة"],["fünf","خمسة"],["fünfzig","خمسون"],["hundert","مئة"]]
+};
 function unique(items,key){const seen=new Set();return items.filter(x=>{const k=key(x);if(seen.has(k))return false;seen.add(k);return true})}
 let appended=0,updated=0;
 Object.entries(enrichment).forEach(([oldId,data])=>{
@@ -41,6 +50,11 @@ Object.entries(enrichment).forEach(([oldId,data])=>{
   source.push(extra);byId.set(id,extra);appended++;
  }
 });
+for(const [id,items] of Object.entries(additionalVocabulary)){
+ const lesson=byId.get(id);
+ if(!lesson)throw Error("Missing vocabulary target "+id);
+ lesson.vocabulary=unique([...lesson.vocabulary,...items.map(([de,ar])=>({de,ar}))],x=>x.de);
+}
 window.DM_PRIMARY_LESSONS=source;
 window.DM_ENRICHMENT_REPORT={appended,updated,total:source.length};
 })();
