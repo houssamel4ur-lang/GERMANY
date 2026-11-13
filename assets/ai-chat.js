@@ -3,6 +3,8 @@
 "use strict";
 const $=s=>document.querySelector(s),body=$("#messages"),base=String(window.DEUTSCH_AI_CONFIG?.apiBase||"").trim().replace(/\/+$/,"");
 const maxTurns=Math.max(4,Math.min(20,Number(window.DEUTSCH_AI_CONFIG?.maxTurns)||12));
+const focusId=String(new URLSearchParams(location.search).get("lesson")||"").trim();
+const lessonFocus=window.DM_MASTER_CURRICULUM?.topics?.find(t=>t.id===focusId)||null;
 const textBox=$("#userMessage"),sendBtn=$("#sendBtn"),micBtn=$("#recordBtn"),status=$("#chatStatus"),badge=$("#connectionBadge");
 let liveActive=false;
 let turns=[],connected=false,busy=false,recorder=null,chunks=[],recTimer=null,recStarted=0,recordStream=null,playing=null,playURL=null,requestController=null;
@@ -40,6 +42,7 @@ body.appendChild(wrapper);body.scrollTop=body.scrollHeight;return wrapper;
 function showWelcome(){
  body.innerHTML="";
  append("assistant",greetings[pick("#levelSelect")]||greetings.A1);
+ if(lessonFocus){const note=document.createElement("div");note.className="ai-alert";note.textContent="محادثة مركزة على درس "+lessonFocus.title+" ("+lessonFocus.level+") من فهرس الموقع.";body.appendChild(note)}
  const tip=document.createElement("div");tip.className="ai-alert";tip.dir="rtl";tip.textContent="جمل البداية للتدرب فقط. الردود الحرة كيولّدها نموذج ألماني محلي على السيرفر ديالك؛ الصوت اصطناعي وماشي ديال شخص حقيقي.";body.appendChild(tip);
  body.scrollTop=0;
 }
@@ -91,7 +94,7 @@ setStatus("كيتم إعداد رد ألماني مناسب لمستوى "+pick(
 const current={role:"user",content:message};
 try{
  const reply=await call("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
- level:pick("#levelSelect"),scenario:pick("#scenarioSelect"),correct:$("#correctToggle").checked,
+ level:pick("#levelSelect"),scenario:pick("#scenarioSelect"),correct:$("#correctToggle").checked,lesson_id:lessonFocus?.level===pick("#levelSelect")?focusId:null,
  messages:[...turns,current].slice(-(maxTurns*2))
  })});
  const data=await reply.json();
