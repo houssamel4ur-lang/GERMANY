@@ -165,7 +165,7 @@ assert.deepEqual(
  {A1:20,A2:16,B1:21,B2:32},
  'incorrect module distribution'
 );
-assert.deepEqual(organized.flatMap(m=>m.topicIds),master.topics.map(t=>t.id),'module grouping must preserve all 452 approved PDF entries in sequence');
+assert.deepEqual(Array.from(organized.flatMap(m=>m.topicIds)),Array.from(master.topics,x=>x.id),'module grouping must preserve all 452 approved PDF entries in sequence');
 assert.ok(organized.every(m=>m.topicIds.length>=2&&m.topicIds.length<=8),'module size should be manageable');
 assert.equal(Object.keys(modulesWin.DM_MODULE_BY_TOPIC).length,452,'every topic needs a module parent');
 assert.ok(read('syllabus.html').includes('assets/modules.css')&&read('syllabus.html').includes('data/learning-modules.js'),'syllabus must load grouped navigation');
