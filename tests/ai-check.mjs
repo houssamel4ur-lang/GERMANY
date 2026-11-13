@@ -42,6 +42,10 @@ assert.match(read("selfhost-ai/local_bridge.py"),/def _speech\(/,"local German T
 assert.match(read("selfhost-ai/local_bridge.py"),/def _transcription\(/,"local German Whisper endpoint should exist");
 assert.match(read("selfhost-ai/local_bridge.py"),/"think": False/,"disable native model thinking");
 assert.match(read("selfhost-ai/local_bridge.py"),/"keep_alive": "30m"/,"avoid cold-start model load every few minutes");
+assert.match(read("selfhost-ai/local_bridge.py"),/BRIDGE_VERSION = "2026.11.13.3"/,"versioned local bridge prevents stale Python code");
+assert.match(read("selfhost-ai/local_bridge.py"),/def _fast_greeting\(/,"local greeting should never leak reasoning");
+assert.match(read("selfhost-ai/local_bridge.py"),/def _generate_final\(/,"repair invalid Qwen output once");
+assert.match(read("assets/ai-chat.js"),/data.bridge_version!==requiredBridge/,"website should detect stale Windows bridge");
 assert.match(read("selfhost-ai/local_bridge.py"),/"num_ctx": 1536/,"compact CPU context window");
 assert.doesNotMatch(read("selfhost-ai/local_bridge.py"),/"format": \{"type": "object"/,"avoid structured decoding overhead on local CPU");
 assert.doesNotMatch(read("assets/ai-chat.js"),/Ich denke nach|Verbindung fehlgeschlagen/,"chat should show neither thinking nor repetitive generic errors");
