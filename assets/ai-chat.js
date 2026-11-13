@@ -101,7 +101,7 @@ if(!configured()){
 }
  try{
  const res=await call("/api/health",{method:"GET"});const data=await res.json();
- const requiredBridge="2026.11.13.5";
+ const requiredBridge="2026.11.13.6";
  if(window.DEUTSCH_AI_CONFIG?.localOnly&&data.bridge_version!==requiredBridge){
   connected=false;speechReady=false;transcriptionReady=false;window.DEUTSCH_AI_VOICE_READY=false;
   statusBadge(false,"خاص تحديث برنامج AI المحلي");syncVoice();
