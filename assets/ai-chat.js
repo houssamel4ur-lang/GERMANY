@@ -96,6 +96,14 @@ if(!configured()){
 }
  try{
  const res=await call("/api/health",{method:"GET"});const data=await res.json();
+ const requiredBridge="2026.11.13.3";
+ if(window.DEUTSCH_AI_CONFIG?.localOnly&&data.bridge_version!==requiredBridge){
+  connected=false;speechReady=false;transcriptionReady=false;window.DEUTSCH_AI_VOICE_READY=false;
+  statusBadge(false,"خاص تحديث برنامج AI المحلي");
+  $("#configHint").textContent="الموقع تحدّث، ولكن البرنامج اللي شغال فـPC قديم. خاص تبدل local_bridge.py وتسد النافذة الكحلة القديمة وتعاود تشغّل START-DEUTSCH-AI.cmd.";
+  setStatus("كود GitHub تحدّث ولكن النسخة القديمة ديال Python باقية خدامة. حمّل حزمة الإصلاح الجديدة وشغّلها.");
+  applyControls();return;
+ }
  connected=data.ready===true;
  speechReady=connected&&data.speech_ready===true;
  transcriptionReady=connected&&data.transcription_configured===true;
@@ -140,7 +148,7 @@ try{
  if(!text)throw new Error("الردّ فيه تفكير داخلي أو فارغ، ولذلك ما تعرضش. حاول مجدداً.");
  pending.remove();append("assistant",text);
  turns.push(current,{role:"assistant",content:text});turns=turns.slice(-(maxTurns*2));
- setStatus("جاوب Qwen3 4B فـ "+(data.elapsed_seconds??Math.max(1,Math.round((Date.now()-startedAt)/1000)))+" ثانية. تقدر تكمل المحادثة.");
+ setStatus(data.provider==="local-greeting"?"ردّ تحية سريع من التطبيق المحلي؛ باقي الحوار كيستعمل Qwen3 4B.":"جاوب Qwen3 4B فـ "+(data.elapsed_seconds??Math.max(1,Math.round((Date.now()-startedAt)/1000)))+" ثانية. تقدر تكمل المحادثة.");
  if($("#autoSpeak").checked)speak(text);
 }catch(e){
  pending.remove();sentBubble.remove();
