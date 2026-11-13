@@ -35,7 +35,7 @@ await go("course.html?topic=A1-02-01");
 assert.ok((await page.locator("#courseSection").innerText()).includes("التحية"),"curated communication lesson not visible");
 await page.locator('[data-tab="audio"]').click();
 assert.ok((await page.locator("#courseSection .wordrow").count())>=3,"audio phrases missing from lesson");
-assert.ok((await page.locator("#courseSection").innerText()).includes("الصوتيات"),"audio tab missing");
+assert.match(await page.locator("#courseSection").innerText(),/الاستماع والنطق|الحروف والنطق/,"audio tab missing");
 await page.locator('[data-tab="exercise"]').click();
 assert.ok((await page.locator("#quizSurface").innerText()).includes("السؤال"),"quiz options missing");
 checked++;
