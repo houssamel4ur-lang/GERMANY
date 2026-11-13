@@ -107,12 +107,13 @@ for(const path of [
  'data/course-a2-grammar.js','data/course-a2-skills.js',
  'data/primary-lesson-links.js','data/primary-phonetics.js',
  'data/curriculum-lessons-2026.js','data/curated-primary-2026.js',
- 'data/advanced-grammar-b1.js','data/advanced-grammar-b2.js','data/advanced-grammar-b1-more.js','data/advanced-grammar-b2-more.js','data/advanced-merge.js'
+ 'data/advanced-grammar-b1.js','data/advanced-grammar-b2.js','data/advanced-grammar-b1-more.js','data/advanced-grammar-b2-more.js','data/advanced-merge.js',
+ 'data/foundation-a1.js','data/foundation-a2.js','data/foundation-merge.js'
 ])runInNewContext(read(path),{window:draftWin});
 const draftLessons=draftWin.DM_PRIMARY_LESSONS;
-assert.equal(draftLessons.length,192,'expected 192 topic-specific drafts including 48 advanced grammar lessons');
+assert.equal(draftLessons.length,230,'expected 230 topic-specific drafts including 48 advanced grammar and 38 foundation units');
 assert.equal(new Set(draftLessons.map(x=>x.id)).size,draftLessons.length,'duplicate authored lesson ID');
-for(const [level,count] of Object.entries({A1:56,A2:44,B1:47,B2:45})){
+for(const [level,count] of Object.entries({A1:73,A2:65,B1:47,B2:45})){
  assert.equal(draftLessons.filter(x=>x.level===level).length,count,level+' draft coverage mismatch');
 }
 for(const l of draftLessons){
@@ -139,11 +140,17 @@ for(const level of ['B1','B2']){
 }
 for(const page of ['index.html','syllabus.html','course.html','journey.html','review-primary.html']){
  const html=read(page);
- for(const script of ['data/advanced-grammar-b1.js','data/advanced-grammar-b2.js','data/advanced-grammar-b1-more.js','data/advanced-grammar-b2-more.js','data/advanced-merge.js'])assert.ok(html.includes(script),page+' missing advanced content '+script);
+ for(const script of ['data/advanced-grammar-b1.js','data/advanced-grammar-b2.js','data/advanced-grammar-b1-more.js','data/advanced-grammar-b2-more.js','data/advanced-merge.js','data/foundation-a1.js','data/foundation-a2.js','data/foundation-merge.js'])assert.ok(html.includes(script),page+' missing advanced content '+script);
+}
+const present=new Set(draftLessons.map(x=>x.id));
+for(const [level,section,expected] of [['A1','أساسيات القواعد',36],['A2','القواعد الموسعة',45]]){
+ const topics=master.topics.filter(x=>x.level===level&&x.section===section);
+ assert.equal(topics.length,expected,'canonical source grammar count mismatch: '+level);
+ assert.ok(topics.every(x=>present.has(x.id)),level+' grammar has missing topic-specific draft');
 }
 assert.match(read('assets/primary-study.js'),/first\/questions\.length/,'quiz must use real first-attempt scoring');
 assert.match(read('assets/primary-study.js'),/JSON\.stringify\(\{version:KEY,progress:state\}/,'progress export must produce backup');
 assert.ok(!read('assets/primary-study.js').includes('speechSynthesis'),'primary curriculum must never fallback to wrong-language speech');
 
 
-console.log('PASS: 452 primary topics, 192 interactive lesson drafts, 64 archived topics, German-only speech policy, MP3 audio sources, and '+lessons.length+' unique lessons, '+lessons.reduce((n,x)=>n+x.words.length,0)+' vocabulary entries, 4 levels, HTML assets and data structure.');
+console.log('PASS: 452 primary topics, 230 interactive lesson drafts, 64 archived topics, German-only speech policy, MP3 audio sources, and '+lessons.length+' unique lessons, '+lessons.reduce((n,x)=>n+x.words.length,0)+' vocabulary entries, 4 levels, HTML assets and data structure.');
