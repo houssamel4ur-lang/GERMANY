@@ -1,8 +1,8 @@
 {
   "voice": "de-DE-KatjaNeural",
-  "generated": 1069,
-  "requested": 1069,
+  "generated": 1528,
+  "requested": 1528,
   "offline_german_fallbacks": 0,
   "failures": [],
-  "elapsed_seconds": 197.3
+  "elapsed_seconds": 66.2
 }
