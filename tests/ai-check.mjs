@@ -37,6 +37,13 @@ assert.equal((read("ai.html").match(/<option value="(?:A1|A2|B1|B2)">/g)||[]).le
 assert.match(read("assets/ai-config.js"),/apiBase:"http:\/\/127\.0\.0\.1:8787"/,"local API only, no paid server");
 assert.match(read("selfhost-ai/local_bridge.py"),/qwen3:4b/,"local Qwen3 4B model");
 assert.match(read("selfhost-ai/local_bridge.py"),/127\.0\.0\.1/,"bridge must stay on loopback");
+assert.match(read("selfhost-ai/local_bridge.py"),/def _voice_available\(/,"voice readiness detection should exist");
+assert.match(read("selfhost-ai/local_bridge.py"),/def _speech\(/,"local German TTS endpoint should exist");
+assert.match(read("selfhost-ai/local_bridge.py"),/def _transcription\(/,"local German Whisper endpoint should exist");
+assert.match(read("selfhost-ai/local_bridge.py"),/"format": \{"type": "object"/,"local Ollama replies should be constrained to JSON");
+assert.doesNotMatch(read("assets/ai-chat.js"),/Ich denke nach/,"chat must not show model thinking as a message");
+assert.match(read("ai.html"),/ai-voice-details/,"optional voice controls should be available");
+
 assert.doesNotMatch(read("assets/ai-config.js"),/sk-[A-Za-z0-9]{10}/,"no secrets in public config");
 const compose=read("selfhost-ai/compose.yaml");
 assert.match(compose,/ollama\/ollama/);
