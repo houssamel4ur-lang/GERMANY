@@ -11,7 +11,7 @@ async function go(path){await page.goto(url+path,{waitUntil:"load"});await page.
 try{
 await go("index.html");
 assert.ok((await page.locator("#homeStats .stat").count())>=3,"homepage stats are missing");
-assert.equal(await page.evaluate(()=>window.DM_PRIMARY_LESSONS?.length),192,"primary enriched lessons not loaded");
+assert.equal(await page.evaluate(()=>window.DM_PRIMARY_LESSONS?.length),230,"primary enriched lessons not loaded");
 checked++;
 await go("syllabus.html?level=A2");
 assert.ok((await page.locator("#curriculumMount").innerText()).includes("A2"),"syllabus unavailable");
@@ -52,6 +52,6 @@ await go("review-primary.html");
 assert.ok((await page.locator("#primaryStudyMount").innerText()).length>30,"primary review unavailable");
 checked++;
 assert.deepEqual(errors,[],"JavaScript errors: "+errors.join("; "));
-console.log("BROWSER PASS: "+checked+" pages; 192 lessons; audio controls, quiz, practice, progress and navigation.");
+console.log("BROWSER PASS: "+checked+" pages; 230 lessons; audio controls, quiz, practice, progress and navigation.");
 }catch(e){console.error("BROWSER FAILURE:",e.stack);console.error("JavaScript errors:",errors);process.exitCode=1}
 finally{await browser.close()}
