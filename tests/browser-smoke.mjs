@@ -80,6 +80,17 @@ assert.ok((await page.locator("#courseSection").innerText()).includes("Zustandsp
 await page.locator('[data-tab="reading"]').click();
 assert.ok((await page.locator("#courseSection .story").innerText()).includes("Museum"),"B2 extension German reading missing");
 checked++;
+await go("ai.html");
+assert.equal(await page.locator("#levelSelect option").count(),4,"AI chat must offer all four levels");
+assert.equal(await page.locator("#scenarioSelect option").count(),8,"AI chat must offer varied scenarios");
+assert.equal(await page.locator("#recordBtn").isDisabled(),true,"voice must not pretend to work without a backend");
+assert.ok((await page.locator("#connectionBadge").innerText()).includes("غير مفعّل"),"offline AI must clearly disclose missing backend");
+await page.selectOption("#levelSelect","B2");
+assert.equal(await page.locator("#sessionLevel").innerText(),"B2");
+await page.selectOption("#scenarioSelect","job");
+await page.locator("#suggestions [data-prompt]").first().click();
+assert.ok((await page.locator("#userMessage").inputValue()).length>0,"AI conversation prompt selection not working");
+checked++;
 await go("journey.html");
 assert.ok((await page.locator("#primaryStudyMount").innerText()).length>30,"dashboard unavailable");
 checked++;
