@@ -1,0 +1,12 @@
+# Never commit API keys or local Cloudflare secrets.
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+**/.dev.vars
+**/.dev.vars.*
+**/.env
+**/.env.*
+.wrangler/
+**/.wrangler/
+node_modules/
