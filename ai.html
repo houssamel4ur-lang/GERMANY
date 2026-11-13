@@ -3,7 +3,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#123934"><meta name="description" content="تحدث بالألمانية مع شريك محادثة بالذكاء الاصطناعي يتكيف مع مستواك A1 حتى B2">
 <title>محادثة ألمانية بالذكاء الاصطناعي | Deutsch Mastery</title>
-<link rel="stylesheet" href="assets/style.css"><link rel="stylesheet" href="assets/ai-chat.css?v=20261113c">
+<link rel="stylesheet" href="assets/style.css"><link rel="stylesheet" href="assets/ai-chat.css?v=20261113-voice">
 </head>
 <body data-page="german-coach">
 <a class="skip" href="#main">تجاوز إلى المحتوى</a>
@@ -26,7 +26,7 @@
 <div class="ai-buttons"><button class="outline" id="stopAudio" type="button">إيقاف الصوت</button></div>
 </section>
 <section class="ai-panel"><h2>تشغيل AI محلياً بـ0$</h2>
-<p class="tiny">شغّل START-STABLE-AI.cmd باش تستعمل موديل Llama 3.2 3B المستقر أو START-DEUTSCH-AI.cmd باش تستعمل Qwen3 الموجود عندك. للمحادثة بالصوت، ثبّت Whisper وPiper مجاناً باستعمال INSTALL-VOICE.cmd من الحزمة المحدّثة.</p>
+<p class="tiny">شغّل START-STABLE-AI.cmd باش تستعمل موديل Llama 3.2 3B المستقر أو START-DEUTSCH-AI.cmd باش تستعمل Qwen3 الموجود عندك. باش تستعمل الصوت والمكالمة، شغّل START-VOICE-AI.cmd من حزمة Windows الجديدة؛ غادي يثبت Whisper وPiper مجاناً ويتحقق منهم.</p>
 <label for="accessCode">رمز الدخول إلى المساعد</label><input id="accessCode" type="password" placeholder="رمز الدخول الخاص بالسيرفر" autocomplete="off">
 <button class="outline" id="testConnection" type="button">اختبار الاتصال</button>
 <p class="tiny" id="configHint">حمّل حزمة التشغيل المحلية وشغّل الملف START-DEUTSCH-AI.cmd على PC ديالك. خاص Python 3 وOllama يكونو مثبتين.</p>
@@ -34,14 +34,22 @@
 </aside>
 <section class="ai-chat" aria-label="المحادثة">
 <div class="ai-chatbar"><div class="ai-bot-heading"><span class="ai-bot-mark" aria-hidden="true">✦</span><div><strong>Deutsch Partner</strong><span>مدربك الافتراضي بالألمانية · نموذج AI محلي</span></div></div><div class="ai-chatbar-actions"><span id="sessionLevel">A1</span><button type="button" class="ai-new-chat" id="newChat" title="محادثة جديدة">＋ <span>محادثة جديدة</span></button></div></div>
-<details class="ai-voice-details"><summary>🎙️ المحادثة الصوتية بالألمانية <span class="ai-voice-note">تحتاج إعداد الصوت المحلي مرة واحدة</span></summary>
-<div class="ai-live" aria-label="مكالمة صوتية مباشرة">
-<div><b>مكالمة مباشرة بالألمانية</b><span>المحرك كيسمع الجملة، كيتعرف على نهاية الكلام بالصمت، ومن بعد كيجاوب بالألمانية من السيرفر ديالك</span></div>
-<button class="primary" id="startLive" type="button" disabled>بدء المكالمة <span aria-hidden="true">📞</span></button>
-<button class="outline" id="endLive" type="button" disabled>إنهاء المكالمة</button>
-<audio id="liveOutput" autoplay playsinline></audio>
-<span class="ai-live-status" id="liveStatus" role="status">اختبر الاتصال لتعرف واش الصوت واجد</span>
-</div></details>
+<section class="ai-voice-details" aria-label="المحادثة الصوتية">
+<div class="ai-voice-heading">
+  <span class="ai-voice-title">🎧 استمع وتحدّث بالألمانية</span>
+  <span class="ai-voice-note" id="voiceCapabilities" role="status">جاري فحص Whisper وPiper المحليين…</span>
+</div>
+<div class="ai-live" aria-label="مكالمة تدريب صوتية">
+  <div class="ai-live-intro"><b>مكالمة تدريب محلية</b><span>هضر بالألمانية؛ ملي تسكت، AI كيرد عليك بصوت ألماني. المايك كيسمع من بعد ما يسالي الصوت.</span></div>
+  <div class="ai-voice-actions">
+    <button class="primary" id="startLive" type="button" disabled>📞 بدء المكالمة</button>
+    <button class="outline" id="finishLiveTurn" type="button" disabled>إرسال الجملة 🎙️</button>
+    <button class="outline" id="endLive" type="button" disabled>إنهاء المكالمة</button>
+    <button class="outline" id="voiceTest" type="button" disabled>🔊 جرّب الصوت</button>
+  </div>
+  <audio id="liveOutput" autoplay playsinline></audio>
+  <span class="ai-live-status" id="liveStatus" role="status">الصوت كيتفعّل من بعد تثبيت Whisper وPiper المحليين.</span>
+</div></section>
 <div class="ai-messages" id="messages" role="log" aria-live="polite" aria-relevant="additions text"></div>
 <div class="ai-suggestions" id="suggestions" aria-label="جمل للبدء"></div>
 <form id="chatForm" class="ai-compose">
@@ -60,6 +68,6 @@
 <footer><div class="wrap foot"><b>Deutsch Mastery</b><span>تعلّم الألمانية بالتدرّج والممارسة</span><a href="quality.html">حدود المشروع</a></div></footer>
 <script src="data/master-curriculum.js"></script>
 <script src="assets/ai-config.js"></script>
-<script src="assets/ai-chat.js?v=20261113g"></script>
-<script src="assets/ai-live.js"></script>
+<script src="assets/ai-chat.js?v=20261113-voice"></script>
+<script src="assets/ai-live.js?v=20261113-voice"></script>
 </body></html>

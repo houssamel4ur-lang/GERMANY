@@ -1,0 +1,29 @@
+name: Local German AI Voice Checks
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'selfhost-ai/**'
+      - 'assets/ai-live.js'
+      - 'assets/ai-chat.js'
+      - 'ai.html'
+      - '.github/workflows/local-voice-checks.yml'
+  pull_request:
+    paths:
+      - 'selfhost-ai/**'
+      - 'assets/ai-live.js'
+      - 'assets/ai-chat.js'
+      - 'ai.html'
+      - '.github/workflows/local-voice-checks.yml'
+jobs:
+  voice-unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check speech bridge and voice setup Python syntax
+        run: python -m py_compile selfhost-ai/local_bridge.py selfhost-ai/PREPARE-VOICE.py selfhost-ai/diagnose_ai.py
+      - name: Run mock speech API tests without paid services or model downloads
+        run: python -m unittest discover -s selfhost-ai/tests -p 'test_local_*.py' -v
