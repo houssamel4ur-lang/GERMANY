@@ -53,3 +53,63 @@
  .study .speaker-label{font-size:11px;padding:3px 6px}
  .study .dialogue-turn{gap:8px}
 }
+
+/* A real learning path: meaningful stages, secondary materials separately. */
+.lessonlayout .stage-sidebar{background:white;border:1px solid #d9e9df;border-radius:18px;padding:15px;align-self:start;box-shadow:0 5px 20px #12393409}
+.stage-sidebar-heading{display:grid;gap:4px;padding:4px 7px 12px;line-height:1.6}
+.stage-sidebar-heading>span{font-size:14px;font-weight:900;color:#1a5c51}
+.stage-sidebar-heading small{color:#68837a;font-size:12px}
+.stage-sidebar-meter{background:#e7f1ec;height:5px;overflow:hidden;border-radius:10px;margin:0 7px 13px}
+.stage-sidebar-meter span{display:block;background:#108970;height:100%;border-radius:10px;transition:width .18s ease}
+.stage-main-list{display:grid;gap:6px}
+.lessonlayout .stage-sidebar .lesson-stage-button{
+ display:flex;gap:10px;align-items:center;text-align:right;width:100%;
+ border:1px solid transparent;border-radius:11px;background:transparent;color:#436c65;
+ padding:10px 11px;margin:0;white-space:normal;min-width:0;line-height:1.5;
+}
+.lessonlayout .stage-sidebar .lesson-stage-button:hover{background:#f3faf6;border-color:#d7ebdf}
+.lessonlayout .stage-sidebar .lesson-stage-button.active{background:#e0f4ea;border-color:#c3e9d5;color:#08684f;box-shadow:none}
+.lessonlayout .stage-number,.lessonlayout .stage-supplement{
+ width:30px;height:30px;flex:0 0 30px;border-radius:9px;
+ background:#f0f5f2;color:#547a6e;display:grid;place-items:center;font:800 11px/1 system-ui,Tahoma,sans-serif;
+ direction:ltr;
+}
+.lessonlayout .stage-sidebar .active .stage-number{background:#c6e7d6;color:#075b44}
+.lessonlayout .stage-name{font-size:13px;font-weight:760;min-width:0;line-height:1.6}
+.stage-more{border-top:1px solid #e0ede6;margin-top:15px;padding:13px 3px 2px}
+.stage-more>summary{font-size:12px;color:#416f62;font-weight:850;cursor:pointer;list-style:revert;padding:0 4px}
+.stage-optional-list{display:grid;gap:3px;margin-top:11px}
+.lessonlayout .stage-sidebar .optional-stage{padding:7px 9px}
+.lessonlayout .stage-sidebar .optional-stage .stage-name{font-size:12px}
+.stage-sidebar-hint{font-size:11px;line-height:1.9;color:#789087;padding:5px 7px;margin:13px 0 2px}
+.lesson-current-step{display:flex;justify-content:space-between;align-items:center;gap:9px;
+ background:#f2faf5;border:1px solid #d6ede0;border-radius:12px;
+ padding:10px 14px;margin:0 0 20px;font-size:12px;color:#396f60}
+.lesson-current-step strong{color:#126b54;font-size:13px}
+.study#courseSection{scroll-margin-top:100px}
+.lesson-stage-footer{border-top:1px solid #e2ece6;margin-top:29px;padding:18px 1px 3px}
+.lesson-stage-footer-info{font-size:12px;color:#6e857b;line-height:1.8;margin-bottom:13px}
+.lesson-stage-footer-actions{display:flex;justify-content:space-between;gap:11px;flex-wrap:wrap}
+.lesson-stage-footer-actions button{max-width:100%;white-space:normal;text-align:center}
+@media(max-width:1100px){
+ .lessonlayout .side.stage-sidebar{
+  display:block;position:static;overflow:visible;max-height:none;white-space:normal;
+  padding:15px;
+ }
+ .stage-main-list{grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:7px}
+ .lessonlayout .stage-sidebar .lesson-stage-button{
+  width:100%;min-width:0;white-space:normal;text-align:right;border:1px solid #e3eee7;
+ }
+ .stage-sidebar-hint{margin-top:10px}
+ .stage-optional-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:7px}
+}
+@media(max-width:530px){
+ .stage-main-list,.stage-optional-list{grid-template-columns:1fr}
+ .lessonlayout .side.stage-sidebar{padding:12px}
+ .lessonlayout .stage-sidebar .lesson-stage-button{padding:8px 12px}
+ .lessonlayout .stage-sidebar .stage-number{width:27px;height:27px;flex-basis:27px}
+ .lesson-current-step{align-items:flex-start;flex-direction:column}
+ .lesson-stage-footer-actions{display:grid;grid-template-columns:1fr}
+ .lesson-stage-footer-actions button{width:100%}
+}
+@media(prefers-reduced-motion:reduce){.stage-sidebar-meter span{transition:none}}
