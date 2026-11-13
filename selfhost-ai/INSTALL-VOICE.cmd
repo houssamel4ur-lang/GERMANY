@@ -5,11 +5,11 @@ cd /d "%~dp0"
 title Deutsch Mastery - Free German Voice Setup
 
 where py >nul 2>nul
-if %errorlevel%==0 (
+if not errorlevel 1 (
   set "PYTHON=py -3"
 ) else (
   where python >nul 2>nul
-  if %errorlevel%==0 (
+  if not errorlevel 1 (
     set "PYTHON=python"
   ) else (
     echo ERROR: Python 3 not found. Install from python.org.
