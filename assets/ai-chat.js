@@ -32,6 +32,17 @@ function statusBadge(ok,msg){badge.className="ai-status "+(ok?"ok":"off");badge.
 function configured(){return /^https:\/\//i.test(base)||/^http:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/i.test(base)}
 function getCode(){return window.DEUTSCH_AI_CONFIG?.localOnly?"":String($("#accessCode").value||"").trim()}
 function errorMessage(err){if(err.name==="AbortError")return "العملية توقفت.";return err.message||"تعذر الاتصال بالخادم."}
+function finalAnswerOnly(raw){
+ let answer=String(raw||"").replace(/\r\n?/g,"\n");
+ answer=answer.replace(/<think\b[^>]*>[\s\S]*?<\/think\s*>/gi,"");
+ answer=answer.replace(/<think\b[^>]*>[\s\S]*$/gi,"");
+ answer=answer.replace(/<\/think\s*>/gi,"");
+ answer=answer.replace(/^\s*(?:(?:Thinking|Reasoning)\s*\.{3}|\.{3}\s*done thinking\.?|\[analysis\]|analysis:)\s*/gi,"");
+ answer=answer.trim();
+ // Never display a plain-language reasoning trace if a model unexpectedly emits one.
+ if(/^(?:Okay[,]? the user|The user (?:wants|asks|said)|I (?:need|should|must) to|Let me (?:think|plan)|Final plan:|First, I (?:need|should)|Wait, (?:the user|they said)|\*checks requirements)/i.test(answer))return "";
+ return answer;
+}
 function append(role,text,kind){const wrapper=document.createElement("div");wrapper.className="ai-bubble "+(role==="assistant"?"bot":"you")+" de-text"+(kind==="pending"?" pending":"");wrapper.dir="ltr";
 const meta=document.createElement("span");meta.className="ai-meta";meta.textContent=role==="assistant"?"Deutsch Partner":"Du";wrapper.appendChild(meta);
 const msg=document.createElement("span");msg.textContent=text;wrapper.appendChild(msg);
@@ -109,7 +120,7 @@ stopPlaying();busy=true;applyControls();
 body.querySelector(".ai-intro")?.remove();
 append("user",message);
 textBox.value="";resizeInput();
-const pending=append("assistant","Ich denke nach …","pending");
+const pending=append("assistant","•••","pending");pending.setAttribute("aria-label","جاري إعداد الجواب");pending.querySelector("span:last-child")?.classList.add("ai-pending-dots");
 setStatus("كيتم إعداد رد ألماني مناسب لمستوى "+pick("#levelSelect")+"...");
 const current={role:"user",content:message};
 try{
@@ -118,8 +129,8 @@ try{
  messages:[...turns,current].slice(-(maxTurns*2))
  })});
  const data=await reply.json();
- const text=String(data.reply||"").trim();
- if(!text)throw new Error("الخادم ما رجّعش أي جواب.");
+ const text=finalAnswerOnly(data.reply);
+ if(!text)throw new Error("الردّ فيه تفكير داخلي أو فارغ، ولذلك ما تعرضش. حاول مجدداً.");
  pending.remove();append("assistant",text);
  turns.push(current,{role:"assistant",content:text});turns=turns.slice(-(maxTurns*2));
  setStatus(speechReady?"المحادثة مستمرة. تقدر تسمع الرد أو تكمل الكتابة.":"المحادثة مستمرة مع Qwen3 4B المحلي. اكتب جوابك بالألمانية.");
@@ -197,6 +208,13 @@ $("#levelSelect").addEventListener("change",()=>{if(busy)return;turns=[];stopPla
 $("#scenarioSelect").addEventListener("change",()=>{if(busy)return;turns=[];showWelcome();suggestions();setStatus("بدأت محادثة بموضوع جديد.")});
 $("#suggestions").addEventListener("click",e=>{const btn=e.target.closest("[data-prompt]");if(btn){textBox.value=btn.dataset.prompt;resizeInput();textBox.focus()}});
 $("#testConnection").addEventListener("click",check);
+const mobileSettings=$("#aiMobileSettings"),layout=$(".ai-layout");
+mobileSettings?.addEventListener("click",()=>{
+ const open=layout.classList.toggle("settings-open");
+ mobileSettings.setAttribute("aria-expanded",String(open));
+ mobileSettings.textContent=open?"✕ إغلاق الإعدادات":"⚙ إعدادات المحادثة";
+});
+
 $("#accessCode").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();check()}});
 window.addEventListener("pagehide",()=>{recordStream?.getTracks().forEach(t=>t.stop());stopPlaying()});
 showWelcome();suggestions();resizeInput();if(window.DEUTSCH_AI_CONFIG?.localOnly){const code=$("#accessCode");if(code){const label=document.querySelector("label[for=accessCode]");code.hidden=true;if(label)label.hidden=true;}$("#configHint").textContent="للتشغيل على نفس PC، فتح START-DEUTSCH-AI.cmd من الحزمة المحلية، بلا رمز دخول وبلا API مدفوعة.";}applyControls();check();
