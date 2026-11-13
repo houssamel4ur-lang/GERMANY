@@ -3,7 +3,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#123934"><meta name="description" content="تحدث بالألمانية مع شريك محادثة بالذكاء الاصطناعي يتكيف مع مستواك A1 حتى B2">
 <title>محادثة ألمانية بالذكاء الاصطناعي | Deutsch Mastery</title>
-<link rel="stylesheet" href="assets/style.css"><link rel="stylesheet" href="assets/ai-chat.css?v=20261113b">
+<link rel="stylesheet" href="assets/style.css"><link rel="stylesheet" href="assets/ai-chat.css?v=20261113c">
 </head>
 <body data-page="german-coach">
 <a class="skip" href="#main">تجاوز إلى المحتوى</a>
@@ -26,7 +26,7 @@
 <div class="ai-buttons"><button class="outline" id="stopAudio" type="button">إيقاف الصوت</button></div>
 </section>
 <section class="ai-panel"><h2>تشغيل AI محلياً بـ0$</h2>
-<p class="tiny">شغّل START-DEUTSCH-AI.cmd على Windows (بعد فك الضغط). البرنامج يربط هاد الصفحة بالموديل Qwen3 4B اللي حمّلتي في Ollama، بدون حساب أو API مدفوعة. في هاد النسخة المحادثة كتابية؛ الصوت قيد التجهيز.</p>
+<p class="tiny">شغّل START-DEUTSCH-AI.cmd باش تربط الموقع بـQwen3 4B المحلي. للمحادثة بالصوت، ثبّت Whisper وPiper مجاناً باستعمال INSTALL-VOICE.cmd من الحزمة المحدّثة.</p>
 <label for="accessCode">رمز الدخول إلى المساعد</label><input id="accessCode" type="password" placeholder="رمز الدخول الخاص بالسيرفر" autocomplete="off">
 <button class="outline" id="testConnection" type="button">اختبار الاتصال</button>
 <p class="tiny" id="configHint">حمّل حزمة التشغيل المحلية وشغّل الملف START-DEUTSCH-AI.cmd على PC ديالك. خاص Python 3 وOllama يكونو مثبتين.</p>
@@ -34,13 +34,14 @@
 </aside>
 <section class="ai-chat" aria-label="المحادثة">
 <div class="ai-chatbar"><div class="ai-bot-heading"><span class="ai-bot-mark" aria-hidden="true">✦</span><div><strong>Deutsch Partner</strong><span>مدربك الافتراضي بالألمانية · Qwen3 4B محلي</span></div></div><div class="ai-chatbar-actions"><span id="sessionLevel">A1</span><button type="button" class="ai-new-chat" id="newChat" title="محادثة جديدة">＋ <span>محادثة جديدة</span></button></div></div>
+<details class="ai-voice-details"><summary>🎙️ المحادثة الصوتية بالألمانية <span class="ai-voice-note">تحتاج إعداد الصوت المحلي مرة واحدة</span></summary>
 <div class="ai-live" aria-label="مكالمة صوتية مباشرة">
 <div><b>مكالمة مباشرة بالألمانية</b><span>المحرك كيسمع الجملة، كيتعرف على نهاية الكلام بالصمت، ومن بعد كيجاوب بالألمانية من السيرفر ديالك</span></div>
 <button class="primary" id="startLive" type="button" disabled>بدء المكالمة <span aria-hidden="true">📞</span></button>
 <button class="outline" id="endLive" type="button" disabled>إنهاء المكالمة</button>
 <audio id="liveOutput" autoplay playsinline></audio>
-<span class="ai-live-status" id="liveStatus" role="status">متوقفة حتى يتم الاتصال بالخادم</span>
-</div>
+<span class="ai-live-status" id="liveStatus" role="status">اختبر الاتصال لتعرف واش الصوت واجد</span>
+</div></details>
 <div class="ai-messages" id="messages" role="log" aria-live="polite" aria-relevant="additions text"></div>
 <div class="ai-suggestions" id="suggestions" aria-label="جمل للبدء"></div>
 <form id="chatForm" class="ai-compose">
@@ -54,11 +55,11 @@
 <p class="ai-footnote" id="chatStatus" role="status">الصوت الناتج اصطناعي. لا يتم تشغيل صوت متصفح بلغة أخرى.</p>
 </section>
 </div>
-<div class="ai-notice">المحادثات لا تُستخدم لمنح شهادة لغوية، وقد يخطئ الذكاء الاصطناعي في بعض التصحيحات. الصوت يحتاج مكونات محلية إضافية؛ مازال غير مفعّل في حزمة التشغيل النصية.  المكالمة تقدر تكون أبطأ حسب قوة الجهاز.</div>
+<div class="ai-notice">المحادثات لا تُستخدم لمنح شهادة لغوية، وقد يخطئ الذكاء الاصطناعي في بعض التصحيحات. الصوت كيتفعّل غير بعد تثبيت Whisper وPiper محلياً وإعادة تشغيل السيرفر؛ يمكن تكون الاستجابة بطيئة حسب قوة الجهاز.</div>
 </div></main>
 <footer><div class="wrap foot"><b>Deutsch Mastery</b><span>تعلّم الألمانية بالتدرّج والممارسة</span><a href="quality.html">حدود المشروع</a></div></footer>
 <script src="data/master-curriculum.js"></script>
 <script src="assets/ai-config.js"></script>
-<script src="assets/ai-chat.js?v=20261113b"></script>
+<script src="assets/ai-chat.js?v=20261113c"></script>
 <script src="assets/ai-live.js"></script>
 </body></html>
