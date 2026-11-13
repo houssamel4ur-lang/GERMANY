@@ -204,6 +204,25 @@ try{
 }catch(e){setStatus("تعذر الرد الصوتي: "+errorMessage(e)+" — جرّب زر «جرّب الصوت» وشوف إعدادات السماعات.")}
 }
 
+let pendingSpeechReview=null;
+function settleSpeechReview(confirmed){
+ const active=pendingSpeechReview;pendingSpeechReview=null;
+ const panel=$("#transcriptionReview"),editor=$("#transcriptEditor");
+ if(panel)panel.hidden=true;
+ if(active)active(confirmed?String(editor.value||"").trim().slice(0,1500):"");
+}
+function reviewTranscript(text){
+ if(!$("#reviewTranscription")?.checked)return Promise.resolve(text);
+ settleSpeechReview(false);
+ const panel=$("#transcriptionReview"),editor=$("#transcriptEditor");
+ editor.value=String(text||"").slice(0,1500);panel.hidden=false;editor.focus();
+ setStatus("راجع الكلمات اللي سمعها Whisper وصحّحهم إذا احتاج الأمر، ثم ضغط إرسال.");
+ return new Promise(resolve=>{pendingSpeechReview=resolve;});
+}
+$("#confirmTranscript")?.addEventListener("click",()=>settleSpeechReview(true));
+$("#cancelTranscript")?.addEventListener("click",()=>settleSpeechReview(false));
+window.DEUTSCH_AI_REVIEW_TRANSCRIPT=reviewTranscript;
+window.DEUTSCH_AI_CANCEL_REVIEW=()=>settleSpeechReview(false);
 async function microphone(){
 if(!connected)return;
 if(recorder&&recorder.state==="recording"){recorder.stop();return}
@@ -232,8 +251,10 @@ try{
     const res=await call("/api/transcribe",{method:"POST",body:fd});
     const data=await res.json();const transcript=String(data.text||"").trim();
     if(!transcript){setStatus("ما قدرناش نفهمو التسجيل. عاود أو اكتب الرسالة.");return}
-    setStatus("تم التعرف على الكلام: "+transcript);
-    busy=false;applyControls();await respond(transcript,true);
+    setStatus("Whisper سمع: "+transcript);
+    const reviewed=await reviewTranscript(transcript);
+    busy=false;applyControls();
+    if(reviewed)await respond(reviewed,true);else setStatus("ألغيتي الجملة. تقدر تعاود التسجيل.");
    }catch(e){setStatus("تعذر تحويل الصوت إلى نص: "+errorMessage(e))}
    finally{busy=false;applyControls()}
  };
