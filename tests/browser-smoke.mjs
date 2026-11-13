@@ -1,7 +1,7 @@
 import {chromium} from "playwright";
 import assert from "node:assert/strict";
 const url="http://127.0.0.1:8765/";
-const browser=await chromium.launch({headless:true,args:["--no-sandbox"]});
+const browser=await chromium.launch({channel:"chrome",headless:true,args:["--no-sandbox"]});
 let checked=0;
 const context=await browser.newContext({viewport:{width:1280,height:820}});
 const page=await context.newPage();
