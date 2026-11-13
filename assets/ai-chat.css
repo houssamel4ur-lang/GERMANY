@@ -79,6 +79,7 @@ body[data-page="german-coach"] .top{border-bottom:1px solid #e1e9e8;box-shadow:0
  .ai-layout{grid-template-columns:238px minmax(0,1fr)}
  .ai-page{width:calc(100% - 28px)}
  .ai-panel{padding:14px}
+ .ai-options{grid-template-columns:1fr}
 }
 @media(max-width:760px){
  .ai-page{width:calc(100% - 20px);padding:12px 0}
