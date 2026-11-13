@@ -37,6 +37,8 @@ if(mode==="all"){
  "data/curated-primary-2026.js",
  "data/advanced-grammar-b1.js",
  "data/advanced-grammar-b2.js",
+ "data/advanced-grammar-b1-more.js",
+ "data/advanced-grammar-b2-more.js",
  "data/advanced-merge.js"
  ];
  for(const path of sources)runInNewContext(readFileSync(path,"utf8"),{window:w});
