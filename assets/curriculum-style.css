@@ -1,0 +1,51 @@
+/* 2026 PDF curriculum UX — shares the original Deutsch Mastery color system. */
+.coursehero{background:var(--deep);color:white;border-radius:22px;padding:32px 36px;margin-bottom:22px}
+.coursehero .overline{color:#a6dcca}.coursehero h1{font-size:clamp(27px,4vw,42px);margin:9px 0;line-height:1.45}
+.coursehero p{color:#c5e1d7;margin:8px 0;max-width:850px}
+.coursemetrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:22px 0}
+.coursemetric{border:1px solid var(--line);border-radius:14px;padding:17px;background:white}
+.coursemetric b{display:block;font-size:26px;line-height:1.5;color:var(--teal)}.coursemetric span{font-size:12px;color:var(--muted)}
+.courselevels{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}
+.courselevels button,.courselevels a{border:1px solid var(--line);padding:9px 19px;border-radius:12px;background:white;color:var(--deep);font-size:16px;font-weight:900}
+.courselevels .active{background:var(--deep);color:#fff;border-color:var(--deep)}
+.groupbox{background:white;border:1px solid var(--line);border-radius:18px;padding:20px;margin:16px 0;box-shadow:var(--shadow)}
+.groupbox h2{margin:2px 0;font-size:21px}
+.groupbox .groupmeta{font-size:12px;color:var(--muted);margin:0 0 13px}
+.curriculumtopics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.topiclink{padding:11px 14px;border:1px solid var(--line);background:#fff;border-radius:11px;display:flex;align-items:center;gap:10px;font-size:13px;min-height:59px;transition:.15s}
+.topiclink:hover,.topiclink:focus-visible{border-color:#69a991;background:#f4fbf6}
+.topiclink .topicindex{min-width:29px;height:29px;border-radius:9px;background:#f0f6f2;display:grid;place-items:center;font-size:11px;color:#356d5e;font-weight:900}
+.topiclink .topicbody{flex:1;line-height:1.5}.topiclink small{display:block;font-size:10px;color:var(--muted)}
+.topiclink .ready{color:#087255;font-weight:800}.topiclink .pending{color:#8a8070;font-weight:650}
+.coursefilter{display:flex;align-items:center;gap:10px;margin:16px 0;flex-wrap:wrap}
+.coursefilter input{min-width:min(420px,100%);flex:1;max-width:550px;padding:12px;border:1px solid #cadcd3;border-radius:12px;background:#fff}
+.coursefilter label{font-weight:800}
+.syllabusnotice{background:#fff8e8;border:1px solid #ead6a3;padding:13px 18px;border-radius:12px;color:#6a5934;font-size:13px;margin:16px 0}
+.curricontent{display:grid;grid-template-columns:220px minmax(0,1fr);gap:18px;align-items:start}
+.curri-tabs{position:sticky;top:91px;border:1px solid var(--line);border-radius:16px;background:white;padding:13px;display:grid;gap:6px}
+.curri-tabs button{border:none;border-radius:10px;text-align:right;background:transparent;padding:10px 12px;font-size:13px;color:#486e72;font-weight:750}
+.curri-tabs button.active{background:#dff4e8;color:#126a56}
+.curri-stage{background:white;border:1px solid var(--line);padding:25px;border-radius:17px;min-height:350px}
+.curri-stage h2{font-size:23px;margin-top:0}
+.curri-stage p{font-size:14px}
+.curri-ex{border:1px solid var(--line);border-radius:12px;padding:14px;margin:10px 0;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.curri-ex .translation{color:var(--muted);font-size:12px}
+.curri-ex .de{font-size:18px}
+.curri-ex button{background:#e4f6eb;color:#0c7258;border:1px solid #c6ead8;padding:8px 12px;border-radius:9px;font-weight:750}
+.curri-progress{background:#e5ede9;height:9px;border-radius:15px;margin:16px 0;overflow:hidden}
+.curri-progress div{height:100%;background:#129874}
+.curri-answer{border:1px solid var(--line);background:white;color:var(--ink);width:100%;text-align:right;border-radius:11px;padding:13px;margin:7px 0;font-weight:750}
+.curri-answer:disabled{opacity:.75}
+.curri-answer.correct{border:2px solid #1d936f;background:#e4f7ed}
+.curri-answer.wrong{border:2px solid #d67d70;background:#fff1ed}
+.curri-feedback{padding:10px 13px;border-radius:9px;margin:11px 0;background:#f1f8f4;font-size:13px;min-height:38px}
+.curri-feedback.error{background:#fff0eb;color:#a4443b}
+.currinav{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0}
+.currinav a{padding:8px 13px;border:1px solid var(--line);border-radius:10px;font-weight:750;font-size:13px}
+.currinav a:hover{background:#eef9f2}
+.curriref{font-size:12px;color:var(--muted)}
+.curri-skill{background:#f2f8f5;border-right:4px solid #14936e;border-radius:12px;padding:18px;margin:12px 0}
+.curri-skill .de{font-size:19px;line-height:1.9}
+.curri-task{border:1px solid #cce4d9;border-radius:11px;padding:17px;background:#f6fcf8}
+@media(max-width:850px){.coursemetrics{grid-template-columns:repeat(2,1fr)}.curricontent{grid-template-columns:1fr}.curri-tabs{position:static;display:flex;flex-wrap:wrap}.curri-tabs button{flex:1 1 120px;text-align:center}}
+@media(max-width:600px){.curriculumtopics{grid-template-columns:1fr}.coursehero{padding:21px}.coursemetric b{font-size:23px}.curri-stage{padding:17px}.coursefilter input{min-width:100%}}
