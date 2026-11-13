@@ -1135,7 +1135,7 @@ const expanded={
       },
       {
         "title": "ie /iː/",
-        "how": "صوت i طويل كما في Liebe وMusik (انتبه أن Musik لا تحتوي ie؛ استعمل Liebe للمقارنة).",
+        "how": "صوت i طويل كما في Liebe وlieben. النطق هنا هو /iː/ الطويل.",
         "words": [
           "Liebe",
           "lieben"
