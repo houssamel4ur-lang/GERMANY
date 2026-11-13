@@ -31,6 +31,11 @@ function setStatus(msg){status.textContent=msg}
 function statusBadge(ok,msg){badge.className="ai-status "+(ok?"ok":"off");badge.textContent=msg}
 function configured(){return /^https:\/\//i.test(base)||/^http:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/i.test(base)}
 function getCode(){return window.DEUTSCH_AI_CONFIG?.localOnly?"":String($("#accessCode").value||"").trim()}
+function syncVoice(){
+ window.DEUTSCH_AI_VOICE_READY=Boolean(connected&&speechReady&&transcriptionReady);
+ window.DEUTSCH_AI_AUDIO_STATUS={speechReady:connected&&speechReady,transcriptionReady:connected&&transcriptionReady,model:modelLabel};
+ window.dispatchEvent(new Event("coach-voice-readiness"));
+}
 function errorMessage(err){if(err.name==="AbortError")return "العملية توقفت.";return err.message||"تعذر الاتصال بالخادم."}
 function finalAnswerOnly(raw){
  let answer=String(raw||"").replace(/\r\n?/g,"\n");
@@ -90,17 +95,17 @@ return res;
 }
 async function check(){
 if(!configured()){
- connected=false;speechReady=false;transcriptionReady=false;window.DEUTSCH_AI_VOICE_READY=false;statusBadge(false,"غير مفعّل");
+ connected=false;speechReady=false;transcriptionReady=false;window.DEUTSCH_AI_VOICE_READY=false;statusBadge(false,"غير مفعّل");syncVoice();
  $("#configHint").textContent="الواجهة واجدة، ولكن خاصك تشغّل selfhost-ai على جهازك أو سيرفرك وتضيف رابط HTTPS الخاص به في assets/ai-config.js.";
  setStatus("المحادثة الحرة غير مفعّلة حتى يكون سيرفرنا الخاص خدام وعندو نموذج Qwen3 مثبت؛ ما كاين حتى API خارجي.");applyControls();return;
 }
  try{
  const res=await call("/api/health",{method:"GET"});const data=await res.json();
- const requiredBridge="2026.11.13.4";
+ const requiredBridge="2026.11.13.5";
  if(window.DEUTSCH_AI_CONFIG?.localOnly&&data.bridge_version!==requiredBridge){
   connected=false;speechReady=false;transcriptionReady=false;window.DEUTSCH_AI_VOICE_READY=false;
-  statusBadge(false,"خاص تحديث برنامج AI المحلي");
-  $("#configHint").textContent="الموقع تحدّث، ولكن البرنامج اللي شغال فـPC قديم. خاص تبدل local_bridge.py وتسد النافذة الكحلة القديمة وتعاود تشغّل START-DEUTSCH-AI.cmd.";
+  statusBadge(false,"خاص تحديث برنامج AI المحلي");syncVoice();
+  $("#configHint").textContent="الموقع تحدّث، ولكن البرنامج اللي شغال فـPC قديم. خاص تبدل local_bridge.py وتسد النافذة الكحلة القديمة وتعاود تشغّل START-VOICE-AI.cmd.";
   setStatus("كود GitHub تحدّث ولكن النسخة القديمة ديال Python باقية خدامة. حمّل حزمة الإصلاح الجديدة وشغّلها.");
   applyControls();return;
  }
@@ -110,11 +115,11 @@ if(!configured()){
  transcriptionReady=connected&&data.transcription_configured===true;
  window.DEUTSCH_AI_VOICE_READY=speechReady&&transcriptionReady;
  if(!speechReady){$("#autoSpeak").checked=false;$("#autoSpeak").disabled=true;}else{$("#autoSpeak").disabled=false;}
- statusBadge(connected,connected?"متصل · AI جاهز":"غير جاهز");
+ statusBadge(connected,connected?"متصل · AI جاهز":"غير جاهز");syncVoice();
  $("#configHint").textContent=connected?"السيرفر الخاص جاهز. الاتصال كيدوز بينك وبين النموذج المحلي على جهازك أو سيرفرك.":"السيرفر موجود، ولكن نموذج Ollama المحلي أو رمز الدخول مازال ما تفعّلوش.";
- setStatus(connected?(transcriptionReady?"مستعد. اكتب أو استعمل الميكروفون.":"الموديل المحلي متصل: "+modelLabel+". المحادثة الكتابية واجدة."):"الخادم لم يصبح جاهزاً للمحادثة بعد.");
+ setStatus(connected?(speechReady&&transcriptionReady?"مستعد! الصوت والميكروفون واجدين، تقدر تبدأ مكالمة بالألمانية.":transcriptionReady?"المايك خدام؛ خاص إعداد Piper للرد الصوتي.":speechReady?"النطق الألماني خدام؛ خاص إعداد Whisper للمايك.":"المحادثة الكتابية واجدة. باش تفعل الصوت والمكالمة شغّل START-VOICE-AI.cmd."):"الخادم لم يصبح جاهزاً للمحادثة بعد.");
  }catch(e){
- connected=false;speechReady=false;transcriptionReady=false;window.DEUTSCH_AI_VOICE_READY=false;statusBadge(false,"تعذر الاتصال");
+ connected=false;speechReady=false;transcriptionReady=false;window.DEUTSCH_AI_VOICE_READY=false;statusBadge(false,"تعذر الاتصال");syncVoice();
  $("#configHint").textContent=errorMessage(e);
  setStatus("لم يتم الاتصال بخدمة الذكاء الاصطناعي. التمارين العادية فالموقع باقية خدامة.");
  }
@@ -201,7 +206,7 @@ try{
    const blob=new Blob(chunks,{type:typ});chunks=[];
    if(blob.size<400){setStatus("التسجيل قصير بزاف. حاول تعاود.");return}
    if(blob.size>5_000_000){setStatus("التسجيل كبير بزاف (5MB كحد أقصى).");return}
-   busy=true;applyControls();setStatus("كيتم تحويل التسجيل إلى نص ألماني...");
+   busy=true;applyControls();setStatus("Whisper كيحوّل صوتك إلى ألمانية… أول مرة يقدر يحمّل نموذج مجاني.");
    try{
     const fd=new FormData();fd.append("audio",blob,"speech."+(typ.includes("mp4")?"mp4":typ.includes("ogg")?"ogg":"webm"));
     const res=await call("/api/transcribe",{method:"POST",body:fd});
