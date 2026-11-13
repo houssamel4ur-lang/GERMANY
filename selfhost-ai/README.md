@@ -96,6 +96,10 @@ Whisper غادي ينزل نموذج small في أول استعمال. باش ت
 
 ## اختبارات
 
+إلا بدلت شي درس فموقع Deutsch Mastery، عاود بناء قاعدة المعرفة الخاصة بالمساعد قبل Docker build:
+
+    node selfhost-ai/export-curriculum.mjs
+
 من مجلد selfhost-ai وبعد تثبيت fastapi وhttpx وpython-multipart:
 
     python -m unittest discover -s tests -v
