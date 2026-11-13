@@ -37,5 +37,8 @@ jobs:
           node --check data/advanced-grammar-b1-more.js
           node --check data/advanced-grammar-b2-more.js
           node --check data/advanced-merge.js
+          node --check data/foundation-a1.js
+          node --check data/foundation-a2.js
+          node --check data/foundation-merge.js
       - name: Validate curriculum and site
         run: node tests/check.mjs
