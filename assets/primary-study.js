@@ -1,0 +1,249 @@
+/* Deutsch Mastery — primary-curriculum interactive learning engine.
+ * No automatic claims of CEFR attainment. Exercises are formative practice.
+ * Audio is delegated exclusively to the verified German MP3 player.
+ */
+(function(){
+"use strict";
+const root=document.getElementById("primaryStudyMount");
+if(!root)return;
+const master=window.DM_MASTER_CURRICULUM;
+const material=window.DM_PRIMARY_LESSONS||[];
+const topics=master?.topics||[];
+const lessonMap=new Map(material.map(x=>[x.id,x]));
+const $=(s,el=document)=>el.querySelector(s), $$=(s,el=document)=>Array.from(el.querySelectorAll(s));
+const esc=x=>String(x==null?"":x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const iso=x=>'<span lang="de" dir="ltr" class="de">'+esc(x)+'</span>';
+const norm=x=>String(x||"").normalize("NFKC").trim().toLocaleLowerCase("de-DE").replace(/[.!?؟،,;:]+$/g,"").replace(/\s+/g," ");
+const shuffle=a=>{let b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b};
+const KEY="deutsch-mastery-primary-v2";
+const state=(()=>{
+try{let s=JSON.parse(localStorage.getItem(KEY)||"{}");return {attempts:s.attempts||{},passed:s.passed||{},cards:s.cards||{},last:s.last||null,errors:s.errors||[],created:s.created||Date.now()}}
+catch(e){return {attempts:{},passed:{},cards:{},last:null,errors:[],created:Date.now()}}
+})();
+const store=()=>{try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){notify("تعذر حفظ التقدم في المتصفح. جرّب التصفح العادي وتحقق من مساحة التخزين.")}};
+const notify=msg=>{const el=$("#courseNotice");if(el)el.textContent=msg};
+const courseLink=id=>"course.html?topic="+encodeURIComponent(id);
+let id=new URLSearchParams(location.search).get("topic"),lesson=lessonMap.get(id),topic=topics.find(x=>x.id===id);
+let tab="intro",questions=[],pos=0,first=0,miss=0,wrongOnThis=false,order=[],serial=0;
+function allWords(){return material.flatMap(l=>l.vocabulary.map(v=>({de:v.de,ar:v.ar,source:l.id}))).filter(v=>v.de&&v.ar)}
+function speechControls(){
+return '<div class="controls"><label for="speed">سرعة MP3</label><select id="speed"><option value=".75">بطيئة ×0.75</option><option value="1" selected>طبيعية ×1</option><option value="1.15">أسرع ×1.15</option></select><label for="repeat">التكرار</label><select id="repeat"><option value="1">مرة</option><option value="2">مرتان</option><option value="3">3 مرات</option></select><button class="outline" data-stop type="button">■ إيقاف الصوت</button></div><p class="tiny" id="audioStatus" role="status">ملفات MP3 ألمانية مستقلة. إذا كان التسجيل غير متوفر لن يُستخدم صوت بلغة أخرى.</p>';
+}
+function speaker(text){const available=!!window.DM_AUDIO_MAP?.[text];return '<button class="speak" type="button" '+(available?'data-say="'+esc(text)+'"':'disabled title="تسجيل ألماني غير متوفر لهذه العبارة"')+' aria-label="استمع للألمانية">'+(available?"🔊":"🔇")+'</button>'}
+function savedKey(word){return lesson.id+"::"+word.de}
+function wordCard(word,i,listenOnly){
+const key=savedKey(word),saved=!!state.cards[key];
+return '<div class="wordrow"><div>'+iso(word.de)+'<small>'+esc(word.ar)+'</small></div><div class="rowactions">'+speaker(word.de)+(listenOnly?"":'<button class="outline" data-saveword="'+i+'" type="button" aria-label="احفظ للمراجعة">'+(saved?"★ محفوظة":"☆ احفظ")+'</button>')+'</div></div>';
+}
+const tabs=[["intro","📘 المقدمة"],["vocab","📗 المفردات"],["audio","🔊 الصوتيات"],["grammar","📐 الشرح"],["conversation","💬 المحادثة"],["reading","📖 القراءة"],["exercise","🎯 التمارين"],["result","🏆 النتيجة"]];
+function detailPage(){
+document.title=topic.title+" | Deutsch Mastery";
+const same=topics.filter(x=>x.level===topic.level),ix=same.findIndex(x=>x.id===topic.id);
+const next=same.slice(ix+1).find(x=>lessonMap.has(x.id));
+const prev=same.slice(0,ix).reverse().find(x=>lessonMap.has(x.id));
+root.innerHTML='<div class="crumb"><a href="syllabus.html?level='+topic.level+'">فهرس '+topic.level+'</a> / '+esc(topic.section)+' / '+String(topic.number).padStart(2,"0")+'</div>'+
+'<div class="lessonhero"><span class="eyebrow">'+topic.level+' · المحور '+topic.section_number+'.'+String(topic.number).padStart(2,"0")+' · تدريب تفاعلي</span><h1>'+esc(topic.title)+'</h1><p>من الفهرس المعتمد، صفحة '+topic.page+'. مادة أولية للتعلم والمراجعة، وليست تدريباً نهائياً معتمداً.</p></div>'+
+'<div class="lessonlayout"><aside class="side" aria-label="أقسام الدرس"><b>أقسام مستقلة</b>'+tabs.map(t=>'<button class="tab" type="button" data-tab="'+t[0]+'">'+t[1]+'</button>').join("")+'</aside><article class="study" id="courseSection"></article></div>'+
+'<div class="controls" style="justify-content:space-between;margin:22px 0"><a class="outline" href="syllabus.html?level='+topic.level+'">كل الدروس</a><div class="controls">'+(prev?'<a class="outline" href="'+courseLink(prev.id)+'">الدرس السابق</a>':"")+(next?'<a class="primary" href="'+courseLink(next.id)+'">الدرس التالي ←</a>':"")+'</div></div>'+
+'<div class="tiny" id="courseNotice" role="status"></div>';
+state.last=topic.id;store();
+}
+function title(title,sub){return '<span class="kicker">'+topic.level+' · '+esc(topic.section)+'</span><h2>'+esc(title)+'</h2><p class="sub">'+esc(sub)+'</p>'}
+function render(){
+$$("[data-tab]",root).forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
+const view=$("#courseSection");if(!view)return;let html="";
+if(tab==="intro"){
+html=title(topic.title,"هدف الدرس: فهم عناصر الموضوع واستعمال الأمثلة والمفردات في سياق صحيح.")+
+'<div class="panel article"><h3>ماذا ستتعلم؟</h3><p>'+esc(lesson.explanation)+'</p></div>'+
+'<div class="story">'+iso(lesson.examples[0][0])+'<p>'+esc(lesson.examples[0][1])+'</p>'+speaker(lesson.examples[0][0])+'</div>'+
+'<p class="notice">'+esc(lesson.quality)+'</p><button class="primary" data-goto="vocab">ابدأ بالمفردات ←</button>';
+}
+if(tab==="vocab"){
+html=title("مفردات الدرس","استمع إلى كل كلمة، ثم احفظ الصعبة لإعادتها بالمراجعة المتباعدة.")+
+lesson.vocabulary.map((v,i)=>wordCard(v,i,false)).join("")+
+'<p class="tiny">احفظ الاسم مع أداته إن وجدت. لا تستبدل الاستماع الألماني بكتابة نطق تقريبي بالعربية.</p>';
+}
+if(tab==="audio"){
+const phrases=[...new Set([...lesson.vocabulary.map(w=>w.de),...lesson.examples.map(x=>x[0]),...lesson.dialogue.map(x=>x[0])])];
+html=title("الصوتيات","كلمات وجمل هذا الدرس فقط؛ التشغيل من ملفات ألمانية مسجلة لا من صوت المتصفح.")+
+speechControls()+
+phrases.map(de=>'<div class="wordrow">'+iso(de)+speaker(de)+'</div>').join("");
+}
+if(tab==="grammar"){
+html=title("شرح الموضوع","شرح عربي مباشر مع أمثلة ألمانية مرتبطة بالمحور.")+
+'<div class="panel article"><h3>'+esc(topic.title)+'</h3><p>'+esc(lesson.explanation)+'</p></div>'+
+lesson.examples.map(x=>'<div class="story">'+iso(x[0])+'<p>'+esc(x[1])+'</p>'+speaker(x[0])+'</div>').join("")+
+'<button class="primary" data-goto="exercise">تطبيق القاعدة ←</button>';
+}
+if(tab==="conversation"){
+html=title("المحادثة","استمع للجمل ورددها؛ الحوار تمرين قرائي وصوتي وليس تقييماً تلقائياً لنطقك.")+speechControls()+
+lesson.dialogue.map((x,i)=>'<div class="wordrow"><div><small>المتحدث '+(i%2?"ب":"أ")+'</small>'+iso(x[0])+'<small>'+esc(x[1])+'</small></div>'+speaker(x[0])+'</div>').join("")+
+'<p class="notice">للتمرين: أغلق الترجمة بصرياً، استمع وأعد الجملة بصوتك، ثم قارن فهمك بالمعنى.</p>';
+}
+if(tab==="reading"){
+html=title("القراءة والفهم","اقرأ النص أولاً، ثم استمع إذا كان ملف MP3 متوفراً.")+speechControls()+
+'<div class="story">'+iso(lesson.reading)+'<div class="controls">'+speaker(lesson.reading)+'</div></div>'+
+'<details class="panel"><summary>أظهر الترجمة العربية</summary><p>'+esc(lesson.translation)+'</p></details>'+
+'<div class="panel"><h3>تدريب كتابة</h3><p>'+esc(lesson.writing)+'</p><textarea id="writingDraft" rows="4" style="width:100%;max-width:100%" placeholder="اكتب محاولتك هنا..."></textarea><p class="tiny">لا يوجد مصحح آلي موثوق للكتابة الحرة. يمكنك حفظ مسودتك محلياً.</p><button class="outline" data-savewriting>حفظ المسودة</button></div>';
+}
+if(tab==="exercise")html=title("التمارين المتسلسلة","سؤال واحد في كل مرة مع تصحيح فوري، وتغيير ترتيب الأسئلة عند الإعادة.")+'<div id="quizSurface"></div>';
+if(tab==="result"){
+const attempts=state.attempts[id]||[],last=attempts[attempts.length-1];
+html=title("نتيجة الدرس","النتائج حقيقية من إجاباتك المخزنة محلياً.")+
+(last?'<div class="panel"><h3>آخر تدريب</h3><p>صحيح من أول محاولة: <strong>'+last.first+' / '+last.total+'</strong></p><p>محاولات خاطئة قبل التصحيح: '+last.errors+'</p><p>التاريخ: '+new Date(last.ts).toLocaleString("ar")+'</p><p>'+(state.passed[id]?"✓ اجتزت التدريب المصغر بنسبة 80% أو أكثر":"أعد التمارين لتحسين فهمك")+'</p></div>':'<div class="notice">لم تنه التمارين بعد.</div>')+
+'<button class="primary" data-goto="exercise">إعادة التدريب ←</button>';
+}
+view.innerHTML=html;
+if(tab==="exercise"){questions=buildQuestions();pos=0;first=0;miss=0;drawQuestion()}
+if(tab==="reading"){const v=(()=>{try{return localStorage.getItem(KEY+"-writing-"+id)||""}catch(e){return ""}})();$("#writingDraft",view).value=v}
+}
+function choices(correct,pool,max=4){
+ const vals=[correct],used=new Set([norm(correct)]);
+ shuffle(pool).forEach(x=>{if(vals.length<max&&!used.has(norm(x))&&x){used.add(norm(x));vals.push(x)}});
+ return shuffle(vals);
+}
+function buildQuestions(){
+ const qs=lesson.questions.map(q=>({kind:"choice",prompt:q.prompt,answer:q.answer,options:choices(q.answer,q.options||[],3)}));
+ const vocabulary=lesson.vocabulary.filter(w=>w.de&&w.ar);
+ const distractors=shuffle(allWords().filter(w=>w.source!==lesson.id&&w.de&&w.ar));
+ const findOpts=(w,key)=>choices(w[key],vocabulary.map(x=>x[key]).concat(distractors.map(x=>x[key])),4);
+ shuffle(vocabulary).forEach((word,i)=>{
+  if(i%3===0)qs.push({kind:"choice",prompt:"اختر المعنى العربي الصحيح:",display:word.de,answer:word.ar,options:findOpts(word,"ar")});
+  else if(i%3===1)qs.push({kind:"choice",prompt:"اختر التعبير الألماني الذي يعني: "+word.ar,answer:word.de,options:findOpts(word,"de")});
+  else qs.push({kind:"listen",prompt:"استمع إلى الكلمة واختر معناها:",audio:word.de,answer:word.ar,options:findOpts(word,"ar")});
+ });
+ if(lesson.examples[0]){
+  const sentence=lesson.examples[0][0].trim();
+  const toks=sentence.split(/\s+/).filter(Boolean);
+  if(toks.length>=3&&toks.length<=16)qs.push({kind:"order",prompt:"رتّب الكلمات لتكوين الجملة:",answer:sentence,tokens:shuffle(toks)});
+  // Allow German writing practice of just one vocabulary entry; don't demand full paragraph typing.
+  const w=vocabulary.find(x=>/^[A-Za-zÄÖÜäöüß][A-Za-zÄÖÜäöüß\s-]+$/.test(x.de));
+  if(w)qs.push({kind:"type",prompt:"اكتب بالألمانية: "+w.ar,answer:w.de});
+ }
+ if(lesson.reading&&lesson.translation){
+  const distractorTranslations=shuffle(material.filter(x=>x.id!==lesson.id&&x.level===lesson.level).map(x=>x.translation).filter(x=>x&&x!==lesson.translation)).slice(0,3);
+  if(distractorTranslations.length>=2)qs.push({kind:"reading",prompt:"اختر الترجمة المطابقة للنص الألماني:",reading:lesson.reading,answer:lesson.translation,options:shuffle([lesson.translation,...distractorTranslations])});
+ }
+ return shuffle(qs);
+}
+function drawQuestion(){
+const el=$("#quizSurface");if(!el)return;
+if(pos>=questions.length){finishQuiz();return}
+const q=questions[pos];order=[];wrongOnThis=false;const run=++serial;
+let h='<p class="tiny">السؤال '+(pos+1)+' / '+questions.length+' · نقاط المحاولة الأولى: '+first+'</p><div class="progress"><div style="width:'+(100*pos/questions.length)+'%"></div></div><h3>'+esc(q.prompt)+'</h3>';
+if(q.display)h+='<div class="story">'+iso(q.display)+'</div>';
+if(q.reading)h+='<div class="story">'+iso(q.reading)+'</div>';
+if(q.audio)h+='<div class="controls">'+speaker(q.audio)+' <span class="tiny">استمع قبل الاختيار</span></div>';
+if(q.options)h+=q.options.map((o,i)=>'<button type="button" class="choice" data-answer="'+i+'">'+esc(o)+'</button>').join("");
+if(q.kind==="type")h+='<div class="controls"><input id="typedAnswer" class="field" lang="de" dir="ltr" autocomplete="off" placeholder="اكتب الكلمة بالألمانية"><button class="primary" data-checktype>تحقق</button></div>';
+if(q.kind==="order")h+='<div id="ordered" class="answerbox">اختر الكلمات بالترتيب</div><div class="chips" id="tokenChoices"></div><div class="controls"><button class="primary" data-checkorder>تحقق</button><button class="outline" data-clearorder>إعادة الترتيب</button></div>';
+h+='<div id="answerFeedback" role="status"></div>';
+el.innerHTML=h;
+if(q.kind==="order")renderTokens(q);
+const enter=$("#typedAnswer");if(enter)enter.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();checkAnswer(enter.value)}};
+}
+function renderTokens(q){
+const grid=$("#tokenChoices"),out=$("#ordered");if(!grid||!out)return;
+out.textContent=order.map(x=>x.word).join(" ")||"اختر الكلمات بالترتيب";
+grid.innerHTML=q.tokens.map((word,i)=>'<button class="token" data-token="'+i+'" '+(order.some(x=>x.i===i)?"disabled":"")+'>'+esc(word)+'</button>').join("");
+}
+function checkAnswer(input,button){
+const q=questions[pos],good=norm(input)===norm(q.answer),feedback=$("#answerFeedback");
+if(!good){
+ wrongOnThis=true;miss++;state.errors.push({topic:id,kind:q.kind,prompt:q.prompt,ts:Date.now()});state.errors=state.errors.slice(-250);store();
+ feedback.innerHTML='<div class="feedback err">الجواب غير صحيح. راجع المثال وحاول مرة أخرى.</div>';
+ if(button)button.classList.add("bad");
+ if(q.kind==="order"){order=[];renderTokens(q)}
+ return;
+}
+if(!wrongOnThis)first++;
+feedback.innerHTML='<div class="feedback">✓ صحيح. '+(q.kind==="order"||q.kind==="type"?esc(q.answer):"أحسنت!")+'</div>';
+$$("button",$("#quizSurface")).forEach(b=>b.disabled=true);
+const s=++serial;
+setTimeout(()=>{if(tab!=="exercise"||s!==serial)return;pos++;drawQuestion()},850);
+}
+function finishQuiz(){
+const attempt={first,total:questions.length,errors:miss,ts:Date.now()};
+state.attempts[id]=state.attempts[id]||[];state.attempts[id].push(attempt);state.attempts[id]=state.attempts[id].slice(-25);
+if(questions.length&&first/questions.length>=.8)state.passed[id]=Date.now();
+store();
+$("#quizSurface").innerHTML='<div class="panel" style="text-align:center"><h2>أنهيت التمرين</h2><p>صحيح من أول محاولة: <b>'+first+' / '+questions.length+'</b></p><p>محاولات خاطئة: '+miss+'</p><p>المعيار التدريبي: 80% من أول محاولة، وليس شهادة إتقان مستوى CEFR.</p><button class="primary" data-retry>إعادة بأسئلة مرتبة عشوائياً</button><button class="outline" data-goto="result">عرض التقييم</button></div>';
+}
+function beginReview(){
+document.title="مراجعة المفردات | Deutsch Mastery";
+root.innerHTML='<div class="pagehead"><span class="overline">SPACED REPETITION</span><h1>مراجعة مفردات المنهج الجديد</h1><p>تظهر البطاقات المحفوظة من دروس الفهرس الجديد. الأجوبة تتحكم في مواعيد مراجعتها.</p></div><div id="reviewZone"></div><p id="courseNotice" role="status" class="tiny"></p>';
+let cardId=null,turned=false,reviewDue=true;
+function draw(){
+const now=Date.now(),records=Object.entries(state.cards);
+const due=records.filter(([id,c])=>c.due<=now);
+const subset=reviewDue?due:records;
+if(cardId&&!subset.some(([x])=>x===cardId))cardId=null;
+cardId=cardId||subset[0]?.[0]||null;
+if(!cardId){
+ $("#reviewZone").innerHTML='<div class="panel"><h3>لا توجد بطاقات للمراجعة وفق هذا الاختيار.</h3><p>المحفوظة: '+records.length+'، المستحقة الآن: '+due.length+'</p><button class="outline" data-switchreview>'+(reviewDue?"إظهار جميع البطاقات":"إظهار المستحقة فقط")+'</button></div>';return;
+}
+const c=state.cards[cardId];
+$("#reviewZone").innerHTML='<div class="panel" style="max-width:760px;margin:auto"><div class="controls" style="justify-content:space-between"><b>'+records.length+' كلمات محفوظة</b><span class="badge">'+due.length+' مستحقة الآن</span></div><button class="outline" data-switchreview>'+(reviewDue?"إظهار جميع البطاقات":"إظهار المستحقة فقط")+'</button><div class="flash">'+iso(c.de)+'</div><div class="flashmeaning">'+(turned?esc(c.ar):"حاول استحضار المعنى قبل كشفه")+'</div><div class="controls" style="justify-content:center">'+speaker(c.de)+'<button class="outline" data-flip>إظهار / إخفاء المعنى</button></div>'+(turned?'<div class="reviewbuttons"><button class="outline" data-review="again">لم أتذكر</button><button class="primary" data-review="good">أتذكر جيداً</button></div>':"")+'<p class="tiny" style="text-align:center">فواصل 1، 2، 4، 8، 16، 32 يوماً تقريباً، وتبدأ من الصفر بعد الخطأ.</p></div>';
+}
+root.addEventListener("click",e=>{
+if(e.target.closest("[data-flip]")){turned=!turned;draw();return}
+if(e.target.closest("[data-switchreview]")){reviewDue=!reviewDue;cardId=null;turned=false;draw();return}
+const b=e.target.closest("[data-review]");if(!b)return;
+const record=state.cards[cardId];
+if(b.dataset.review==="again"){record.interval=0;record.due=Date.now();}else{record.interval=record.interval?Math.min(record.interval*2,64):1;record.due=Date.now()+record.interval*86400000}
+store();turned=false;
+const remaining=Object.entries(state.cards).filter(([k,v])=>(!reviewDue||v.due<=Date.now())&&k!==cardId);
+cardId=remaining[0]?.[0]||null;draw();
+});
+draw();
+}
+function beginDashboard(){
+document.title="تقدم المنهج الجديد | Deutsch Mastery";
+const total=material.length,attempts=Object.values(state.attempts).reduce((a,b)=>a+b.length,0),passed=Object.keys(state.passed).filter(x=>lessonMap.has(x)).length,due=Object.values(state.cards).filter(c=>c.due<=Date.now()).length;
+root.innerHTML='<div class="pagehead"><span class="overline">LEARNING DASHBOARD</span><h1>تقدمك في المنهج المعتمد</h1><p>فقط نتائج الدروس الموجودة فعلاً، دون اختراع إكمال لأي عنوان من الفهرس.</p></div>'+
+'<div class="statgrid"><div class="panel"><strong>'+passed+'/'+total+'</strong><span>تدريب اجتزته من المحاور المتاحة</span></div><div class="panel"><strong>'+attempts+'</strong><span>محاولة اختبار</span></div><div class="panel"><strong>'+Object.keys(state.cards).length+'</strong><span>مفردات محفوظة</span></div><div class="panel"><strong>'+due+'</strong><span>مراجعة مستحقة</span></div></div>'+
+'<div class="panel"><h2>أكمل دراستك</h2><p>ملاحظة: '+(master.total_topics-total)+' من موضوعات الفهرس ما زالت بحاجة إلى محتوى تفاعلي خاص بها؛ لا يظهر أي تقدم وهمي.</p><a class="primary" href="'+courseLink(lessonMap.has(state.last)?state.last:material[0].id)+'">متابعة آخر درس متاح ←</a> <a class="outline" href="syllabus.html">تصفح الفهرس</a></div>'+
+'<div class="panel"><h2>تقسيم ساعتين يومياً</h2><div class="daily"><div><b>30 دقيقة</b>مفردات وقواعد</div><div><b>30 دقيقة</b>صوتيات ونطق</div><div><b>30 دقيقة</b>قراءة ومحادثة</div><div><b>30 دقيقة</b>تمارين ومراجعة</div></div><p class="tiny">هذه خطة مقترحة، ولا تعني أن المستوى يتحقق بعد عدد محدد من الساعات.</p></div>'+
+'<div class="panel"><h2>النسخ الاحتياطي لتقدمك</h2><button class="primary" data-export>تنزيل ملف JSON</button><label class="outline" style="display:inline-flex">استيراد تقدم <input id="importProgress" type="file" accept="application/json,.json"></label><p class="tiny">استيراد ملف يستبدل تقدم المنهج الجديد الحالي بعد موافقتك.</p></div><p id="courseNotice" role="status"></p>';
+root.addEventListener("change",async e=>{
+if(e.target.id!=="importProgress")return;
+try{const file=e.target.files?.[0];if(!file)return;const obj=JSON.parse(await file.text());if(obj.version!==KEY||!obj.progress||typeof obj.progress.cards!=="object"||typeof obj.progress.attempts!=="object")throw Error("invalid");
+if(!confirm("هل تريد استبدال تقدمك الحالي بالتقدم المستورد؟"))return;
+localStorage.setItem(KEY,JSON.stringify(obj.progress));location.reload();
+}catch(err){notify("ملف النسخة الاحتياطية غير صالح لهذا المشروع.")}});
+}
+root.addEventListener("click",e=>{
+const goto=e.target.closest("[data-goto]");
+if(goto){tab=goto.dataset.goto;serial++;render();return}
+const b=e.target.closest("[data-tab]");
+if(b){tab=b.dataset.tab;serial++;render();return}
+const save=e.target.closest("[data-saveword]");
+if(save&&lesson){
+ const word=lesson.vocabulary[Number(save.dataset.saveword)],key=savedKey(word);
+ if(state.cards[key])delete state.cards[key];
+ else state.cards[key]={de:word.de,ar:word.ar,lesson:id,interval:0,due:Date.now()};
+ store();render();return;
+}
+const exportButton=e.target.closest("[data-export]");
+if(exportButton){
+ const data=JSON.stringify({version:KEY,progress:state},null,2);
+ const blob=new Blob([data],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="deutsch-mastery-primary-progress.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);return;
+}
+const writing=e.target.closest("[data-savewriting]");
+if(writing){try{localStorage.setItem(KEY+"-writing-"+id,$("#writingDraft").value);notify("حُفظت مسودة الكتابة محلياً.")}catch(err){notify("تعذر حفظ المسودة.")}return}
+if(tab!=="exercise")return;
+const btn=e.target.closest("[data-answer]");
+if(btn){checkAnswer(questions[pos].options[Number(btn.dataset.answer)],btn);return}
+if(e.target.closest("[data-checktype]")){checkAnswer($("#typedAnswer").value);return}
+if(e.target.closest("[data-token]")){const i=Number(e.target.closest("[data-token]").dataset.token);order.push({i,word:questions[pos].tokens[i]});renderTokens(questions[pos]);return}
+if(e.target.closest("[data-clearorder]")){order=[];renderTokens(questions[pos]);return}
+if(e.target.closest("[data-checkorder]")){checkAnswer(order.map(x=>x.word).join(" "));return}
+if(e.target.closest("[data-retry]")){questions=buildQuestions();pos=0;first=0;miss=0;drawQuestion();return}
+});
+const page=document.body.dataset.page;
+if(page==="primary-review")beginReview();
+else if(page==="primary-dashboard")beginDashboard();
+else if(!topic){root.innerHTML='<div class="panel"><h1>الموضوع غير موجود في الفهرس</h1><a href="syllabus.html">فتح المنهج المعتمد</a></div>'}
+else if(!lesson){root.innerHTML='<div class="panel"><h1>'+esc(topic.title)+'</h1><p>الموضوع موجود ضمن الفهرس المعتمد، لكن لم يجهز محتواه التفاعلي بعد. لن نعرض تدريبات وهمية.</p><a class="primary" href="syllabus.html?level='+topic.level+'">فهرس المستوى</a></div>'}
+else{detailPage();render()}
+})();
