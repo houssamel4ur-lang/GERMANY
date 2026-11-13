@@ -382,9 +382,17 @@ class Handler(BaseHTTPRequestHandler):
                 # Fail closed: malformed reasoning must never be sent to a learner.
                 self._response(502, {"error": "الموديل ما رجّعش جواب نهائي آمن. جرب تعاود السؤال."})
                 return
-            self._response(200, {"reply": reply, "level": level, "provider": "self-hosted"})
-        except (URLError, HTTPError, TimeoutError, ValueError, KeyError):
-            self._response(503, {"error": "Ollama ما جاوبش أو تأخر بزاف. تأكد من تشغيله وخفف البرامج المفتوحة على PC."})
+            self._response(200, {"reply": reply, "level": level, "provider": "self-hosted",
+                                 "elapsed_seconds": round(time.monotonic() - started, 1)})
+        except HTTPError as exc:
+            detail = exc.read(800).decode("utf-8", errors="replace")
+            print("[Deutsch AI] Ollama HTTP %d: %s" % (exc.code, detail[:300]), flush=True)
+            self._response(502, {"error": "Ollama رجّع خطأ "+str(exc.code)+". راجع النافذة الكحلة للمزيد من التفاصيل."})
+        except TimeoutError:
+            self._response(504, {"error": "Qwen3 تأخر بزاف على PC. سدّ البرامج الثقيلة وعاود المحاولة."})
+        except (URLError, ValueError, KeyError, OSError) as exc:
+            print("[Deutsch AI] Ollama request error:", str(exc)[:300], flush=True)
+            self._response(503, {"error": "تعذر الاتصال بـOllama المحلي. تأكد أن Ollama خدام وأن الموديل qwen3:4b محمّل."})
 
     def log_message(self, fmt, *args):
         print("[Deutsch AI] " + (fmt % args))
