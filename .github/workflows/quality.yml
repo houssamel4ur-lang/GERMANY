@@ -26,6 +26,7 @@ jobs:
           node --check data/course-a2-skills.js
           node --check data/primary-lesson-links.js
           node --check data/primary-phonetics.js
+          node --check data/structured-a1-pronunciation.js
           node --check assets/primary-study.js
           node --check assets/primary-home.js
           node --check data/curriculum-2026.js
