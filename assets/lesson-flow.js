@@ -41,7 +41,7 @@ function classify(topic){
  if(["A1-03","A2-01","B1-01","B2-01"].includes(sectionId))return "grammar";
  // These larger syllabus sections contain multiple different real-world skills.
  if(sectionId==="B2-03"){
-  return /استماع|المسموع|النقاشات|المقابلات|التقارير|الوثائقيات|المحاضرات|السرعة الطبيعية|تدوين الملاحظات|المواقف الضمنية/i.test(title)?"listening":"reading";
+  return /استماع|المسموع|النقاشات|المقابلات|المقابالت|التقارير|الوثائقيات|المحاضرات|السرعة الطبيعية|تدوين الملاحظات|المواقف الضمنية/i.test(title)?"listening":"reading";
  }
  if(sectionId==="B2-04"){
   return /التحدث|الشفهي|العرض|المناقشة|إدارة الحوار|Diskussion|الأسئلة غير المتوقعة|التعبيرات الطبيعية|النبر والتنغيم|الدفاع عن الموقف|الاعتراض المهذب|الشك والاحتمال|الحلول الواقعية|مقارنة البدائل|إعادة الصياغة شفويا/i.test(title)?"speaking":"writing";
