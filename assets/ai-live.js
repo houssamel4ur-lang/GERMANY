@@ -65,12 +65,13 @@ function stopOutput(){
  if(playbackResolve){const done=playbackResolve;playbackResolve=null;done()}
  output.pause();output.removeAttribute("src");output.srcObject=null;output.load();
  if(mediaURL){URL.revokeObjectURL(mediaURL);mediaURL=null}
- output.controls=false;
+ output.controls=false;output.hidden=true;
 }
 function stopSession(){
  const wasActive=active;
  active=false;busy=false;
  controller?.abort();controller=null;
+ window.DEUTSCH_AI_CANCEL_REVIEW?.();
  stopRecorder();recorder=null;parts=[];
  stream?.getTracks().forEach(t=>t.stop());stream=null;
  if(ctx){ctx.close().catch(()=>{});ctx=null}
@@ -116,7 +117,7 @@ function listen(){
   if(!heardVoice&&rms<0.025)quietLevel=quietLevel*0.97+rms*0.03;
   if(rms>Math.max(0.014,quietLevel*2.5))consecutive++;else consecutive=0;
   if(consecutive>=2){heardVoice=true;lastVoice=now}
-  if(heardVoice&&now-lastVoice>1300&&now-listenStarted>850)stopRecorder();
+  if(heardVoice&&now-lastVoice>2200&&now-listenStarted>850)stopRecorder();
   if(now-listenStarted>22000)stopRecorder();
  },110);
 }
@@ -129,9 +130,15 @@ async function processTurn(blob,type){
   const data=new FormData();
   data.append("audio",blob,"speech."+(type.includes("mp4")?"mp4":type.includes("ogg")?"ogg":"webm"));
   const response=await endpoint("/api/transcribe",{method:"POST",body:data});
-  const transcript=String((await response.json()).text||"").trim();
+  let transcript=String((await response.json()).text||"").trim();
   if(!active)return;
   if(!transcript){status("Whisper ما فهمش الجملة. عاود هضر بوضوح.");return}
+  if(document.getElementById("reviewTranscription")?.checked){
+   status("Whisper سمع هاد الجملة. راجعها ووافق قبل ما نجاوبك.");
+   transcript=await window.DEUTSCH_AI_REVIEW_TRANSCRIPT?.(transcript) || "";
+   if(!active)return;
+   if(!transcript){status("لغيت هاد التسجيل؛ غادي نرجع نسمعك.");return}
+  }
   bubble("user",transcript);
   status("Qwen3/Llama كيوجد جواب ألماني حسب مستواك…");
   const user={role:"user",content:transcript};
@@ -151,7 +158,7 @@ async function processTurn(blob,type){
   const wav=await sound.blob();
   if(!active)return;
   if(!wav.size)throw Error("الصوت المولد فارغ.");
-  mediaURL=URL.createObjectURL(wav);output.src=mediaURL;output.controls=false;
+  mediaURL=URL.createObjectURL(wav);output.src=mediaURL;output.hidden=false;output.controls=true;
   status("🔊 Deutsch Partner كيهضر؛ كنرجع نسمعك مباشرة من بعد الجواب.");
   await new Promise(resolve=>{
    let completed=false;
