@@ -11,6 +11,8 @@ on:
       - 'journey.html'
       - 'review-primary.html'
       - 'assets/primary-study.js'
+      - 'assets/lesson-flow.js'
+      - 'assets/lesson-structure.css'
       - 'assets/primary-home.js'
       - 'assets/curriculum-app.js'
       - 'data/curriculum-lessons-2026.js'
