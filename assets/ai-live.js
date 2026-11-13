@@ -1,169 +1,216 @@
-/* Self-hosted, hands-free conversation. Ollama + Whisper + Piper only.
- * No OpenAI WebRTC endpoint or commercial model API is used.
- * Silence after an utterance starts the next turn automatically.
+/* Deutsch Partner: offline German microphone + turn-based voice conversation.
+ * Whisper speech-to-text, Ollama German tutor, Piper German voice.
+ * Uses only the user's localhost backend; no commercial real-time speech API.
  */
 (function(){
 "use strict";
-const start=document.getElementById("startLive"),end=document.getElementById("endLive");
-const indicator=document.getElementById("liveStatus"),output=document.getElementById("liveOutput");
-const badge=document.getElementById("connectionBadge");
-if(!start||!end||!indicator||!output||!badge)return;
+const $=id=>document.getElementById(id);
+const start=$("startLive"),finish=$("finishLiveTurn"),end=$("endLive"),test=$("voiceTest");
+const indicator=$("liveStatus"),output=$("liveOutput"),capabilities=$("voiceCapabilities"),badge=$("connectionBadge");
+if(!start||!finish||!end||!test||!indicator||!output||!badge)return;
 const base=String(window.DEUTSCH_AI_CONFIG?.apiBase||"").trim().replace(/\/+$/,"");
-const field=id=>document.getElementById(id);
-let active=false,busy=false,stream=null,recorder=null,chunkList=[],analyser=null,audioCtx=null,timer=null,controller=null,objectURL=null;
-let recordedSpeech=false,speechAt=0,startAt=0,consecutive=0,turns=[],sessionStarted=0,playbackResolve=null;
-function status(value){indicator.textContent=value}
-function connected(){return window.DEUTSCH_AI_VOICE_READY===true&&badge.classList.contains("ok")&&/^(https:\/\/|http:\/\/localhost|http:\/\/127\.0\.0\.1)/.test(base)}
-function adjust(){start.disabled=active||!connected();end.disabled=!active}
-new MutationObserver(adjust).observe(badge,{attributes:true,attributeFilter:["class"]});
-function notifyLocked(locked){
- window.dispatchEvent(new CustomEvent("coach-live-state",{detail:{active:locked}}));
- for(const id of ["levelSelect","scenarioSelect","correctToggle"]){if(field(id))field(id).disabled=locked}
- adjust();
+const validBase=/^https:\/\/|^http:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/i.test(base);
+let active=false,busy=false,stream=null,recorder=null,parts=[],ctx=null,micSource=null,analyser=null;
+let timer=null,controller=null,mediaURL=null,playbackResolve=null,sessionStarted=0,listenStarted=0,lastVoice=0;
+let heardVoice=false,consecutive=0,history=[],testBusy=false,quietLevel=0.009;
+const memoryLimit=12;
+function status(message){indicator.textContent=message}
+function audioFlags(){return window.DEUTSCH_AI_AUDIO_STATUS||{speechReady:false,transcriptionReady:false}}
+function ready(){return validBase&&badge.classList.contains("ok")&&window.DEUTSCH_AI_VOICE_READY===true}
+function flags(){
+ const a=audioFlags(),speech=Boolean(a.speechReady),mic=Boolean(a.transcriptionReady);
+ if(!validBase||!badge.classList.contains("ok"))capabilities.textContent="شغّل سيرفر AI المحلي ثم اختبر الاتصال";
+ else if(speech&&mic)capabilities.textContent="● Whisper وPiper واجدين محلياً";
+ else if(!speech&&!mic)capabilities.textContent="خاص تثبيت Whisper وPiper بالصوت";
+ else if(!speech)capabilities.textContent="Whisper موجود؛ خاص صوت Piper الألماني";
+ else capabilities.textContent="Piper موجود؛ خاص Whisper للميكروفون";
+ start.disabled=active||testBusy||!ready();end.disabled=!active;
+ finish.disabled=!active||busy||recorder?.state!=="recording";
+ test.disabled=active||testBusy||!speech||!validBase||!badge.classList.contains("ok");
 }
-function appendBubble(role,txt){
- const host=field("messages"),box=document.createElement("div");
- box.className="ai-bubble "+(role==="user"?"you":"bot")+" de-text";box.dir="ltr";
- const meta=document.createElement("span");meta.className="ai-meta";meta.textContent=role==="user"?"Du · Live":"Deutsch Partner · Live";
- const content=document.createElement("span");content.textContent=txt;
- box.append(meta,content);host.appendChild(box);host.scrollTop=host.scrollHeight;
+window.addEventListener("coach-voice-readiness",()=>{
+ const a=audioFlags();
+ if(!active&&!testBusy){status(a.speechReady&&a.transcriptionReady?
+  "الصوت واجد. ضغط «بدء المكالمة» أو «جرّب الصوت».":
+  "باش تستعمل الصوت، شغّل START-VOICE-AI.cmd حتى يكمل تثبيت Piper وWhisper.")}
+ flags();
+});
+new MutationObserver(flags).observe(badge,{attributes:true,attributeFilter:["class"]});
+function broadcast(isActive){
+ window.dispatchEvent(new CustomEvent("coach-live-state",{detail:{active:isActive}}));
+ for(const id of ["levelSelect","scenarioSelect","correctToggle"]){if($(id))$(id).disabled=isActive}
+ flags();
 }
-async function endpoint(path,options){
- const headers={"X-Coach-Access":field("accessCode")?.value||"",...(options.headers||{})};
+function bubble(role,message){
+ const host=$("messages");if(!host)return;
+ const node=document.createElement("div");node.className="ai-bubble "+(role==="user"?"you":"bot")+" de-text";node.dir="ltr";
+ const label=document.createElement("span");label.className="ai-meta";label.textContent=role==="user"?"Du · صوت":"Deutsch Partner · صوت";
+ const content=document.createElement("span");content.textContent=message;
+ node.append(label,content);host.appendChild(node);host.scrollTop=host.scrollHeight;
+}
+async function endpoint(path,opts={}){
+ const headers={...(opts.headers||{})};
+ if(!window.DEUTSCH_AI_CONFIG?.localOnly&&$("accessCode")?.value)headers["X-Coach-Access"]=$("accessCode").value;
  controller=new AbortController();
- let response;
- try{response=await fetch(base+path,{...options,headers,signal:controller.signal})}
- catch(e){throw new Error("الخادم المحلي ما جاوبش أو تقطع الاتصال.")}
- if(!response.ok){
-  let body={};try{body=await response.json()}catch(e){}
-  throw new Error(body.error||"الخادم رجع خطأ: "+response.status);
- }
- return response;
+ const res=await fetch(base+path,{...opts,headers,signal:controller.signal});
+ if(!res.ok){let error={};try{error=await res.json()}catch(_){}
+  throw Error(error.error||"الخادم رجع "+res.status)}
+ return res;
 }
-function haltRecording(){
- if(timer){clearInterval(timer);timer=null}
- if(recorder?.state==="recording"){try{recorder.stop()}catch(e){}}
+function stopRecorder(){
+ if(timer!==null){clearInterval(timer);timer=null}
+ if(recorder?.state==="recording"){try{recorder.stop()}catch(_){}}
 }
-function stopAudio(){
- if(playbackResolve){const resolve=playbackResolve;playbackResolve=null;resolve()}
- output.pause();output.srcObject=null;output.removeAttribute("src");output.load();
- if(objectURL){URL.revokeObjectURL(objectURL);objectURL=null}
+function stopOutput(){
+ if(playbackResolve){const done=playbackResolve;playbackResolve=null;done()}
+ output.pause();output.removeAttribute("src");output.srcObject=null;output.load();
+ if(mediaURL){URL.revokeObjectURL(mediaURL);mediaURL=null}
+ output.controls=false;
 }
-function endSession(){
+function stopSession(){
+ if(!active)return;
  active=false;busy=false;
  controller?.abort();controller=null;
- haltRecording();
- recorder=null;chunkList=[];
- if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
- if(audioCtx){audioCtx.close().catch(()=>{});audioCtx=null}
- analyser=null;stopAudio();turns=[];
- notifyLocked(false);
- status("المكالمة سالات والميكروفون توقف.");
+ stopRecorder();recorder=null;parts=[];
+ stream?.getTracks().forEach(t=>t.stop());stream=null;
+ if(ctx){ctx.close().catch(()=>{});ctx=null}
+ analyser=null;micSource=null;stopOutput();
+ history=[];broadcast(false);
+ status("المكالمة تسالات، والميكروفون توقف.");
 }
-function audioLevel(){
+function volume(){
  if(!analyser)return 0;
- let arr=new Uint8Array(analyser.fftSize);
- analyser.getByteTimeDomainData(arr);
- let sum=0;for(const x of arr){const n=(x-128)/128;sum+=n*n}
- return Math.sqrt(sum/arr.length);
+ const values=new Uint8Array(analyser.fftSize);analyser.getByteTimeDomainData(values);
+ let power=0;
+ for(const sample of values){const x=(sample-128)/128;power+=x*x}
+ return Math.sqrt(power/values.length);
 }
-function beginTurn(){
+function listen(){
  if(!active||busy||!stream)return;
- if(Date.now()-sessionStarted>15*60_000){status("انتهت جلسة 15 دقيقة حفاظاً على الموارد.");endSession();return}
- if(typeof MediaRecorder==="undefined"){status("المتصفح لا يدعم تسجيل الصوت. استخدم الوضع الكتابي.");endSession();return}
- const candidates=["audio/webm;codecs=opus","audio/mp4","audio/webm","audio/ogg;codecs=opus"];
- const mime=candidates.find(x=>MediaRecorder.isTypeSupported(x));
+ if(Date.now()-sessionStarted>15*60000){
+  status("وصلتي لـ15 دقيقة ديال المكالمة. تقدر تبدا مكالمة جديدة.");stopSession();return;
+ }
+ if(typeof MediaRecorder==="undefined"){status("المتصفح ما كيدعمش التسجيل هنا.");stopSession();return}
+ const formats=["audio/webm;codecs=opus","audio/webm","audio/mp4","audio/ogg;codecs=opus"];
+ const mime=formats.find(x=>MediaRecorder.isTypeSupported(x));
  try{recorder=new MediaRecorder(stream,mime?{mimeType:mime}:{})}
- catch(e){status("تعذر فتح تسجيل الصوت في هذا المتصفح.");endSession();return}
- chunkList=[];recordedSpeech=false;speechAt=0;consecutive=0;startAt=Date.now();
+ catch(_){status("متصفحك ما قدرش يبدأ تسجيل الميكروفون.");stopSession();return}
  const thisRecorder=recorder;
- thisRecorder.addEventListener("dataavailable",e=>{if(e.data.size>0)chunkList.push(e.data)});
- thisRecorder.addEventListener("stop",async()=>{
-  if(timer){clearInterval(timer);timer=null}
+ parts=[];heardVoice=false;lastVoice=0;consecutive=0;listenStarted=Date.now();quietLevel=0.009;
+ thisRecorder.ondataavailable=e=>{if(e.data.size)parts.push(e.data)};
+ thisRecorder.onstop=async()=>{
+  if(timer!==null){clearInterval(timer);timer=null}
   if(!active||thisRecorder!==recorder)return;
   const typ=thisRecorder.mimeType||"audio/webm";
-  const blob=new Blob(chunkList,{type:typ});chunkList=[];
-  recorder=null;
-  if(!recordedSpeech||blob.size<900){status("تقدر تهضر بالألمانية… كنسمع ليك.");beginTurn();return}
-  await processTurn(blob,typ);
- });
- thisRecorder.start(300);
- status("🎙️ هضر بشكل طبيعي. ملي تسكت غادي نفهم ونرد بالألمانية.");
+  const audio=new Blob(parts,{type:typ});parts=[];recorder=null;flags();
+  if(!heardVoice||audio.size<500){
+   status("ما سمعتش جملة واضحة. عاود هضر أو استعمل «إرسال الجملة».");listen();return;
+  }
+  await processTurn(audio,typ);
+ };
+ thisRecorder.start(250);flags();
+ status("🎙️ كنسمعك… هضر بالألمانية. ملي تسكت غادي يتصيفط كلامك.");
  timer=setInterval(()=>{
-  if(!active||recorder!==thisRecorder)return;
-  const now=Date.now(),rms=audioLevel();
-  if(rms>0.034)consecutive++;else consecutive=0;
-  if(consecutive>=2){recordedSpeech=true;speechAt=now}
-  if(recordedSpeech&&now-speechAt>1400&&now-startAt>900)haltRecording();
-  if(now-startAt>26000)haltRecording();
- },120);
+  if(!active||recorder!==thisRecorder||busy)return;
+  const now=Date.now(),rms=volume();
+  if(!heardVoice&&rms<0.025)quietLevel=quietLevel*0.97+rms*0.03;
+  if(rms>Math.max(0.014,quietLevel*2.5))consecutive++;else consecutive=0;
+  if(consecutive>=2){heardVoice=true;lastVoice=now}
+  if(heardVoice&&now-lastVoice>1300&&now-listenStarted>850)stopRecorder();
+  if(now-listenStarted>22000)stopRecorder();
+ },110);
 }
 async function processTurn(blob,type){
  if(!active||busy)return;
- busy=true;status("كنحوّل صوتك إلى الألمانية ونوجد جواب من النموذج المحلي…");
+ busy=true;flags();
+ status("كنحوّل صوتك لنص ألماني عبر Whisper… أول استعمال يقدر يحمل النموذج.");
  try{
-  const file=new FormData();
-  file.append("audio",blob,"utterance."+(type.includes("mp4")?"mp4":type.includes("ogg")?"ogg":"webm"));
-  if(blob.size>5_000_000)throw new Error("التسجيل كبير بزاف. حاول بجملة أقصر.");
-  const transcriptResult=await endpoint("/api/transcribe",{method:"POST",body:file});
-  const transcript=String((await transcriptResult.json()).text||"").trim();
+  if(blob.size>5000000)throw Error("التسجيل طويل بزاف، حاول بجملة أقصر.");
+  const data=new FormData();
+  data.append("audio",blob,"speech."+(type.includes("mp4")?"mp4":type.includes("ogg")?"ogg":"webm"));
+  const response=await endpoint("/api/transcribe",{method:"POST",body:data});
+  const transcript=String((await response.json()).text||"").trim();
   if(!active)return;
-  if(!transcript){
-   status("ما فهمتش الكلام. عاود هضر بهدوء وبوضوح.");
-   return;
-  }
-  appendBubble("user",transcript);
+  if(!transcript){status("Whisper ما فهمش الجملة. عاود هضر بوضوح.");return}
+  bubble("user",transcript);
+  status("Qwen3/Llama كيوجد جواب ألماني حسب مستواك…");
   const user={role:"user",content:transcript};
-  const result=await endpoint("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-    level:field("levelSelect").value,scenario:field("scenarioSelect").value,
-    correct:field("correctToggle").checked,lesson_id:new URLSearchParams(location.search).get("lesson")||null,messages:[...turns,user].slice(-24)
+  const generated=await endpoint("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+   level:$("levelSelect").value,scenario:$("scenarioSelect").value,
+   correct:$("correctToggle").checked,lesson_id:new URLSearchParams(location.search).get("lesson")||null,
+   messages:[...history,user].slice(-memoryLimit)
   })});
-  const reply=String((await result.json()).reply||"").trim();
+  const reply=String((await generated.json()).reply||"").trim();
   if(!active)return;
-  if(!reply)throw new Error("النموذج المحلي ما عطاش جواب.");
-  appendBubble("assistant",reply);
-  turns.push(user,{role:"assistant",content:reply});turns=turns.slice(-24);
-  status("كنولّد النطق الألماني المحلي...");
+  if(!reply)throw Error("ما وصلناش بجواب من الموديل.");
+  bubble("assistant",reply);history.push(user,{role:"assistant",content:reply});history=history.slice(-memoryLimit);
+  status("🔊 Piper كيجهّز النطق الألماني…");
   const sound=await endpoint("/api/speak",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-    text:reply.slice(0,650),level:field("levelSelect").value
+   text:reply.slice(0,650),level:$("levelSelect").value
   })});
   const wav=await sound.blob();
   if(!active)return;
-  objectURL=URL.createObjectURL(wav);
-  output.src=objectURL;
-  output.controls=false;
-  status("🔊 Deutsch Partner كيهضر بالألمانية؛ الميكروفون كيسمع من بعد ما يسالي.");
+  if(!wav.size)throw Error("الصوت المولد فارغ.");
+  mediaURL=URL.createObjectURL(wav);output.src=mediaURL;output.controls=false;
+  status("🔊 Deutsch Partner كيهضر؛ كنرجع نسمعك مباشرة من بعد الجواب.");
   await new Promise(resolve=>{
-   let done=false;
-   const finish=()=>{if(done)return;done=true;playbackResolve=null;output.onended=null;output.onerror=null;resolve()};
-   playbackResolve=finish;
-   output.onended=finish;output.onerror=finish;
-   output.play().catch(()=>{output.controls=true;status("متصفحك منع التشغيل التلقائي. ضغط على تشغيل الصوت باش تكمل المكالمة.");});
+   let completed=false;
+   const done=()=>{if(completed)return;completed=true;playbackResolve=null;output.onended=null;output.onerror=null;resolve()};
+   playbackResolve=done;output.onended=done;
+   output.onerror=()=>{status("تعذر تشغيل الصوت؛ تأكد من اختيار السماعات.");done()};
+   output.play().catch(()=>{
+    if(!active)return done();
+    output.controls=true;
+    status("المتصفح منع التشغيل التلقائي. ضغط Play على الصوت اللي ظهر باش تكمل المكالمة.");
+   });
   });
-  stopAudio();
+  stopOutput();
  }catch(e){
-  if(active)status("وقع مشكل فالمحادثة المحلية: "+String(e.message||"تعذر إتمام المكالمة"));
+  if(active)status("مشكلة فالمكالمة المحلية: "+String(e.message||"خطأ غير معروف").slice(0,180));
  }finally{
-  busy=false;
-  if(active)beginTurn();
+  busy=false;flags();
+  if(active)listen();
  }
 }
 start.addEventListener("click",async()=>{
- if(active||!connected())return;
- if(field("recordBtn")?.classList.contains("recording")){status("وقف التسجيل القصير أولاً.");return}
- if(!navigator.mediaDevices?.getUserMedia){status("المتصفح لا يدعم الميكروفون هنا؛ خاص HTTPS وإذن التسجيل.");return}
+ if(active||!ready())return;
+ if($("recordBtn")?.classList.contains("recording")){
+  status("وقف التسجيل القصير قبل المكالمة.");return
+ }
+ if(!navigator.mediaDevices?.getUserMedia){status("المتصفح خاصو HTTPS وإذن الميكروفون.");return}
  try{
   stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
-  const AContext=window.AudioContext||window.webkitAudioContext;
-  if(!AContext)throw new Error("متصفحك لا يدعم قياس الصمت للردود.");
-  audioCtx=new AContext();await audioCtx.resume();
-  analyser=audioCtx.createAnalyser();analyser.fftSize=1024;
-  audioCtx.createMediaStreamSource(stream).connect(analyser);
-  turns=[];active=true;busy=false;sessionStarted=Date.now();notifyLocked(true);
-  beginTurn();
- }catch(e){status("ما قدرناش نفتح الميكروفون: "+String(e.message||"تحقق من الإذن"));endSession()}
+  const AudioCtx=window.AudioContext||window.webkitAudioContext;
+  if(!AudioCtx)throw Error("المتصفح ما كيدعمش قياس الصوت.");
+  ctx=new AudioCtx();await ctx.resume();
+  analyser=ctx.createAnalyser();analyser.fftSize=1024;
+  micSource=ctx.createMediaStreamSource(stream);micSource.connect(analyser);
+  active=true;busy=false;history=[];sessionStarted=Date.now();
+  broadcast(true);listen();
+ }catch(e){
+  status("ما قدرناش نشغلو الميكروفون. عطِ الإذن للمتصفح: "+String(e.message||"تعذر التسجيل"));
+  stopSession();
+ }
 });
-end.addEventListener("click",endSession);
-window.addEventListener("pagehide",endSession);
-adjust();
+finish.addEventListener("click",()=>{
+ if(!active||busy||recorder?.state!=="recording")return;
+ heardVoice=true;lastVoice=Date.now();stopRecorder();flags();
+});
+end.addEventListener("click",stopSession);
+test.addEventListener("click",async()=>{
+ if(active||testBusy||!audioFlags().speechReady)return;
+ testBusy=true;flags();status("كنجرب الصوت الألماني ديال Piper…");
+ try{
+  const resp=await endpoint("/api/speak",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+   text:"Hallo! Ich bin dein Deutschpartner. Wir üben heute Deutsch.",level:$("levelSelect").value
+  })});
+  const blob=await resp.blob();if(!blob.size)throw Error("صوت فارغ.");
+  stopOutput();mediaURL=URL.createObjectURL(blob);output.src=mediaURL;output.controls=true;
+  await output.play();
+  status("الصوت الألماني خدام. تقدر تشغل الميكروفون أو تبدأ المكالمة.");
+ }catch(e){status("الصوت ما خدمش: "+String(e.message||"خطأ محلي").slice(0,180))}
+ finally{testBusy=false;flags()}
+});
+window.addEventListener("pagehide",()=>{if(active)stopSession();else stopOutput()});
+flags();
 })();
