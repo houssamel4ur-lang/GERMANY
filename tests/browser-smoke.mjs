@@ -63,7 +63,7 @@ checked++;
 await go("course.html?topic=B2-01-16");
 assert.ok((await page.locator("#courseSection").innerText()).includes("Zustandspassiv"),"B2 extension state-passive lesson missing");
 await page.locator('[data-tab="reading"]').click();
-assert.ok((await page.locator("#courseSection").innerText()).includes("المتحف"),"B2 extension reading translation missing");
+assert.ok((await page.locator("#courseSection .story").innerText()).includes("Museum"),"B2 extension German reading missing");
 checked++;
 await go("journey.html");
 assert.ok((await page.locator("#primaryStudyMount").innerText()).length>30,"dashboard unavailable");
