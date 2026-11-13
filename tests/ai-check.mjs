@@ -41,6 +41,16 @@ try{
  assert.equal(sound.status,200);
  assert.equal(sound.headers.get("Content-Type"),"audio/mpeg");
  globalThis.fetch=async (url,opts)=>{
+   assert.equal(url,"https://api.openai.com/v1/realtime/client_secrets");
+   const cfg=JSON.parse(opts.body);
+   assert.equal(cfg.session.model,"gpt-realtime-2.1-mini");
+   assert.equal(cfg.session.audio.input.turn_detection.type,"semantic_vad");
+   assert.match(cfg.session.instructions,/CEFR B2/);
+   return Response.json({value:"ek-TEST-FAKE",expires_at:1234567890});
+ };
+ const realtime=await invoke("/api/realtime-token",{method:"POST",headers:{...auth,"Content-Type":"application/json"},body:JSON.stringify({level:"B2",scenario:"debate",correct:true})});
+ assert.equal(realtime.status,200);assert.equal((await realtime.json()).value,"ek-TEST-FAKE");
+ globalThis.fetch=async (url,opts)=>{
    assert.equal(url,"https://api.openai.com/v1/audio/transcriptions");
    assert.equal(opts.body.get("language"),"de");
    return Response.json({text:"Ich heiße Lena."});
@@ -60,4 +70,9 @@ assert.match(read("assets/ai-chat.js"),/\/api\/transcribe/);
 assert.match(read("assets/ai-chat.js"),/\/api\/speak/);
 assert.ok(!read("assets/ai-config.js").includes("sk-"),"Never publish a secret in frontend config");
 assert.ok(!read("assets/ai-chat.js").includes("speechSynthesis"),"Never use wrong-language browser TTS");
+assert.match(read("ai.html"),/id="startLive"/);
+assert.match(read("ai.html"),/assets\/ai-live.js/);
+assert.match(read("assets/ai-live.js"),/RTCPeerConnection/);
+assert.match(read("assets/ai-live.js"),/realtime\/calls/);
+
 console.log("AI CHECK PASS: four levels, protected backend, CORS, real chat, German TTS and STT contracts, and static interface.");
