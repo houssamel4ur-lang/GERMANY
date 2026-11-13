@@ -34,6 +34,13 @@
 </aside>
 <section class="ai-chat" aria-label="المحادثة">
 <div class="ai-chatbar"><div><strong>Deutsch Partner</strong><span>صديق تدريب افتراضي بالذكاء الاصطناعي — ليس شخصاً حقيقياً</span></div><span id="sessionLevel">A1</span></div>
+<div class="ai-live" aria-label="مكالمة صوتية مباشرة">
+<div><b>مكالمة مباشرة بالألمانية</b><span>تبادل أدوار طبيعي بالصوت، مع إمكانية إيقاف الميكروفون في أي لحظة</span></div>
+<button class="primary" id="startLive" type="button" disabled>بدء المكالمة <span aria-hidden="true">📞</span></button>
+<button class="outline" id="endLive" type="button" disabled>إنهاء المكالمة</button>
+<audio id="liveOutput" autoplay playsinline></audio>
+<span class="ai-live-status" id="liveStatus" role="status">متوقفة حتى يتم الاتصال بالخادم</span>
+</div>
 <div class="ai-messages" id="messages" role="log" aria-live="polite" aria-relevant="additions text"></div>
 <div class="ai-suggestions" id="suggestions" aria-label="جمل للبدء"></div>
 <form id="chatForm" class="ai-compose">
@@ -52,4 +59,5 @@
 <footer><div class="wrap foot"><b>Deutsch Mastery</b><span>تعلّم الألمانية بالتدرّج والممارسة</span><a href="quality.html">حدود المشروع</a></div></footer>
 <script src="assets/ai-config.js"></script>
 <script src="assets/ai-chat.js"></script>
+<script src="assets/ai-live.js"></script>
 </body></html>
