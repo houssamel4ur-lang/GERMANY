@@ -53,9 +53,9 @@ function add(id,base,part){
  explanation:part?part[0]:base.grammar,
  examples:[ex,[base.example,base.exampleAr]].filter(x=>x[0]&&x[1]).filter((x,i,a)=>a.findIndex(y=>y[0]===x[0])===i),
  vocabulary:(base.words||[]).map(x=>Array.isArray(x)?{de:x[0],ar:x[1]}:{de:x.de,ar:x.ar}),
- reading:base.reading||base.example,translation:base.textAr||base.exampleAr,dialogue:base.dialogue||[],
+ reading:Array.isArray(base.reading)?base.reading[0]:(base.reading||base.example),translation:Array.isArray(base.reading)?base.reading[1]:(base.textAr||base.exampleAr),dialogue:base.dialogue||[],
  writing:base.writing||"اكتب خمس جمل مترابطة بالألمانية حول هذا الموضوع، وراجع ترتيب الأفعال والروابط.",
- questions:part?[{prompt:part[3][0],answer:part[3][1],options:part[3].slice(1),type:"grammar"}]:[],
+ questions:part?[{prompt:part[3][0],answer:part[3][1],options:part[3].slice(1),type:"grammar"},...(Array.isArray(base.reading)&&Array.isArray(base.reading[2])?[{prompt:base.reading[2][0],answer:base.reading[2][1],options:base.reading[2].slice(1),type:"reading"}]:[])]:[],
  source:part?"authored-unit-"+base.n:"practice-"+base.id,
  status:"draft_interactive",
  quality:"تدريب موضوعي قابل للاستخدام، لكن يحتاج توسيعاً ومراجعة لغوية متخصصة قبل اعتباره درساً نهائياً."});
