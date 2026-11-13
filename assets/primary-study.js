@@ -35,7 +35,11 @@ function wordCard(word,i,listenOnly){
 const key=savedKey(word),saved=!!state.cards[key];
 return '<div class="wordrow wordrow-vocab"><div class="wordrow-text"><div class="wordrow-german">'+iso(word.de)+speaker(word.de)+'</div><small>'+esc(word.ar)+'</small></div>'+(listenOnly?"":'<div class="rowactions"><button class="outline" data-saveword="'+i+'" type="button" aria-label="احفظ للمراجعة">'+(saved?"★ محفوظة":"☆ احفظ")+'</button></div>')+'</div>';
 }
-const tabs=[["intro","01 · خطة الدرس"],["vocab","02 · المفردات"],["audio","03 · النطق والاستماع"],["grammar","04 · الشرح والقواعد"],["conversation","05 · المحادثة"],["reading","06 · القراءة والكتابة"],["exercise","07 · التمارين"],["result","08 · التقييم"]];
+const flow=(topic&&lesson)?window.DM_LESSON_FLOW?.get(topic,lesson):null;
+const tabs=flow?.core||[];
+const optionalTabs=flow?.extras||[];
+const stageName=id=>[...tabs,...optionalTabs].find(x=>x.id===id)?.label||id;
+const stageButton=(s,extra=false)=>'<button class="tab lesson-stage-button'+(extra?' optional-stage':'')+'" type="button" data-tab="'+s.id+'" aria-current="false">'+(extra?'<span class="stage-supplement">+</span>':'<span class="stage-number">'+String(s.number).padStart(2,"0")+'</span>')+'<span class="stage-name">'+esc(s.label)+'</span></button>';
 function detailPage(){
 const parentModule=window.DM_LEARNING_MODULES?.find(x=>x.id===window.DM_MODULE_BY_TOPIC?.[topic.id]);
 const parentUrl=parentModule?"module.html?module="+encodeURIComponent(parentModule.id)+"#"+topic.id:"syllabus.html?level="+topic.level;
@@ -45,7 +49,13 @@ const next=same.slice(ix+1).find(x=>lessonMap.has(x.id));
 const prev=same.slice(0,ix).reverse().find(x=>lessonMap.has(x.id));
 root.innerHTML='<div class="crumb"><a href="syllabus.html?level='+topic.level+'">فهرس '+topic.level+'</a> / <a href="'+parentUrl+'">'+esc(parentModule?.title||topic.section)+'</a> / الجزء '+String(topic.number).padStart(2,"0")+'</div>'+
 '<div class="lessonhero"><span class="eyebrow">'+topic.level+' · المحور '+topic.section_number+'.'+String(topic.number).padStart(2,"0")+' · تدريب تفاعلي</span><h1>'+esc(topic.title)+'</h1><p>من الفهرس المعتمد، صفحة '+topic.page+'. محتوى تدريبي  ' + (lesson.objectives?.length?'موسّع يتطلب مراجعة لغوية بشرية':'أولي لم يكتمل بعد') + ' ، وليس شهادة رسمية.</p></div>'+
-'<div class="lessonlayout"><aside class="side" aria-label="تسلسل مراحل التعلم"><b>مراحل الدرس بالترتيب</b>'+tabs.map(t=>'<button class="tab" type="button" data-tab="'+t[0]+'">'+t[1]+'</button>').join("")+'</aside><article class="study" id="courseSection"></article></div>'+
+'<div class="lessonlayout"><aside class="side stage-sidebar" aria-label="مسار التعلم المرتب">'+
+ '<div class="stage-sidebar-heading"><span>مسار '+esc(flow.kindTitle)+'</span><small id="stageSidebarCounter">المرحلة 1 من '+tabs.length+'</small></div>'+
+ '<div class="stage-sidebar-meter"><span id="stageSidebarMeter" style="width:0%"></span></div>'+
+ '<nav class="stage-main-list" aria-label="مراحل هذا الدرس">'+tabs.map(s=>stageButton(s)).join("")+'</nav>'+
+ (optionalTabs.length?'<details class="stage-more"><summary>مواد إضافية للدرس ('+optionalTabs.length+')</summary><div class="stage-optional-list">'+optionalTabs.map(s=>stageButton(s,true)).join("")+'</div></details>':"")+
+ '<p class="stage-sidebar-hint">المراحل كتختلف حسب موضوع الدرس. اتبع الأرقام بالترتيب، والمواد الإضافية اختيارية.</p></aside>'+
+ '<article class="study" id="courseSection"></article></div>'+
 '<div class="controls" style="justify-content:space-between;margin:22px 0"><a class="outline" href="'+parentUrl+'">العودة للوحدة المتكاملة</a><a class="primary" href="ai.html?lesson='+encodeURIComponent(topic.id)+'">تدرب مع AI ديالنا على هاد الدرس ←</a><div class="controls">'+(prev?'<a class="outline" href="'+courseLink(prev.id)+'">الدرس السابق</a>':"")+(next?'<a class="primary" href="'+courseLink(next.id)+'">الدرس التالي ←</a>':"")+'</div></div>'+
 '<div class="tiny" id="courseNotice" role="status"></div>';
 state.last=topic.id;store();
@@ -61,7 +71,18 @@ function examplesBlock(items){
  return (items||[]).filter(x=>x&&x[0]&&x[1]).map(x=>'<div class="story lesson-example">'+iso(x[0])+'<p>'+esc(x[1])+'</p>'+speaker(x[0])+'</div>').join("");
 }
 function render(){
- $$("[data-tab]",root).forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
+ $("[data-tab]",root).forEach(b=>{
+  const active=b.dataset.tab===tab;
+  b.classList.toggle("active",active);
+  b.setAttribute("aria-current",active?"step":"false");
+ });
+ const index=tabs.findIndex(x=>x.id===tab);
+ const progress=index<0?0:(index+1)/tabs.length*100;
+ const counter=$("#stageSidebarCounter");
+ if(counter)counter.textContent=index<0?"مادة إضافية":"المرحلة "+(index+1)+" من "+tabs.length;
+ const meter=$("#stageSidebarMeter");if(meter)meter.style.width=progress+"%";
+ const extrasBox=$(".stage-more",root);
+ if(index<0&&extrasBox)extrasBox.open=true;
  const view=$("#courseSection");if(!view)return;
  const expanded=!!lesson.objectives?.length;
  const lessonObjectives=expanded?lesson.objectives:[
@@ -71,14 +92,15 @@ function render(){
  ];
  let html="";
  if(tab==="intro"){
-  html=title("خريطة الدرس: "+topic.title,"هذه الصفحة للتوجيه وخطوات الدراسة؛ الشرح التفصيلي يوجد في قسمه الخاص ولا يتكرر هنا.")+
-  '<div class="lesson-block"><h3>بعد هذا الدرس تستطيع أن...</h3>'+bulletList(lessonObjectives)+'</div>'+
-  '<div class="lesson-block"><h3>تسلسل التعلم</h3><ol class="learning-list"><li>افهم الهدف والمصطلحات الرئيسية.</li><li>تعلّم المفردات في سياقها ثم استمع للأصوات.</li><li>ادرس القاعدة والأمثلة التطبيقية دون استعجال.</li><li>طبّق في الحوار والقراءة والكتابة.</li><li>أنجز تمارين المراجعة ثم راجع الأخطاء.</li></ol></div>'+
-  '<div class="lesson-highlights"><span>المستوى '+esc(topic.level)+'</span><span>المحور '+esc(topic.section_number)+'.'+String(topic.number).padStart(2,"0")+'</span><span>'+(expanded?esc(lesson.estimatedMinutes||45)+' دقيقة مقترحة':'مسودة قيد التوسيع')+'</span></div>'+
-  '<p class="notice">'+esc(lesson.quality||"محتوى تدريب أولي، يحتاج مراجعة وتطويراً.")+'</p><button class="primary" data-goto="vocab">انتقل إلى المفردات ←</button>';
+  html=title("ابدأ: "+topic.title,"هذا المسار مرتب خصيصاً لموضوع "+flow.kindTitle+"، وليس قائمة ثابتة تُستعمل في كل الدروس.")+
+  '<div class="lesson-block"><h3>ماذا ستتعلم؟</h3>'+bulletList(lessonObjectives)+'</div>'+
+  '<div class="lesson-block"><h3>طريقة دراسة هذا الموضوع</h3><p>'+esc(lesson.explanation||"اقرأ الأمثلة وحاول استخدامها بنفسك.")+'</p></div>'+
+  '<div class="lesson-block"><h3>خطوات الدرس بالترتيب</h3><ol class="learning-list">'+tabs.slice(1).map(s=>'<li>'+esc(s.label)+'</li>').join("")+'</ol><p class="tiny">المواد الإضافية في القائمة الجانبية اختيارية؛ ما كتقطعش تسلسل الدرس.</p></div>'+
+  '<div class="lesson-highlights"><span>المستوى '+esc(topic.level)+'</span><span>نوع الدرس: '+esc(flow.kindTitle)+'</span><span>'+(expanded?esc(lesson.estimatedMinutes||45)+' دقيقة مقترحة':'مسودة قيد التوسيع')+'</span></div>'+
+  '<p class="notice">'+esc(lesson.quality||"محتوى تدريب أولي، يحتاج مراجعة وتطويراً.")+'</p>';
  }
  if(tab==="vocab"){
-  html=title("مفردات وتعبيرات الدرس","هذا القسم لتعلّم المعنى والاستعمال وحفظ الكلمات؛ تدريب الأذن وحده في قسم الصوتيات.")+
+  html=title("مفردات وتعبيرات الدرس","ابدأ بالمعنى ثم اسمع الكلمة بجانبها. الكلمات الصعبة يمكن حفظها للمراجعة؛ ما تحتاجش تحفظ لائحة كبيرة دفعة واحدة.")+
   '<div class="lesson-block"><h3>كيف تحفظ الكلمة بشكل صحيح؟</h3><p>اقرأ الكلمة الألمانية ومعناها، استمع إن توفر تسجيل MP3، ثم كوّن جملة قصيرة بها واحفظ الكلمات الصعبة للمراجعة. احفظ الأسماء مع der أو die أو das عندما تكون الأداة مذكورة.</p></div>'+
   '<p class="tiny">عدد العناصر: '+lesson.vocabulary.length+'</p>'+
   lesson.vocabulary.map((v,i)=>wordCard(v,i,false)).join("")+
@@ -157,9 +179,18 @@ function render(){
   '<div class="lesson-block"><h3>ماذا بعد؟</h3><p>إذا أخطأت في الكلمات فارجع للمفردات، وإذا أخطأت في القاعدة فراجع الشرح، ثم اقرأ النص أو حاول المحادثة مرة أخرى.</p></div>'+
   '<button class="primary" data-goto="exercise">إعادة التدريب ←</button>';
  }
- view.innerHTML=html;
+ const at=tabs.findIndex(s=>s.id===tab);
+ const previous=at>0?tabs[at-1]:null;
+ const upcoming=at>=0&&at<tabs.length-1?tabs[at+1]:null;
+ const heading=at>=0?'المرحلة '+(at+1)+' من '+tabs.length:'مادة إضافية للدرس';
+ const nextLink=upcoming&&tab!=="exercise"?'<button class="primary" type="button" data-goto="'+upcoming.id+'">التالي: '+esc(upcoming.label)+' ←</button>':"";
+ const backLink=previous?'<button class="outline" type="button" data-goto="'+previous.id+'">→ السابق: '+esc(previous.label)+'</button>':"";
+ const nextFromExtra=at<0?'<button class="outline" type="button" data-goto="'+tabs[0].id+'">العودة للمسار الأساسي</button>':"";
+ view.innerHTML='<div class="lesson-current-step"><span>'+esc(heading)+'</span><strong>'+esc(stageName(tab))+'</strong></div>'+
+ html+'<div class="lesson-stage-footer"><div class="lesson-stage-footer-info">'+(at>=0?'تابع حسب التسلسل؛ تقدر ترجع لأي مرحلة وقتما بغيت.':'هذي مادة إضافية، ماشي مرحلة إجبارية.')+'</div>'+
+ '<div class="lesson-stage-footer-actions">'+backLink+nextFromExtra+nextLink+'</div></div>';
  if(tab==="exercise"){questions=buildQuestions();pos=0;first=0;miss=0;drawQuestion()}
- if(tab==="reading"){const v=(()=>{try{return localStorage.getItem(KEY+"-writing-"+id)||""}catch(e){return ""}})();$("#writingDraft",view).value=v}
+ if(tab==="reading"){const v=(()=>{try{return localStorage.getItem(KEY+"-writing-"+id)||""}catch(e){return ""}})();const draft=$("#writingDraft",view);if(draft)draft.value=v}
 }
 function choices(correct,pool,max=4){
  const vals=[correct],used=new Set([norm(correct)]);
@@ -280,9 +311,9 @@ localStorage.setItem(KEY,JSON.stringify(obj.progress));location.reload();
 }
 root.addEventListener("click",e=>{
 const goto=e.target.closest("[data-goto]");
-if(goto){tab=goto.dataset.goto;serial++;render();return}
+if(goto){tab=goto.dataset.goto;serial++;render();$("#courseSection")?.scrollIntoView({block:"start",behavior:"auto"});return}
 const b=e.target.closest("[data-tab]");
-if(b){tab=b.dataset.tab;serial++;render();return}
+if(b){tab=b.dataset.tab;serial++;render();$("#courseSection")?.scrollIntoView({block:"start",behavior:"auto"});return}
 const save=e.target.closest("[data-saveword]");
 if(save&&lesson){
  const word=lesson.vocabulary[Number(save.dataset.saveword)],key=savedKey(word);
