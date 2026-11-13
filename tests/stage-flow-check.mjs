@@ -29,7 +29,7 @@ for(const topic of items){
  assert.ok(core.length>=4&&core.length<=8,"unreasonable path: "+topic.id);
  assert.equal(new Set(core).size,core.length,topic.id);
  assert.equal(new Set([...core,...extras]).size,core.length+extras.length,topic.id);
- assert.deepEqual(flow.core.map(x=>x.number),core.map((_,i)=>i+1),topic.id);
+ assert.equal(JSON.stringify(flow.core.map(x=>x.number)),JSON.stringify(core.map((_,i)=>i+1)),topic.id);
 }
 const byID=id=>items.find(x=>x.id===id);
 assert.equal(helper.classify(byID("A1-01-01")),"pronunciation");
@@ -47,7 +47,7 @@ const prep=helper.get(byID("A1-01-01"),{
  alphabet:[["A","a","/aː/","Apfel","تفاحة"]],
  examples:[["Guten Tag","مرحباً"]],reading:"Ich lerne.",dialogue:[]
 });
-assert.deepEqual(prep.core.map(x=>x.id),["intro","grammar","audio","vocab","exercise","result"]);
+assert.equal(JSON.stringify(prep.core.map(x=>x.id)),JSON.stringify(["intro","grammar","audio","vocab","exercise","result"]));
 assert.equal(prep.core.length,6);
 assert.ok(prep.extras.every(x=>!prep.core.some(y=>y.id===x.id)));
 assert.match(read("assets/primary-study.js"),/const tabs=flow\?\.core\|\|\[\]/);
