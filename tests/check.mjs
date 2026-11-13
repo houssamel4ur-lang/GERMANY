@@ -191,5 +191,6 @@ for(const id of draftWin.DM_COMPLETE_LESSON_IDS){
  assert.ok(l.status==='expanded_draft','enrichment still needs human quality assurance');
 }
 assert.equal(draftWin.DM_PRIMARY_LESSONS.find(x=>x.id==='A1-01-01').alphabet.length,26,'alphabet lesson must cover all 26 letters');
+assert.ok(draftWin.DM_PRIMARY_LESSONS.find(x=>x.id==='A1-01-01').alphabet.every(row=>Boolean(audioMap[row[3]])),'all 26 alphabet examples must have verified German MP3');
 assert.ok(read('assets/primary-study.js').includes('lesson.grammarBlocks?.length'),'render unique grammar blocks instead of repeating intro');
 console.log('PASS: 452 primary topics, 230 interactive lesson drafts, 64 archived topics, German-only speech policy, MP3 audio sources, and '+lessons.length+' unique lessons, '+lessons.reduce((n,x)=>n+x.words.length,0)+' vocabulary entries, 4 levels, HTML assets and data structure.');
