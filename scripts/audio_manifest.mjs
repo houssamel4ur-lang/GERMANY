@@ -22,5 +22,26 @@ if(mode==="smoke"){
 }else if(mode==="all"){
  lessons.forEach(l=>{l.words.forEach(x=>add(x.de));add(l.example);add(l.reading);l.dialogue.forEach(x=>add(x[0]))});
 }else throw Error("Unexpected mode: "+mode);
+
+// New approved syllabus: only recorded German expressions from genuinely authored topic lessons.
+if(mode==="all"){
+ const sources=[
+ "data/master-curriculum.js",
+ "data/course-a1-grammar.js",
+ "data/course-a1-skills.js",
+ "data/course-a2-grammar.js",
+ "data/course-a2-skills.js",
+ "data/primary-lesson-links.js",
+ "data/primary-phonetics.js"
+ ];
+ for(const path of sources)runInNewContext(readFileSync(path,"utf8"),{window:w});
+ for(const lesson of w.DM_PRIMARY_LESSONS||[]){
+  for(const word of lesson.vocabulary)add(word.de);
+  for(const x of lesson.examples)add(x[0]);
+  for(const x of lesson.dialogue)add(x[0]);
+  add(lesson.reading);
+ }
+}
+
 const data=collected.map(text=>({text,path:"assets/audio/de_"+createHash("sha256").update(text).digest("hex").slice(0,24)+".mp3"}));
 process.stdout.write(JSON.stringify({mode,voice:"de-DE-KatjaNeural",entries:data},null,2));
