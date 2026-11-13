@@ -7,7 +7,7 @@ const source=window.DM_PRIMARY_LESSONS;
 if(!master||!Array.isArray(source))throw new Error("Primary curriculum must load before advanced grammar");
 const map=new Map(master.topics.map(t=>[t.id,t]));
 const ids=new Set(source.map(x=>x.id));
-const incoming=[...(window.DM_ADVANCED_GRAMMAR_B1||[]),...(window.DM_ADVANCED_GRAMMAR_B2||[])];
+const incoming=[...(window.DM_ADVANCED_GRAMMAR_B1||[]),...(window.DM_ADVANCED_GRAMMAR_B2||[]),...(window.DM_ADVANCED_GRAMMAR_B1_MORE||[]),...(window.DM_ADVANCED_GRAMMAR_B2_MORE||[])];
 for(const item of incoming){
  const t=map.get(item.id);
  if(!t)throw new Error("Unknown advanced curriculum topic "+item.id);
