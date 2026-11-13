@@ -48,7 +48,7 @@ function buildInstructions(level,scenario,correct){
 }
 async function openaiJSON(path,env,body,timeout=24000){
  const response=await fetch("https://api.openai.com/v1/"+path,{method:"POST",headers:{"Authorization":"Bearer "+env.OPENAI_API_KEY,"Content-Type":"application/json"},body:JSON.stringify(body),signal:AbortSignal.timeout(timeout)});
- if(!response.ok){const info=await response.text();console.log("AI request failed",response.status,info.slice(0,120));throw new Error("UPSTREAM_"+response.status)}
+ if(!response.ok){console.log("AI provider returned status",response.status);throw new Error("UPSTREAM_"+response.status)}
  return response;
 }
 async function talk(req,env,headers){
