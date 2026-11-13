@@ -13,7 +13,7 @@ const field=id=>document.getElementById(id);
 let active=false,busy=false,stream=null,recorder=null,chunkList=[],analyser=null,audioCtx=null,timer=null,controller=null,objectURL=null;
 let recordedSpeech=false,speechAt=0,startAt=0,consecutive=0,turns=[],sessionStarted=0,playbackResolve=null;
 function status(value){indicator.textContent=value}
-function connected(){return badge.classList.contains("ok")&&/^(https:\/\/|http:\/\/localhost|http:\/\/127\.0\.0\.1)/.test(base)}
+function connected(){return window.DEUTSCH_AI_VOICE_READY===true&&badge.classList.contains("ok")&&/^(https:\/\/|http:\/\/localhost|http:\/\/127\.0\.0\.1)/.test(base)}
 function adjust(){start.disabled=active||!connected();end.disabled=!active}
 new MutationObserver(adjust).observe(badge,{attributes:true,attributeFilter:["class"]});
 function notifyLocked(locked){

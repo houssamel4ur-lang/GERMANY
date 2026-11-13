@@ -1,10 +1,12 @@
 # Deutsch Mastery AI — ذكاء اصطناعي ديالنا بلا ربط بمزود AI
 
+**للبداية السهلة على Windows بالمحادثة الكتابية Qwen3 4B فقط:** استعمل [دليل التشغيل المحلي](LOCAL-WINDOWS.md) بلا Docker ولا تثبيت حزم Python إضافية.
+
 هاد النظام كيخدم بنموذج مفتوح على الحاسوب أو السيرفر اللي كتملك وتتحكم فيه، وما كيستعمل حتى API للاستدلال من OpenAI أو Claude أو Gemini.
 
 ## المكونات
 
-- المحادثة: Qwen3 8B عبر Ollama محلياً.
+- المحادثة: Qwen3 4B عبر Ollama محلياً.
 - التعرف على الكلام الألماني: faster-whisper محلياً.
 - النطق الألماني: Piper وصوت de_DE-thorsten-high المحلي.
 - الواجهة: الصفحة ai.html على GitHub Pages، والخادم في هاد المجلد.
@@ -33,7 +35,7 @@
 فتح .env وبدل COACH_ACCESS_CODE برمز فريد طويل (12 حرف على الأقل، ويفضل 24 أو أكثر). ما ترفعش .env لـGitHub.
 
     docker compose up -d --build
-    docker compose exec ollama ollama pull qwen3:8b
+    docker compose exec ollama ollama pull qwen3:4b
     docker compose run --rm coach python -m piper.download_voices --data-dir /opt/voices de_DE-thorsten-high
 
 Whisper غادي ينزل نموذج small في أول استعمال. باش تحضّرو قبل الاستماع:

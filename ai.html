@@ -25,11 +25,11 @@
 <label class="ai-switch"><input type="checkbox" id="autoSpeak" checked> <span>الرد بصوت ألماني تلقائياً</span></label>
 <div class="ai-buttons"><button class="outline" id="newChat" type="button">محادثة جديدة</button><button class="outline" id="stopAudio" type="button">إيقاف الصوت</button></div>
 </section>
-<section class="ai-panel"><h2>الاتصال الآمن</h2>
-<p class="tiny">المحادثة كتخدم بنموذج Qwen3 على سيرفرك أنت، وWhisper وPiper محلياً. ما كاين حتى ربط بمحرك ذكاء اصطناعي مدفوع. استعمل رمز الدخول الخاص بالسيرفر.</p>
+<section class="ai-panel"><h2>تشغيل AI محلياً بـ0$</h2>
+<p class="tiny">شغّل START-DEUTSCH-AI.cmd على Windows (بعد فك الضغط). البرنامج يربط هاد الصفحة بالموديل Qwen3 4B اللي حمّلتي في Ollama، بدون حساب أو API مدفوعة. في هاد النسخة المحادثة كتابية؛ الصوت قيد التجهيز.</p>
 <label for="accessCode">رمز الدخول إلى المساعد</label><input id="accessCode" type="password" placeholder="رمز الدخول الخاص بالسيرفر" autocomplete="off">
 <button class="outline" id="testConnection" type="button">اختبار الاتصال</button>
-<p class="tiny" id="configHint">خاص تشغيل سيرفرك الخاص وتحميل النماذج؛ هاد الواجهة بوحدها ما كتقدرش تولّد الردود.</p>
+<p class="tiny" id="configHint">حمّل حزمة التشغيل المحلية وشغّل الملف START-DEUTSCH-AI.cmd على PC ديالك. خاص Python 3 وOllama يكونو مثبتين.</p>
 </section>
 </aside>
 <section class="ai-chat" aria-label="المحادثة">
@@ -54,7 +54,7 @@
 <p class="ai-footnote" id="chatStatus" role="status">الصوت الناتج اصطناعي. لا يتم تشغيل صوت متصفح بلغة أخرى.</p>
 </section>
 </div>
-<div class="ai-notice">المحادثات لا تُستخدم لمنح شهادة لغوية، وقد يخطئ الذكاء الاصطناعي في بعض التصحيحات. الصوت كيحتاج إذن الميكروفون وربطاً مشفراً بسيرفرك الخاص اللي فيه Qwen3 وWhisper وPiper. المكالمة تقدر تكون أبطأ حسب قوة الجهاز.</div>
+<div class="ai-notice">المحادثات لا تُستخدم لمنح شهادة لغوية، وقد يخطئ الذكاء الاصطناعي في بعض التصحيحات. الصوت يحتاج مكونات محلية إضافية؛ مازال غير مفعّل في حزمة التشغيل النصية.  المكالمة تقدر تكون أبطأ حسب قوة الجهاز.</div>
 </div></main>
 <footer><div class="wrap foot"><b>Deutsch Mastery</b><span>تعلّم الألمانية بالتدرّج والممارسة</span><a href="quality.html">حدود المشروع</a></div></footer>
 <script src="data/master-curriculum.js"></script>
