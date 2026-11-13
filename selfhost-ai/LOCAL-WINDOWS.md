@@ -31,3 +31,9 @@ Software and inference API cost: $0. Hardware, electricity and existing Internet
 ## Updating an existing installation
 
 If you already have the earlier ZIP, **close its old black server window** and replace `local_bridge.py` plus the Windows command files from the updated archive. Reload the website with Ctrl+Shift+R. Keeping the old server window open means old model-output filtering and voice routes continue to be used.
+
+## Slow replies or repeated connection errors
+
+The November 13 fast patch keeps the existing Qwen3 4B model but lowers CPU memory/context work, avoids strict JSON decoding, limits reply length, and keeps the model loaded for 30 minutes to reduce cold starts. The website now shows the server's actual error message instead of repeating generic German text. Keep in mind response speed still depends on your Windows PC's CPU/GPU and available RAM; this update cannot guarantee instant answers.
+
+**Important:** Close the old black `START-DEUTSCH-AI.cmd` window; replace `local_bridge.py` with the new file, start the batch file again, then reload the AI webpage with Ctrl+Shift+R. A GitHub change does not automatically update the running Python file on your computer.
