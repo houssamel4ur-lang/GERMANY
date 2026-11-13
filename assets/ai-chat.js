@@ -6,6 +6,7 @@ const maxTurns=Math.max(4,Math.min(20,Number(window.DEUTSCH_AI_CONFIG?.maxTurns)
 const focusId=String(new URLSearchParams(location.search).get("lesson")||"").trim();
 const lessonFocus=window.DM_MASTER_CURRICULUM?.topics?.find(t=>t.id===focusId)||null;
 const textBox=$("#userMessage"),sendBtn=$("#sendBtn"),micBtn=$("#recordBtn"),status=$("#chatStatus"),badge=$("#connectionBadge");
+let speechReady=false,transcriptionReady=false;window.DEUTSCH_AI_VOICE_READY=false;
 let liveActive=false;
 let turns=[],connected=false,busy=false,recorder=null,chunks=[],recTimer=null,recStarted=0,recordStream=null,playing=null,playURL=null,requestController=null;
 const pick=s=>$(s)?.value||"";
@@ -29,7 +30,7 @@ const esc=s=>String(s||"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"
 function setStatus(msg){status.textContent=msg}
 function statusBadge(ok,msg){badge.className="ai-status "+(ok?"ok":"off");badge.textContent=msg}
 function configured(){return /^https:\/\//i.test(base)||/^http:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/i.test(base)}
-function getCode(){return String($("#accessCode").value||"").trim()}
+function getCode(){return window.DEUTSCH_AI_CONFIG?.localOnly?"":String($("#accessCode").value||"").trim()}
 function errorMessage(err){if(err.name==="AbortError")return "العملية توقفت.";return err.message||"تعذر الاتصال بالخادم."}
 function append(role,text,kind){const wrapper=document.createElement("div");wrapper.className="ai-bubble "+(role==="assistant"?"bot":"you")+" de-text"+(kind==="pending"?" pending":"");wrapper.dir="ltr";
 const meta=document.createElement("span");meta.className="ai-meta";meta.textContent=role==="assistant"?"Deutsch Partner":"Du";wrapper.appendChild(meta);
@@ -52,7 +53,7 @@ const phrases=previews[subject]?.[level]||previews[subject]?.A2||previews.free[l
 $("#suggestions").innerHTML=phrases.map(p=>'<button type="button" data-prompt="'+esc(p)+'" lang="de" dir="ltr">'+esc(p)+'</button>').join("");
 }
 function isLocked(){return busy||!connected||liveActive}
-function applyControls(){sendBtn.disabled=isLocked();micBtn.disabled=isLocked()&&!recorder;$("#newChat").disabled=busy||liveActive;$("#testConnection").disabled=busy;$("#sessionLevel").textContent=pick("#levelSelect")}
+function applyControls(){sendBtn.disabled=isLocked();micBtn.disabled=(isLocked()||!transcriptionReady)&&!recorder;$("#newChat").disabled=busy||liveActive;$("#testConnection").disabled=busy;$("#sessionLevel").textContent=pick("#levelSelect")}
 async function call(path,options={}){
 const controller=options.signal?null:new AbortController();
 const headers={...(options.headers||{})};if(getCode())headers["X-Coach-Access"]=getCode();
@@ -64,18 +65,22 @@ return res;
 }
 async function check(){
 if(!configured()){
- connected=false;statusBadge(false,"غير مفعّل");
+ connected=false;speechReady=false;transcriptionReady=false;window.DEUTSCH_AI_VOICE_READY=false;statusBadge(false,"غير مفعّل");
  $("#configHint").textContent="الواجهة واجدة، ولكن خاصك تشغّل selfhost-ai على جهازك أو سيرفرك وتضيف رابط HTTPS الخاص به في assets/ai-config.js.";
  setStatus("المحادثة الحرة غير مفعّلة حتى يكون سيرفرنا الخاص خدام وعندو نموذج Qwen3 مثبت؛ ما كاين حتى API خارجي.");applyControls();return;
 }
  try{
  const res=await call("/api/health",{method:"GET"});const data=await res.json();
  connected=data.ready===true;
+ speechReady=connected&&data.speech_ready===true;
+ transcriptionReady=connected&&data.transcription_configured===true;
+ window.DEUTSCH_AI_VOICE_READY=speechReady&&transcriptionReady;
+ if(!speechReady){$("#autoSpeak").checked=false;$("#autoSpeak").disabled=true;}else{$("#autoSpeak").disabled=false;}
  statusBadge(connected,connected?"متصل · AI جاهز":"غير جاهز");
  $("#configHint").textContent=connected?"السيرفر الخاص جاهز. الاتصال كيدوز بينك وبين النموذج المحلي على جهازك أو سيرفرك.":"السيرفر موجود، ولكن نموذج Ollama المحلي أو رمز الدخول مازال ما تفعّلوش.";
- setStatus(connected?"مستعد. اكتب جملة ألمانية أو استعمل الميكروفون.":"الخادم لم يصبح جاهزاً للمحادثة بعد.");
+ setStatus(connected?(transcriptionReady?"مستعد. اكتب أو استعمل الميكروفون.":"Qwen3 4B متصل محلياً. المحادثة الكتابية جاهزة؛ الصوت غادي نضيفوه في المرحلة المقبلة."):"الخادم لم يصبح جاهزاً للمحادثة بعد.");
  }catch(e){
- connected=false;statusBadge(false,"تعذر الاتصال");
+ connected=false;speechReady=false;transcriptionReady=false;window.DEUTSCH_AI_VOICE_READY=false;statusBadge(false,"تعذر الاتصال");
  $("#configHint").textContent=errorMessage(e);
  setStatus("لم يتم الاتصال بخدمة الذكاء الاصطناعي. التمارين العادية فالموقع باقية خدامة.");
  }
@@ -178,5 +183,5 @@ $("#suggestions").addEventListener("click",e=>{const btn=e.target.closest("[data
 $("#testConnection").addEventListener("click",check);
 $("#accessCode").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();check()}});
 window.addEventListener("pagehide",()=>{recordStream?.getTracks().forEach(t=>t.stop());stopPlaying()});
-showWelcome();suggestions();applyControls();check();
+showWelcome();suggestions();if(window.DEUTSCH_AI_CONFIG?.localOnly){const code=$("#accessCode");if(code){const label=document.querySelector("label[for=accessCode]");code.hidden=true;if(label)label.hidden=true;}$("#configHint").textContent="للتشغيل على نفس PC، فتح START-DEUTSCH-AI.cmd من الحزمة المحلية، بلا رمز دخول وبلا API مدفوعة.";}applyControls();check();
 })();
