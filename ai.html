@@ -12,7 +12,7 @@
 <nav aria-label="التنقل"><a href="syllabus.html">المنهج</a><a href="module.html">الوحدات</a><a href="journey.html">تقدمي</a><a href="ai.html" aria-current="page">المحادثة بالذكاء الاصطناعي</a></nav>
 <a class="navstart" href="index.html">الرئيسية ←</a></div></header>
 <main id="main"><div class="wrap ai-page">
-<div class="ai-heading"><div><span class="overline">DEUTSCH SPRECHEN · A1 – B2</span><h1>تحدّث بالألمانية مع شريك AI</h1><p>محادثة طبيعية تناسب مستواك. غيّر الموضوع، تكلم أو اكتب، واطلب تصحيحاً لطيفاً متى احتجت.</p></div>
+<div class="ai-heading"><div><span class="overline">DEUTSCH SPRECHEN · A1 – B2</span><h1>تحدّث بالألمانية مع ذكائنا الاصطناعي</h1><p>محادثة طبيعية تناسب مستواك. غيّر الموضوع، تكلم أو اكتب، واطلب تصحيحاً لطيفاً متى احتجت.</p></div>
 <span class="ai-status" id="connectionBadge" role="status">التحقق من الاتصال…</span></div>
 <div class="ai-layout">
 <aside class="ai-options">
@@ -26,16 +26,16 @@
 <div class="ai-buttons"><button class="outline" id="newChat" type="button">محادثة جديدة</button><button class="outline" id="stopAudio" type="button">إيقاف الصوت</button></div>
 </section>
 <section class="ai-panel"><h2>الاتصال الآمن</h2>
-<p class="tiny">مفتاح خدمة AI يبقى في الخادم فقط؛ لا تدخله هنا. يمكن استعمال رمز دخول خاص لإدارة تكلفة الاستعمال.</p>
-<label for="accessCode">رمز الدخول إلى المساعد</label><input id="accessCode" type="password" placeholder="رمز الخدمة، وليس API key" autocomplete="off">
+<p class="tiny">المحادثة كتخدم بنموذج Qwen3 على سيرفرك أنت، وWhisper وPiper محلياً. ما كاين حتى ربط بمحرك ذكاء اصطناعي مدفوع. استعمل رمز الدخول الخاص بالسيرفر.</p>
+<label for="accessCode">رمز الدخول إلى المساعد</label><input id="accessCode" type="password" placeholder="رمز الدخول الخاص بالسيرفر" autocomplete="off">
 <button class="outline" id="testConnection" type="button">اختبار الاتصال</button>
-<p class="tiny" id="configHint">إذا لم يكن الخادم مفعلاً، ستظهر تعليمات الربط هنا.</p>
+<p class="tiny" id="configHint">خاص تشغيل سيرفرك الخاص وتحميل النماذج؛ هاد الواجهة بوحدها ما كتقدرش تولّد الردود.</p>
 </section>
 </aside>
 <section class="ai-chat" aria-label="المحادثة">
-<div class="ai-chatbar"><div><strong>Deutsch Partner</strong><span>صديق تدريب افتراضي بالذكاء الاصطناعي — ليس شخصاً حقيقياً</span></div><span id="sessionLevel">A1</span></div>
+<div class="ai-chatbar"><div><strong>Deutsch Partner</strong><span>موديل محلي خاص بمنصة Deutsch Mastery — ماشي إنسان حقيقي</span></div><span id="sessionLevel">A1</span></div>
 <div class="ai-live" aria-label="مكالمة صوتية مباشرة">
-<div><b>مكالمة مباشرة بالألمانية</b><span>تبادل أدوار طبيعي بالصوت، مع إمكانية إيقاف الميكروفون في أي لحظة</span></div>
+<div><b>مكالمة مباشرة بالألمانية</b><span>المحرك كيسمع الجملة، كيتعرف على نهاية الكلام بالصمت، ومن بعد كيجاوب بالألمانية من السيرفر ديالك</span></div>
 <button class="primary" id="startLive" type="button" disabled>بدء المكالمة <span aria-hidden="true">📞</span></button>
 <button class="outline" id="endLive" type="button" disabled>إنهاء المكالمة</button>
 <audio id="liveOutput" autoplay playsinline></audio>
@@ -54,7 +54,7 @@
 <p class="ai-footnote" id="chatStatus" role="status">الصوت الناتج اصطناعي. لا يتم تشغيل صوت متصفح بلغة أخرى.</p>
 </section>
 </div>
-<div class="ai-notice">المحادثات لا تُستخدم لمنح شهادة لغوية، وقد يخطئ الذكاء الاصطناعي في بعض التصحيحات. ميزة الصوت تتطلب إذن الميكروفون واتصالاً فعلياً بخدمة AI.</div>
+<div class="ai-notice">المحادثات لا تُستخدم لمنح شهادة لغوية، وقد يخطئ الذكاء الاصطناعي في بعض التصحيحات. الصوت كيحتاج إذن الميكروفون وربطاً مشفراً بسيرفرك الخاص اللي فيه Qwen3 وWhisper وPiper. المكالمة تقدر تكون أبطأ حسب قوة الجهاز.</div>
 </div></main>
 <footer><div class="wrap foot"><b>Deutsch Mastery</b><span>تعلّم الألمانية بالتدرّج والممارسة</span><a href="quality.html">حدود المشروع</a></div></footer>
 <script src="assets/ai-config.js"></script>
