@@ -86,7 +86,8 @@ def _system(level, scenario, correct, lesson_id):
         "You are Deutsch Partner, an AI German tutor (not a human) in Deutsch Mastery.",
         "You are talking to one learner. Respond to what they actually said, naturally and warmly.",
         "Use accurate Standard German (Hochdeutsch). Never mix English words into German sentences.",
-        "Never output internal reasoning, analysis, a thinking trace, or any <think> tags.",
+        "Never output internal reasoning, analysis, a thinking trace, or any <think> tags. Output only the final tutoring reply.",
+        "/no_think",
         "Avoid English explanations. If the student requests help in Moroccan Arabic (Darija), give one brief, clear Darija explanation and then return to German.",
         "Do not invent the learner's personal details. Do not request passwords or private information.",
         "Ask at most one question in each answer. Do not repeat generic introductions every turn.",
@@ -101,9 +102,23 @@ def _system(level, scenario, correct, lesson_id):
 
 
 def _clean(reply):
-    reply = re.sub(r"<think>[\s\S]*?</think>", "", reply, flags=re.I)
-    reply = re.sub(r"^\s*(?:Thinking\.\.\.|\.{3}done thinking\.)\s*", "", reply, flags=re.I)
-    return reply.strip()[:1400]
+    """Only a final answer can be returned to the public learner chat.
+
+    Ollama's separate message.thinking field is intentionally not accessed.
+    These checks protect against malformed thought tags or an unexpected model
+    regression where analysis is placed directly in message.content.
+    """
+    if not isinstance(reply, str):
+        return ""
+    reply = re.sub(r"<think\b[^>]*>[\s\S]*?</think\s*>", "", reply, flags=re.I)
+    reply = re.sub(r"<think\b[^>]*>[\s\S]*$", "", reply, flags=re.I)
+    reply = re.sub(r"</think\s*>", "", reply, flags=re.I)
+    reply = re.sub(r"(?is)^\s*Thinking\.{3}[\s\S]{0,4000}?\.{3}\s*done thinking\.\s*", "", reply)
+    reply = re.sub(r"(?i)^\s*(?:Thinking\s*\.{3}|\.{3}\s*done thinking\.?|\[analysis\]|analysis:)\s*", "", reply)
+    reply = reply.strip()
+    if re.match(r"(?i)^(?:Okay[,]? the user|The user (?:wants|asks|said)|I (?:need|should|must) to|Let me (?:think|plan)|Final plan:|First, I (?:need|should)|Wait, (?:the user|they said)|\*checks requirements)", reply):
+        return ""
+    return reply[:1400]
 
 
 class Handler(BaseHTTPRequestHandler):
