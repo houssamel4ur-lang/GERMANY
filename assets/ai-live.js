@@ -116,7 +116,7 @@ async function processTurn(blob,type){
   const user={role:"user",content:transcript};
   const result=await endpoint("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
     level:field("levelSelect").value,scenario:field("scenarioSelect").value,
-    correct:field("correctToggle").checked,messages:[...turns,user].slice(-24)
+    correct:field("correctToggle").checked,lesson_id:new URLSearchParams(location.search).get("lesson")||null,messages:[...turns,user].slice(-24)
   })});
   const reply=String((await result.json()).reply||"").trim();
   if(!active)return;
