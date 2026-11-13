@@ -130,6 +130,7 @@ if(!connected)return;
 if(recorder&&recorder.state==="recording"){recorder.stop();return}
 if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==="undefined"){setStatus("المتصفح لا يدعم التسجيل. جرب Chrome أو Edge، أو استعمل الكتابة.");return}
 try{
+ stopPlaying();
  const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
  recordStream=stream;
  const types=["audio/webm;codecs=opus","audio/mp4","audio/webm","audio/ogg;codecs=opus"];
