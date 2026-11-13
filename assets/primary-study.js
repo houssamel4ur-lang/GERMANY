@@ -35,7 +35,7 @@ function wordCard(word,i,listenOnly){
 const key=savedKey(word),saved=!!state.cards[key];
 return '<div class="wordrow"><div>'+iso(word.de)+'<small>'+esc(word.ar)+'</small></div><div class="rowactions">'+speaker(word.de)+(listenOnly?"":'<button class="outline" data-saveword="'+i+'" type="button" aria-label="احفظ للمراجعة">'+(saved?"★ محفوظة":"☆ احفظ")+'</button>')+'</div></div>';
 }
-const tabs=[["intro","📘 المقدمة"],["vocab","📗 المفردات"],["audio","🔊 الصوتيات"],["grammar","📐 الشرح"],["conversation","💬 المحادثة"],["reading","📖 القراءة"],["exercise","🎯 التمارين"],["result","🏆 النتيجة"]];
+const tabs=[["intro","01 · خطة الدرس"],["vocab","02 · المفردات"],["audio","03 · النطق والاستماع"],["grammar","04 · الشرح والقواعد"],["conversation","05 · المحادثة"],["reading","06 · القراءة والكتابة"],["exercise","07 · التمارين"],["result","08 · التقييم"]];
 function detailPage(){
 const parentModule=window.DM_LEARNING_MODULES?.find(x=>x.id===window.DM_MODULE_BY_TOPIC?.[topic.id]);
 const parentUrl=parentModule?"module.html?module="+encodeURIComponent(parentModule.id)+"#"+topic.id:"syllabus.html?level="+topic.level;
@@ -44,8 +44,8 @@ const same=topics.filter(x=>x.level===topic.level),ix=same.findIndex(x=>x.id===t
 const next=same.slice(ix+1).find(x=>lessonMap.has(x.id));
 const prev=same.slice(0,ix).reverse().find(x=>lessonMap.has(x.id));
 root.innerHTML='<div class="crumb"><a href="syllabus.html?level='+topic.level+'">فهرس '+topic.level+'</a> / <a href="'+parentUrl+'">'+esc(parentModule?.title||topic.section)+'</a> / الجزء '+String(topic.number).padStart(2,"0")+'</div>'+
-'<div class="lessonhero"><span class="eyebrow">'+topic.level+' · المحور '+topic.section_number+'.'+String(topic.number).padStart(2,"0")+' · تدريب تفاعلي</span><h1>'+esc(topic.title)+'</h1><p>من الفهرس المعتمد، صفحة '+topic.page+'. مادة أولية للتعلم والمراجعة، وليست تدريباً نهائياً معتمداً.</p></div>'+
-'<div class="lessonlayout"><aside class="side" aria-label="أقسام الدرس"><b>أقسام مستقلة</b>'+tabs.map(t=>'<button class="tab" type="button" data-tab="'+t[0]+'">'+t[1]+'</button>').join("")+'</aside><article class="study" id="courseSection"></article></div>'+
+'<div class="lessonhero"><span class="eyebrow">'+topic.level+' · المحور '+topic.section_number+'.'+String(topic.number).padStart(2,"0")+' · تدريب تفاعلي</span><h1>'+esc(topic.title)+'</h1><p>من الفهرس المعتمد، صفحة '+topic.page+'. محتوى تدريبي  ' + (lesson.objectives?.length?'موسّع يتطلب مراجعة لغوية بشرية':'أولي لم يكتمل بعد') + ' ، وليس شهادة رسمية.</p></div>'+
+'<div class="lessonlayout"><aside class="side" aria-label="تسلسل مراحل التعلم"><b>مراحل الدرس بالترتيب</b>'+tabs.map(t=>'<button class="tab" type="button" data-tab="'+t[0]+'">'+t[1]+'</button>').join("")+'</aside><article class="study" id="courseSection"></article></div>'+
 '<div class="controls" style="justify-content:space-between;margin:22px 0"><a class="outline" href="'+parentUrl+'">العودة للوحدة المتكاملة</a><div class="controls">'+(prev?'<a class="outline" href="'+courseLink(prev.id)+'">الدرس السابق</a>':"")+(next?'<a class="primary" href="'+courseLink(next.id)+'">الدرس التالي ←</a>':"")+'</div></div>'+
 '<div class="tiny" id="courseNotice" role="status"></div>';
 state.last=topic.id;store();
@@ -188,7 +188,13 @@ function buildQuestions(){
   const distractorTranslations=shuffle(material.filter(x=>x.id!==lesson.id&&x.level===lesson.level).map(x=>x.translation).filter(x=>x&&x!==lesson.translation)).slice(0,3);
   if(distractorTranslations.length>=2)qs.push({kind:"reading",prompt:"اختر الترجمة المطابقة للنص الألماني:",reading:lesson.reading,answer:lesson.translation,options:shuffle([lesson.translation,...distractorTranslations])});
  }
- return shuffle(qs);
+ if(Array.isArray(lesson.readingQuestions)){
+  for(const rq of lesson.readingQuestions){
+   const [prompt,answer,...wrong]=rq;
+   if(prompt&&answer&&wrong.length)qs.push({kind:"choice",prompt:"من النص: "+prompt,answer,options:choices(answer,wrong,3)});
+  }
+ }
+ return [...qs.slice(0,lesson.questions.length),...shuffle(qs.slice(lesson.questions.length))];
 }
 function drawQuestion(){
 const el=$("#quizSurface");if(!el)return;
