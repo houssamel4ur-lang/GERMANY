@@ -173,8 +173,8 @@ const expanded={
         "E",
         "e",
         "/eː/",
-        "Elefant",
-        "فيل"
+        "Essen",
+        "طعام"
       ],
       [
         "F",
@@ -215,15 +215,15 @@ const expanded={
         "K",
         "ka",
         "/kaː/",
-        "Katze",
-        "قطة"
+        "Kind",
+        "طفل"
       ],
       [
         "L",
         "ell",
         "/ɛl/",
-        "Lampe",
-        "مصباح"
+        "Liebe",
+        "حب"
       ],
       [
         "M",
@@ -243,15 +243,15 @@ const expanded={
         "O",
         "o",
         "/oː/",
-        "Orange",
-        "برتقالة"
+        "Ofen",
+        "فرن"
       ],
       [
         "P",
         "pe",
         "/peː/",
-        "Pause",
-        "استراحة"
+        "Papier",
+        "ورق"
       ],
       [
         "Q",
@@ -278,8 +278,8 @@ const expanded={
         "T",
         "te",
         "/teː/",
-        "Tisch",
-        "طاولة"
+        "Tag",
+        "يوم"
       ],
       [
         "U",
