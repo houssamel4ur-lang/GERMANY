@@ -9,12 +9,14 @@ from __future__ import annotations
 import asyncio
 import hmac
 import io
+import json
 import os
 from pathlib import Path
 import tempfile
 import time
 import wave
 from collections import defaultdict, deque
+from functools import lru_cache
 from contextlib import asynccontextmanager
 
 import httpx
@@ -47,6 +49,7 @@ TOPICS = {
     "daily": "Everyday habits, friends, routines and plans.",
     "debate": "Exchange opinions, respond to counterpoints respectfully.",
 }
+CURRICULUM_FILE = Path(__file__).resolve().parent / "curriculum-context.json"
 MAX_AUDIO = 5_000_000
 MAX_MESSAGES = 30
 _rate: dict[str, deque[float]] = defaultdict(deque)
@@ -61,6 +64,7 @@ class DialogueMessage(BaseModel):
 
 
 class ChatInput(BaseModel):
+    lesson_id: str | None = Field(default=None, max_length=48)
     level: str
     scenario: str
     correct: bool
@@ -70,6 +74,31 @@ class ChatInput(BaseModel):
 class SpeechInput(BaseModel):
     text: str = Field(min_length=1, max_length=650)
     level: str = "A1"
+
+
+@lru_cache(maxsize=1)
+def _curriculum() -> dict:
+    try:
+        content = json.loads(CURRICULUM_FILE.read_text(encoding="utf-8"))
+        return {x["id"]: x for x in content.get("topics", [])}
+    except (OSError, ValueError, KeyError):
+        return {}
+
+
+def lesson_context(lesson_id: str | None, level: str) -> str:
+    if not lesson_id:
+        return ""
+    lesson = _curriculum().get(lesson_id)
+    if not lesson or lesson.get("level") != level:
+        return ""
+    samples = "\n".join(x.get("de", "") + " — " + x.get("ar", "") for x in lesson.get("examples", [])[:3])
+    status = "DRAFT teaching material (verify any uncertain linguistic claim)" if lesson.get("coverage") == "draft_interactive" else "OUTLINE ONLY; not yet an authored lesson"
+    return ("\nTutor focus from the site owner's approved curriculum:\n" +
+            "Topic: " + str(lesson.get("title", "")) + "\n" +
+            "Coverage: " + status + "\n" +
+            "Teaching note: " + str(lesson.get("explanation", ""))[:1200] + "\n" +
+            "German examples (with Arabic meanings):\n" + samples[:650] + "\n" +
+            "If the learner asks about this lesson, relate the answer to this topic. Never claim the draft is a verified academic source.\n")
 
 
 def prompt(level: str, scenario: str, correct: bool) -> str:
@@ -159,10 +188,10 @@ async def health(request: Request):
     }))
 
 
-async def _generate_local(messages: list[dict], level: str, scenario: str, correct: bool) -> str:
+async def _generate_local(messages: list[dict], level: str, scenario: str, correct: bool, lesson_id: str | None = None) -> str:
     body = {
         "model": OLLAMA_MODEL,
-        "messages": [{"role": "system", "content": prompt(level, scenario, correct)}, *messages],
+        "messages": [{"role": "system", "content": prompt(level, scenario, correct) + lesson_context(lesson_id, level)}, *messages],
         "stream": False,
         "think": False,
         "options": {"temperature": 0.72, "top_p": 0.90, "num_ctx": 4096, "num_predict": 180 if level == "A1" else 260},
@@ -186,7 +215,7 @@ async def chat(request: Request, data: ChatInput):
     messages = [{"role": m.role, "content": m.content} for m in data.messages[-24:]]
     try:
         async with _running:
-            text = await _generate_local(messages, data.level, data.scenario, data.correct)
+            text = await _generate_local(messages, data.level, data.scenario, data.correct, data.lesson_id)
     except (httpx.HTTPError, ValueError):
         raise HTTPException(503, "النموذج المحلي ما جاوبش. تأكد من تشغيل Ollama ووجود النموذج.")
     if not text:
