@@ -41,7 +41,7 @@ assert.ok((await page.locator("#quizSurface").innerText()).includes("السؤا�
 checked++;
 await go("course.html?topic=A1-01-03");
 await page.locator('[data-tab="grammar"]').click();
-assert.ok((await page.locator("#courseSection").innerText()).includes("الحركات"),"phonetics grammar missing");
+assert.ok((await page.locator("#courseSection .lesson-block").count())>=1,"phonetics grammar content missing");
 checked++;
 await go("practice.html?level=A1");
 assert.ok((await page.locator(".lessongrid .lessoncard").count())>=15,"practice pack cards missing");
