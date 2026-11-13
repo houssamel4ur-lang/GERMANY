@@ -40,7 +40,7 @@ function finalAnswerOnly(raw){
  answer=answer.replace(/^\s*(?:(?:Thinking|Reasoning)\s*\.{3}|\.{3}\s*done thinking\.?|\[analysis\]|analysis:)\s*/gi,"");
  answer=answer.trim();
  // Never display a plain-language reasoning trace if a model unexpectedly emits one.
- if(/^(?:Okay[,]? the user|The user (?:wants|asks|said)|I (?:need|should|must) to|Let me (?:think|plan)|Final plan:|First, I (?:need|should)|Wait, (?:the user|they said)|\*checks requirements)/i.test(answer))return "";
+ if(/(?:^Okay[,]? the (?:user|learner)|^The (?:user|learner) (?:wants|asks|said)|^I (?:need|should|must) to|^Let me (?:think|plan)|^Final plan:|^First, I (?:need|should)|^Wait, (?:the user|they said)|^\*checks requirements|\b(?:the learner said|the user said|the instruction says|I should respond|Let me think|the prompt says|one or two sentences)\b)/i.test(answer))return "";
  return answer;
 }
 function append(role,text,kind){const wrapper=document.createElement("div");wrapper.className="ai-bubble "+(role==="assistant"?"bot":"you")+" de-text"+(kind==="pending"?" pending":"");wrapper.dir="ltr";
