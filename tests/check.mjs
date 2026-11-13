@@ -40,7 +40,7 @@ for(const level of levels){
 }
 assert.equal(new Set(syllabus.map(x=>x.id)).size,64,'syllabus unit IDs must be unique');
 assert.ok(syllabus.every(x=>x.title.length>2&&x.points.length>=2&&x.sourcePage>=2&&x.sourcePage<=17),'syllabus missing PDF details');
-assert.ok(read('syllabus.html').includes('data/syllabus.js'),'syllabus HTML missing data file');
+assert.ok(existsSync(new URL('data/syllabus.js',root)),'archived syllabus data missing');
 assert.ok(read('alphabet.html').includes('data/phonetics.js'),'alphabet page must load lesson data');
 assert.ok(read('alphabet.html').includes('assets/phonetics.js'),'alphabet page must load interactive script');
 const audioLesson=read('assets/phonetics.js');
@@ -52,7 +52,7 @@ assert.match(application,/\.filter\(isGermanVoice\)/,'audio must filter German v
 assert.match(application,/if\(!voice\)\{/,'audio must reject missing German voice');
 assert.match(application,/function initSyllabus\(/,'curriculum page should be interactive');
 
-for(const page of ['index.html','lesson.html','alphabet.html','syllabus.html']){
+for(const page of ['index.html','lesson.html','alphabet.html']){
   assert.ok(read(page).includes('assets/german-player.js'),page+' must load German MP3 player');
   assert.ok(read(page).includes('data/audio-index.js'),page+' must load audio index');
 }
@@ -63,4 +63,29 @@ assert.ok(Object.keys(audioMap).length>=100,'at least 100 verified German MP3 cl
 for(const path of Object.values(audioMap))assert.ok(existsSync(new URL(path,root)),'recorded MP3 file missing: '+path);
 assert.match(read('assets/german-player.js'),/new Audio\(/,'German player must use MP3');
 assert.match(read('assets/german-player.js'),/stopImmediatePropagation/,'German player must override old browser speech handlers');
-console.log('PASS: 64 PDF syllabus units, German-only speech policy, MP3 audio sources, and '+lessons.length+' unique lessons, '+lessons.reduce((n,x)=>n+x.words.length,0)+' vocabulary entries, 4 levels, HTML assets and data structure.');
+
+// Approved *primary* user curriculum, extracted from the replacement 16-page PDF.
+const masterWin={};
+runInNewContext(read('data/master-curriculum.js'),{window:masterWin});
+const master=masterWin.DM_MASTER_CURRICULUM;
+assert.equal(master.total_topics,452,'approved primary PDF lists 452 topics');
+assert.equal(master.pages,16,'primary PDF has 16 pages');
+assert.equal(master.topics.length,452,'all entries must be indexed');
+assert.equal(new Set(master.topics.map(x=>x.id)).size,452,'primary curriculum identifiers must be unique');
+const masterCounts={A1:[12,10,36,20,12],A2:[45,25,15],B1:[55,30,25],B2:[62,38,19,31,17]};
+for(const [level,counts] of Object.entries(masterCounts)){
+ const groups=master.levels.find(x=>x.level===level).sections;
+ assert.equal(groups.length,counts.length,level+' section count mismatch');
+ for(let i=0;i<groups.length;i++){
+  const xs=master.topics.filter(x=>x.level===level&&x.section===groups[i].name);
+  assert.equal(xs.length,counts[i],level+' topic count mismatch: '+groups[i].name);
+  assert.deepEqual(xs.map(x=>x.number),Array.from({length:counts[i]},(_,j)=>j+1),level+' topic order mismatch');
+ }
+}
+assert.ok(master.topics.every(x=>x.status==='outlined'&&x.page>=2&&x.page<=15),'index topics cannot be mislabeled as completed lessons');
+assert.ok(read('syllabus.html').includes('data/master-curriculum.js'),'syllabus must load new approved primary PDF');
+assert.ok(read('syllabus.html').includes('assets/master-curriculum.js'),'syllabus must load primary curriculum UI');
+assert.ok(!read('syllabus.html').includes('data/syllabus.js'),'archived 64-topic index must not be active on syllabus page');
+assert.ok(read('index.html').includes('452 موضوعاً'),'homepage must identify main 452-topic source');
+
+console.log('PASS: 452 primary topics, 64 archived topics, German-only speech policy, MP3 audio sources, and '+lessons.length+' unique lessons, '+lessons.reduce((n,x)=>n+x.words.length,0)+' vocabulary entries, 4 levels, HTML assets and data structure.');
