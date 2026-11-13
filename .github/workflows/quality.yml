@@ -28,5 +28,9 @@ jobs:
           node --check data/primary-phonetics.js
           node --check assets/primary-study.js
           node --check assets/primary-home.js
+          node --check data/curriculum-2026.js
+          node --check data/curriculum-lessons-2026.js
+          node --check data/curated-primary-2026.js
+          node --check assets/curriculum-app.js
       - name: Validate curriculum and site
         run: node tests/check.mjs
