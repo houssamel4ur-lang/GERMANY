@@ -42,7 +42,7 @@ def status(name, callback):
 
 
 def main():
-    log("Deutsch Mastery - diagnostic 2026.11.13.4")
+    log("Deutsch Mastery - diagnostic 2026.11.13.5")
     log("No user chat data is collected.")
     log("=" * 62)
     ollama = "http://127.0.0.1:11434"
@@ -60,7 +60,7 @@ def main():
     log("Ready:", info.get("ready"))
     log("Voice ready:", info.get("speech_ready"))
     log("Mic ready:", info.get("transcription_configured"))
-    if info.get("bridge_version") != "2026.11.13.4":
+    if info.get("bridge_version") != "2026.11.13.5":
         log("NEXT: OLD PYTHON SERVER IS RUNNING. Close old window, then start stable AI.")
         return
     if not info.get("ready"):
