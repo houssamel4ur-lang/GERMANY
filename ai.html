@@ -3,7 +3,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#123934"><meta name="description" content="تحدث بالألمانية مع شريك محادثة بالذكاء الاصطناعي يتكيف مع مستواك A1 حتى B2">
 <title>محادثة ألمانية بالذكاء الاصطناعي | Deutsch Mastery</title>
-<link rel="stylesheet" href="assets/style.css"><link rel="stylesheet" href="assets/ai-chat.css?v=20261113-voice2">
+<link rel="stylesheet" href="assets/style.css"><link rel="stylesheet" href="assets/ai-chat.css?v=20261113-voice3">
 </head>
 <body data-page="german-coach">
 <a class="skip" href="#main">تجاوز إلى المحتوى</a>
@@ -52,6 +52,13 @@
 </div></section>
 <div class="ai-messages" id="messages" role="log" aria-live="polite" aria-relevant="additions text"></div>
 <div class="ai-suggestions" id="suggestions" aria-label="جمل للبدء"></div>
+<div class="ai-transcription-review" id="transcriptionReview" hidden>
+<label for="transcriptEditor">🎧 هادشي اللي فهم Whisper من كلامك. صحّحو إلا كان فيه شي خطأ:</label>
+<textarea id="transcriptEditor" maxlength="1500" rows="2" dir="ltr"></textarea>
+<small>ما كنخمنوش شنو قلتي من كلمات متشابهة؛ تقدر تصلح النص قبل ما يجاوبك AI.</small>
+<div class="review-buttons"><button type="button" class="outline" id="cancelTranscript">عاود التسجيل</button><button type="button" class="primary" id="confirmTranscript">إرسال الجملة المصححة ↗</button></div>
+</div>
+<label class="ai-review-option" for="reviewTranscription"><input type="checkbox" id="reviewTranscription"> راجع الكلام اللي سمعه Whisper قبل ما يجاوب AI (مفيد إلا ما كيعرفش النطق ديالك)</label>
 <form id="chatForm" class="ai-compose">
 <label class="sr-only" for="userMessage">رسالتك بالألمانية</label>
 <textarea id="userMessage" rows="2" maxlength="1500" placeholder="Schreibe hier auf Deutsch …" dir="auto"></textarea>
@@ -68,6 +75,6 @@
 <footer><div class="wrap foot"><b>Deutsch Mastery</b><span>تعلّم الألمانية بالتدرّج والممارسة</span><a href="quality.html">حدود المشروع</a></div></footer>
 <script src="data/master-curriculum.js"></script>
 <script src="assets/ai-config.js"></script>
-<script src="assets/ai-chat.js?v=20261113-voice2"></script>
-<script src="assets/ai-live.js?v=20261113-voice2"></script>
+<script src="assets/ai-chat.js?v=20261113-voice3"></script>
+<script src="assets/ai-live.js?v=20261113-voice3"></script>
 </body></html>
