@@ -106,12 +106,13 @@ for(const path of [
  'data/course-a1-grammar.js','data/course-a1-skills.js',
  'data/course-a2-grammar.js','data/course-a2-skills.js',
  'data/primary-lesson-links.js','data/primary-phonetics.js',
- 'data/curriculum-lessons-2026.js','data/curated-primary-2026.js'
+ 'data/curriculum-lessons-2026.js','data/curated-primary-2026.js',
+ 'data/advanced-grammar-b1.js','data/advanced-grammar-b2.js','data/advanced-merge.js'
 ])runInNewContext(read(path),{window:draftWin});
 const draftLessons=draftWin.DM_PRIMARY_LESSONS;
-assert.equal(draftLessons.length,144,'expected 144 mapped interactive lesson drafts after enrichment');
+assert.equal(draftLessons.length,168,'expected 168 topic-specific learning drafts including 24 advanced grammar lessons');
 assert.equal(new Set(draftLessons.map(x=>x.id)).size,draftLessons.length,'duplicate authored lesson ID');
-for(const [level,count] of Object.entries({A1:56,A2:44,B1:23,B2:21})){
+for(const [level,count] of Object.entries({A1:56,A2:44,B1:35,B2:33})){
  assert.equal(draftLessons.filter(x=>x.level===level).length,count,level+' draft coverage mismatch');
 }
 for(const l of draftLessons){
@@ -126,6 +127,19 @@ for(const l of draftLessons){
  assert.ok(Array.isArray(l.questions),'questions list invalid: '+l.id);
  assert.ok(l.questions.length>=1||l.vocabulary.length>=8,'lesson must support at least eight vocabulary questions: '+l.id);
  assert.ok(l.status==='draft_interactive','draft cannot claim completeness: '+l.id);
+}
+for(const level of ['B1','B2']){
+ const grammatical=draftLessons.filter(x=>x.level===level&&/^\w+-01-/.test(x.id)&&x.kind==='focused-advanced-grammar');
+ assert.equal(grammatical.length,12,level+' requires 12 authored advanced grammar lessons');
+ for(const lesson of grammatical){
+  assert.ok(lesson.reading.length>=170,'advanced reading too short: '+lesson.id);
+  assert.ok(lesson.questions.length>0,'advanced quiz missing '+lesson.id);
+  assert.ok(lesson.writing.length>40,'advanced writing task missing '+lesson.id);
+ }
+}
+for(const page of ['index.html','syllabus.html','course.html','journey.html','review-primary.html']){
+ const html=read(page);
+ for(const script of ['data/advanced-grammar-b1.js','data/advanced-grammar-b2.js','data/advanced-merge.js'])assert.ok(html.includes(script),page+' missing advanced content '+script);
 }
 assert.match(read('assets/primary-study.js'),/first\/questions\.length/,'quiz must use real first-attempt scoring');
 assert.match(read('assets/primary-study.js'),/JSON\.stringify\(\{version:KEY,progress:state\}/,'progress export must produce backup');
