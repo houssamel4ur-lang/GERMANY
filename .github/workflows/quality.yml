@@ -32,5 +32,8 @@ jobs:
           node --check data/curriculum-lessons-2026.js
           node --check data/curated-primary-2026.js
           node --check assets/curriculum-app.js
+          node --check data/advanced-grammar-b1.js
+          node --check data/advanced-grammar-b2.js
+          node --check data/advanced-merge.js
       - name: Validate curriculum and site
         run: node tests/check.mjs
