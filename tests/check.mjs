@@ -174,4 +174,22 @@ for(const file of ['module.html','assets/module-study.js','assets/modules.css'])
 assert.ok(read('module.html').includes('id="moduleMount"')&&read('module.html').includes('assets/german-player.js'),'module must use existing German MP3 player');
 assert.ok(read('assets/module-study.js').includes('data-start-module-review'),'module must include quiz review');
 
+// Structured lesson quality gates: do not silently regress into repeated generic paragraphs.
+assert.ok(read('course.html').includes('data/structured-a1-pronunciation.js'),'structured data missing from lesson page');
+assert.ok(read('course.html').includes('assets/lesson-structure.css'),'responsive stylesheet missing');
+assert.ok(read('module.html').includes('data/structured-a1-pronunciation.js'),'structured lesson missing in module reader');
+assert.ok(existsSync(new URL('assets/lesson-structure.css',root)),'lesson stylesheet missing');
+runInNewContext(read('data/structured-a1-pronunciation.js'),{window:draftWin});
+assert.equal(draftWin.DM_PRIMARY_LESSONS.length,230,'structured enrichment cannot duplicate topic IDs');
+assert.deepEqual(Array.from(draftWin.DM_COMPLETE_LESSON_IDS),['A1-01-01','A1-01-02','A1-01-03','A1-01-04'],'expected first four ordered phonetics lessons');
+for(const id of draftWin.DM_COMPLETE_LESSON_IDS){
+ const l=draftWin.DM_PRIMARY_LESSONS.find(x=>x.id===id);
+ assert.ok(l&&l.objectives.length>=4&&l.grammarBlocks.length>=3,'in-depth teaching steps missing: '+id);
+ assert.ok(l.pronunciation.length>=3&&l.rolePlay.length>=2,'sound and speaking practice missing: '+id);
+ assert.ok(l.reading.split(/\s+/).length>=18&&l.readingQuestions.length>=2,'reading comprehension too short: '+id);
+ assert.ok(l.writingModel&&l.vocabulary.length>=12&&l.dialogue.length>=4,'guided writing and dialogue missing: '+id);
+ assert.ok(l.status==='expanded_draft','enrichment still needs human quality assurance');
+}
+assert.equal(draftWin.DM_PRIMARY_LESSONS.find(x=>x.id==='A1-01-01').alphabet.length,26,'alphabet lesson must cover all 26 letters');
+assert.ok(read('assets/primary-study.js').includes('lesson.grammarBlocks?.length'),'render unique grammar blocks instead of repeating intro');
 console.log('PASS: 452 primary topics, 230 interactive lesson drafts, 64 archived topics, German-only speech policy, MP3 audio sources, and '+lessons.length+' unique lessons, '+lessons.reduce((n,x)=>n+x.words.length,0)+' vocabulary entries, 4 levels, HTML assets and data structure.');
