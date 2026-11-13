@@ -8,6 +8,9 @@ on:
       - 'scripts/german_audio.py'
       - 'data/curriculum-lessons-2026.js'
       - 'data/curated-primary-2026.js'
+      - 'data/advanced-grammar-b1.js'
+      - 'data/advanced-grammar-b2.js'
+      - 'data/advanced-merge.js'
   workflow_dispatch:
     inputs:
       mode:
