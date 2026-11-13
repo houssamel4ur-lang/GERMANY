@@ -39,7 +39,10 @@ if(mode==="all"){
  "data/advanced-grammar-b2.js",
  "data/advanced-grammar-b1-more.js",
  "data/advanced-grammar-b2-more.js",
- "data/advanced-merge.js"
+ "data/advanced-merge.js",
+ "data/foundation-a1.js",
+ "data/foundation-a2.js",
+ "data/foundation-merge.js"
  ];
  for(const path of sources)runInNewContext(readFileSync(path,"utf8"),{window:w});
  for(const lesson of w.DM_PRIMARY_LESSONS||[]){
