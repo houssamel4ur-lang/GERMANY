@@ -50,6 +50,16 @@ def _ollama(path, payload=None, timeout=4):
 
 
 def _topics():
+    if not CONTEXT.is_file():
+        # Download our own public curriculum once; AI inference remains fully local.
+        try:
+            url = "https://houssamel4ur-lang.github.io/GERMANY/selfhost-ai/curriculum-context.json"
+            with urlopen(Request(url, headers={"User-Agent": "DeutschMasteryLocal/1.0"}), timeout=5) as res:
+                content = res.read(3_000_001)
+            if len(content) <= 3_000_000 and len(json.loads(content).get("topics", [])) == 452:
+                CONTEXT.write_bytes(content)
+        except (URLError, HTTPError, OSError, TimeoutError, ValueError, TypeError):
+            pass
     try:
         return {topic["id"]: topic for topic in json.loads(CONTEXT.read_text(encoding="utf-8")).get("topics", [])}
     except (OSError, ValueError, KeyError, TypeError):
