@@ -30,10 +30,12 @@ AVAILABLE_MODELS = {"qwen3:4b", "llama3.2:3b"}
 MODEL = os.getenv("DEUTSCH_AI_MODEL", "qwen3:4b").strip()
 if MODEL not in AVAILABLE_MODELS:
     MODEL = "qwen3:4b"
-BRIDGE_VERSION = "2026.11.13.5"
+BRIDGE_VERSION = "2026.11.13.6"
 VOICE_DIR = Path(__file__).resolve().parent / "voices"
 PIPER_PATH = VOICE_DIR / "de_DE-thorsten-high.onnx"
-WHISPER_SIZE = "base"
+WHISPER_SIZE = os.getenv("DEUTSCH_STT_MODEL", "small").strip().lower()
+if WHISPER_SIZE not in {"base", "small"}:
+    WHISPER_SIZE = "small"
 MAX_RECORDING = 5_000_000
 _STT = None
 _TTS = None
@@ -129,8 +131,9 @@ def _voice_available():
 
 
 def _stt_available():
-    # A package alone is not proof that the Whisper model is downloaded.
-    return find_spec("faster_whisper") is not None and (VOICE_DIR / ".whisper-ready").is_file()
+    # The exact Whisper model must have passed a real decoding test.
+    return (find_spec("faster_whisper") is not None
+            and (VOICE_DIR / (".whisper-" + WHISPER_SIZE + "-ready")).is_file())
 
 
 def _wav_bytes(text):
@@ -154,8 +157,22 @@ def _recognize_audio(payload, suffix):
         if _STT is None:
             from faster_whisper import WhisperModel
             _STT = WhisperModel(WHISPER_SIZE, device="cpu", compute_type="int8")
-        segments, _ = _STT.transcribe(filename, language="de", beam_size=2, vad_filter=False, condition_on_previous_text=False)
-        return " ".join(segment.text.strip() for segment in segments).strip()
+        # Whisper decodes the waveform; it is NOT a keyword lookup in lesson data.
+        # Small multilingual model and beam search handle accented beginner German
+        # more reliably than the previous base/beam=2 defaults, at higher CPU cost.
+        segments, _ = _STT.transcribe(
+            filename, language="de", task="transcribe",
+            beam_size=5, temperature=0.0, best_of=5,
+            vad_filter=False, condition_on_previous_text=False,
+            no_speech_threshold=0.6, log_prob_threshold=-1.0,
+        )
+        clean_segments = []
+        for segment in segments:
+            if (getattr(segment, "no_speech_prob", 0) > 0.75
+                    and getattr(segment, "avg_logprob", 0) < -0.9):
+                continue
+            clean_segments.append(segment.text.strip())
+        return " ".join(clean_segments).strip()
     finally:
         if filename:
             Path(filename).unlink(missing_ok=True)
@@ -385,7 +402,8 @@ class Handler(BaseHTTPRequestHandler):
         try:
             with _AUDIO_LOCK:
                 transcript = _recognize_audio(audio, suffix)
-            self._response(200, {"text": transcript[:1500], "provider": "self-hosted"})
+            self._response(200, {"text": transcript[:1500], "provider": "self-hosted",
+                                 "model": "whisper-" + WHISPER_SIZE})
         except Exception as exc:
             print("[Deutsch AI] Whisper failed:", type(exc).__name__, str(exc)[:160], flush=True)
             self._response(503, {"error": "Whisper ما قدرش يحوّل التسجيل لنص. راجع النافذة الكحلة."})
