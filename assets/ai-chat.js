@@ -114,7 +114,8 @@ if(!configured()){
  speechReady=connected&&data.speech_ready===true;
  transcriptionReady=connected&&data.transcription_configured===true;
  window.DEUTSCH_AI_VOICE_READY=speechReady&&transcriptionReady;
- if(!speechReady){$("#autoSpeak").checked=false;$("#autoSpeak").disabled=true;}else{$("#autoSpeak").disabled=false;}
+ if(!speechReady){$("#autoSpeak").checked=false;$("#autoSpeak").disabled=true;}
+ else{$("#autoSpeak").disabled=false;if(!$("#autoSpeak").dataset.userChanged)$("#autoSpeak").checked=true;}
  statusBadge(connected,connected?"متصل · AI جاهز":"غير جاهز");syncVoice();
  $("#configHint").textContent=connected?"السيرفر الخاص جاهز. الاتصال كيدوز بينك وبين النموذج المحلي على جهازك أو سيرفرك.":"السيرفر موجود، ولكن نموذج Ollama المحلي أو رمز الدخول مازال ما تفعّلوش.";
  setStatus(connected?(speechReady&&transcriptionReady?"مستعد! الصوت والميكروفون واجدين، تقدر تبدأ مكالمة بالألمانية.":transcriptionReady?"المايك خدام؛ خاص إعداد Piper للرد الصوتي.":speechReady?"النطق الألماني خدام؛ خاص إعداد Whisper للمايك.":"المحادثة الكتابية واجدة. باش تفعل الصوت والمكالمة شغّل START-VOICE-AI.cmd."):"الخادم لم يصبح جاهزاً للمحادثة بعد.");
@@ -125,7 +126,7 @@ if(!configured()){
  }
  applyControls();
 }
-async function respond(message){
+async function respond(message,fromMicrophone=false){
 if(isLocked())return;
 message=String(message||"").trim();if(!message)return;
 if(message.length>1500){setStatus("الرسالة طويلة؛ الحد الأقصى 1500 حرف.");return;}
@@ -155,7 +156,10 @@ try{
  pending.remove();append("assistant",text);
  turns.push(current,{role:"assistant",content:text});turns=turns.slice(-(maxTurns*2));
  setStatus(data.provider==="local-greeting"?"ردّ تحية سريع من التطبيق المحلي؛ باقي الحوار كيستعمل "+modelLabel+".":"جاوب "+modelLabel+" فـ "+(data.elapsed_seconds??Math.max(1,Math.round((Date.now()-startedAt)/1000)))+" ثانية. تقدر تكمل المحادثة.");
- if($("#autoSpeak").checked)speak(text);
+ if(fromMicrophone||$("#autoSpeak").checked){
+  if(speechReady)await speak(text);
+  else setStatus("Whisper فهم كلامك، ولكن Piper مازال ما خدامش. شغّل START-VOICE-AI.cmd ثم اختبار الاتصال باش تسمع الرد.");
+ }
 }catch(e){
  pending.remove();sentBubble.remove();
  const reason=errorMessage(e);
@@ -166,24 +170,40 @@ try{
  setStatus("فشل الطلب: "+reason);
 }finally{clearInterval(progressTimer);busy=false;applyControls();textBox.focus()}
 }
-function stopPlaying(){if(playing){playing.pause();playing.src="";playing=null}if(playURL){URL.revokeObjectURL(playURL);playURL=null}}
+function stopPlaying(){
+ const audio=$("#chatAudioPlayer");
+ if(playing){playing.pause();playing.src="";playing=null}
+ if(audio){audio.pause();audio.removeAttribute("src");audio.load();audio.hidden=true}
+ if(playURL){URL.revokeObjectURL(playURL);playURL=null}
+}
 async function speak(text){
-if(!connected)return;
+if(!connected||!speechReady){setStatus("الصوت الألماني مازال ما جاهزش. شغّل START-VOICE-AI.cmd وجرب الاتصال.");return;}
 stopPlaying();
-let payload=String(text).slice(0,650);
+const payload=String(text||"").slice(0,650);
 if(!payload)return;
-setStatus("كيتم توليد نطق ألماني اصطناعي...");
+setStatus("Piper كيوجد الرد الصوتي بالألمانية…");
 try{
  const res=await call("/api/speak",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:payload,level:pick("#levelSelect")})});
- const blob=await res.blob();if(!blob.size)throw Error("ملف الصوت فارغ.");
+ const blob=await res.blob();
+ if(blob.size<44)throw Error("Piper رجع ملف صوت فارغ.");
  playURL=URL.createObjectURL(blob);
- playing=new Audio(playURL);
- playing.onended=()=>{stopPlaying();setStatus("تقدر تعاود تشغل الصوت أو تكمل المحادثة.")};
- playing.onerror=()=>{stopPlaying();setStatus("تعذر تشغيل التسجيل الألماني.")};
- await playing.play();
- setStatus("🔊 صوت اصطناعي يقرأ الرد بالألمانية؛ لا نستعمل صوت المتصفح الافتراضي.");
-}catch(e){setStatus("تعذر توليد الصوت: "+errorMessage(e))}
+ const audio=$("#chatAudioPlayer");
+ if(audio){
+  audio.src=playURL;audio.hidden=false;audio.controls=true;
+  audio.onended=()=>{setStatus("سالَى الرد الصوتي. تقدر تهضر مجدداً.");};
+  try{
+   await audio.play();
+   setStatus("🔊 AI كيهضر بالألمانية. تقدر توقف أو تعاود Play من مشغل الصوت.");
+  }catch(_){
+   setStatus("Piper جهّز الصوت، لكن المتصفح منع التشغيل التلقائي. ضغط Play فمشغل الصوت اللي ظهر لتحت.");
+  }
+ }else{
+  playing=new Audio(playURL);
+  await playing.play();
+ }
+}catch(e){setStatus("تعذر الرد الصوتي: "+errorMessage(e)+" — جرّب زر «جرّب الصوت» وشوف إعدادات السماعات.")}
 }
+
 async function microphone(){
 if(!connected)return;
 if(recorder&&recorder.state==="recording"){recorder.stop();return}
@@ -213,7 +233,7 @@ try{
     const data=await res.json();const transcript=String(data.text||"").trim();
     if(!transcript){setStatus("ما قدرناش نفهمو التسجيل. عاود أو اكتب الرسالة.");return}
     setStatus("تم التعرف على الكلام: "+transcript);
-    busy=false;applyControls();await respond(transcript);
+    busy=false;applyControls();await respond(transcript,true);
    }catch(e){setStatus("تعذر تحويل الصوت إلى نص: "+errorMessage(e))}
    finally{busy=false;applyControls()}
  };
@@ -233,6 +253,8 @@ $("#levelSelect").addEventListener("change",()=>{if(busy)return;turns=[];stopPla
 $("#scenarioSelect").addEventListener("change",()=>{if(busy)return;turns=[];showWelcome();suggestions();setStatus("بدأت محادثة بموضوع جديد.")});
 $("#suggestions").addEventListener("click",e=>{const btn=e.target.closest("[data-prompt]");if(btn){textBox.value=btn.dataset.prompt;resizeInput();textBox.focus()}});
 $("#testConnection").addEventListener("click",check);
+$("#autoSpeak").addEventListener("change",()=>{$("#autoSpeak").dataset.userChanged="1";});
+
 const mobileSettings=$("#aiMobileSettings"),layout=$(".ai-layout");
 mobileSettings?.addEventListener("click",()=>{
  const open=layout.classList.toggle("settings-open");
