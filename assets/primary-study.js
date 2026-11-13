@@ -71,7 +71,7 @@ function examplesBlock(items){
  return (items||[]).filter(x=>x&&x[0]&&x[1]).map(x=>'<div class="story lesson-example">'+iso(x[0])+'<p>'+esc(x[1])+'</p>'+speaker(x[0])+'</div>').join("");
 }
 function render(){
- $("[data-tab]",root).forEach(b=>{
+ Array.from(root.querySelectorAll("[data-tab]")).forEach(b=>{
   const active=b.dataset.tab===tab;
   b.classList.toggle("active",active);
   b.setAttribute("aria-current",active?"step":"false");
