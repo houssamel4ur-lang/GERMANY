@@ -42,7 +42,7 @@ class FinalOnlyReplyTests(unittest.TestCase):
 
     def test_model_still_local_and_nothink(self):
         self.assertEqual(bridge.MODEL, "qwen3:4b")
-        self.assertEqual(bridge.BRIDGE_VERSION, "2026.11.13.4")
+        self.assertEqual(bridge.BRIDGE_VERSION, "2026.11.13.5")
         self.assertIn("/no_think", bridge._system("A1", "free", True, None))
 
     def test_nonthinking_model_omits_no_think_and_native_think_flag(self):
