@@ -112,3 +112,18 @@
   .study .rowactions{gap:5px}
   .study .rowactions .outline{min-width:0}
 }
+
+
+/* Place audio NEXT TO the German term, not at the distant end of a wide row. */
+.study .wordrow-vocab .wordrow-text{min-width:0;display:flex;flex-direction:column;gap:5px;align-items:flex-start}
+.study .wordrow-vocab .wordrow-german{display:flex;flex-wrap:wrap;gap:9px;align-items:center;direction:ltr;justify-content:flex-start;max-width:100%}
+.study .wordrow-vocab .wordrow-german .de{display:inline-block;direction:ltr;max-width:100%;text-align:left}
+.study .wordrow-vocab .wordrow-german .speak{min-width:42px;min-height:42px}
+.study .wordrow-vocab .rowactions{align-self:center}
+.study .pron-words .wordrow{display:flex;flex-wrap:wrap;direction:ltr;justify-content:flex-start;gap:12px;min-height:58px}
+.study .pron-words .wordrow .speak{margin-inline-start:0}
+@media(max-width:500px){
+ .study .wordrow-vocab{grid-template-columns:minmax(0,1fr) auto}
+ .study .wordrow-vocab .wordrow-german .de{font-size:15px}
+ .study .wordrow-vocab .wordrow-german .speak{min-width:39px;min-height:39px}
+}
