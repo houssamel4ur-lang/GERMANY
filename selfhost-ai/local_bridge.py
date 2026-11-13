@@ -27,6 +27,7 @@ HOST = "127.0.0.1"
 PORT = 8787
 OLLAMA = "http://127.0.0.1:11434"
 MODEL = "qwen3:4b"
+BRIDGE_VERSION = "2026.11.13.3"
 VOICE_DIR = Path(__file__).resolve().parent / "voices"
 PIPER_PATH = VOICE_DIR / "de_DE-thorsten-high.onnx"
 WHISPER_SIZE = "base"
@@ -152,6 +153,23 @@ def _recognize_audio(payload, suffix):
         if filename:
             Path(filename).unlink(missing_ok=True)
 
+def _fast_greeting(message, level):
+    """Instant, deterministic German greeting for the common first turn.
+
+    This is a local app reply, clearly marked as such, not misrepresented
+    as model-generated. Full dialogue continues through Qwen3.
+    """
+    normalized = message.strip().casefold().rstrip("!?. ").strip()
+    if normalized not in {"hallo", "hi", "hey", "guten tag", "guten morgen", "guten abend", "servus", "moin"}:
+        return ""
+    return {
+        "A1": "Hallo! Schön, dass du da bist. Wie geht es dir?",
+        "A2": "Hallo! Schön, dich kennenzulernen. Wie war dein Tag bisher?",
+        "B1": "Hallo! Schön, dass wir miteinander Deutsch üben. Worüber möchtest du sprechen?",
+        "B2": "Hallo! Ich freue mich auf unser Gespräch. Welches Thema interessiert dich heute besonders?",
+    }[level]
+
+
 def _clean(reply):
     """Only a final answer can be returned to the public learner chat.
 
@@ -170,6 +188,48 @@ def _clean(reply):
     if re.search(r"(?i)(?:^Okay[,]? the (?:user|learner)|^The (?:user|learner) (?:wants|asks|said)|^I (?:need|should|must) to|^Let me (?:think|plan)|^Final plan:|^First, I (?:need|should)|^Wait, (?:the user|they said)|^\*checks requirements|\b(?:the learner said|the user said|the instruction says|I should respond|Let me think|the prompt says|one or two sentences)\b)", reply):
         return ""
     return reply[:1400]
+
+
+
+def _model_content(response):
+    """Read only the final response, never Ollama's separate thinking field."""
+    raw = response.get("message", {}).get("content", "")
+    try:
+        parsed = json.loads(raw)
+        if isinstance(parsed, dict) and isinstance(parsed.get("reply"), str):
+            raw = parsed["reply"]
+    except (ValueError, TypeError, AttributeError):
+        pass
+    return _clean(raw)
+
+
+def _generate_final(query, level):
+    """One controlled retry if a model returns an empty or reasoning-only answer."""
+    options = {"temperature": 0.55, "top_p": 0.9,
+               "num_ctx": 1536 if level in ("A1", "A2") else 2048,
+               "num_predict": {"A1": 90, "A2": 115, "B1": 150, "B2": 180}[level]}
+    result = _ollama("/api/chat", {"model": MODEL, "messages": query,
+                                   "think": False, "stream": False,
+                                   "keep_alive": "30m", "options": options}, timeout=240)
+    first = _model_content(result)
+    if first:
+        return first
+    # Do not display the first reasoning text. Retry with one focused turn
+    # rather than more output tokens or a strict JSON grammar.
+    print("[Deutsch AI] Rejected empty/reasoning-only output; retrying once.", flush=True)
+    retry = [
+        {"role": "system", "content":
+         "/no_think\nDu bist Deutsch Partner. Antworte direkt und ausschließlich "
+         "mit 1 bis 3 kurzen, korrekten deutschen Sätzen. "
+         "Keine Analyse, keine Erklärung deines Vorgehens."},
+        {"role": "user", "content": "/no_think\n" + query[-1]["content"]},
+    ]
+    result = _ollama("/api/chat", {"model": MODEL, "messages": retry,
+                                   "think": False, "stream": False,
+                                   "keep_alive": "30m",
+                                   "options": {"temperature": 0.35, "num_ctx": 1024,
+                                               "num_predict": 100}}, timeout=160)
+    return _model_content(result)
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -240,6 +300,7 @@ class Handler(BaseHTTPRequestHandler):
             present = False
         self._response(200, {"ready": present, "provider": "self-hosted", "model": MODEL,
                              "speech_ready": _voice_available(), "transcription_configured": _stt_available(),
+                             "bridge_version": BRIDGE_VERSION,
                              "message": "Qwen3 local is ready" if present else "Start Ollama and load qwen3:4b"})
 
     def _binary(self, mime, payload):
@@ -353,37 +414,22 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, TypeError, AttributeError, json.JSONDecodeError) as e:
             self._response(400, {"error": str(e)[:160]})
             return
+        quick_reply = _fast_greeting(safe[-1]["content"], level)
+        if quick_reply:
+            self._response(200, {"reply": quick_reply, "level": level,
+                                 "provider": "local-greeting", "elapsed_seconds": 0})
+            return
         query = [{"role": "system", "content": _system(level, scenario, correct, lesson_id)}, *safe]
         try:
-            # Native Qwen3 think:false plus /no_think; avoid constrained JSON
-            # decoding, which can increase latency/fail on weaker computers.
             started = time.monotonic()
-            answer = _ollama("/api/chat", {
-                "model": MODEL, "messages": query, "stream": False,
-                "think": False, "keep_alive": "30m",
-                "options": {
-                    "temperature": 0.55, "top_p": 0.9,
-                    "num_ctx": 1536 if level in ("A1", "A2") else 2048,
-                    "num_predict": {"A1": 90, "A2": 115, "B1": 150, "B2": 180}[level],
-                },
-            }, timeout=240)
-            raw = answer.get("message", {}).get("content", "")
-            # Backward compatibility with earlier structured response versions.
-            try:
-                parsed = json.loads(raw)
-                if isinstance(parsed, dict) and isinstance(parsed.get("reply"), str):
-                    raw = parsed["reply"]
-            except (ValueError, TypeError, AttributeError):
-                pass
-            reply = _clean(raw)
-            print("[Deutsch AI] Generation took %.1fs; final chars: %d" %
-                  (time.monotonic() - started, len(reply)), flush=True)
+            reply = _generate_final(query, level)
             if not reply:
-                # Fail closed: malformed reasoning must never be sent to a learner.
-                self._response(502, {"error": "الموديل ما رجّعش جواب نهائي آمن. جرب تعاود السؤال."})
+                self._response(502, {"error": "Qwen3 ما رجّعش جواب نهائي حتى بعد إعادة محاولة محلية. جرّب سؤال أقصر بعد ما يسالي تثبيت الصوت."})
                 return
+            seconds = round(time.monotonic() - started, 1)
+            print("[Deutsch AI] Final reply: %.1fs, %d chars" % (seconds, len(reply)), flush=True)
             self._response(200, {"reply": reply, "level": level, "provider": "self-hosted",
-                                 "elapsed_seconds": round(time.monotonic() - started, 1)})
+                                 "elapsed_seconds": seconds})
         except HTTPError as exc:
             detail = exc.read(800).decode("utf-8", errors="replace")
             print("[Deutsch AI] Ollama HTTP %d: %s" % (exc.code, detail[:300]), flush=True)
