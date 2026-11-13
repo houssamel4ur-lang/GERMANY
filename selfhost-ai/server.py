@@ -91,7 +91,7 @@ def prompt(level: str, scenario: str, correct: bool) -> str:
 
 
 def _auth(request: Request) -> None:
-    if not CODE or len(CODE) < 12:
+    if not CODE or len(CODE) < 12 or CODE.startswith("REPLACE-WITH"):
         raise HTTPException(503, "الخادم يحتاج رمز دخول سري من 12 حرفاً على الأقل.")
     supplied = request.headers.get("X-Coach-Access", "")
     if not hmac.compare_digest(supplied, CODE):
