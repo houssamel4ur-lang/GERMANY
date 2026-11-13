@@ -107,7 +107,7 @@ function render(){
   } else if(!uniqueIPA.length)html+='<p class="notice">لا تتوفر حالياً تسجيلات صوتية لهذا الدرس. لا يظهر هنا صوت بديل بلغة أخرى.</p>';
  }
  if(tab==="grammar"){
-  html=title(topic.section==="الحروف والنطق"?"الشرح التفصيلي وطريقة الاستعمال":"القواعد والشرح التفصيلي",
+  html=title(topic.section==="الحروف والنطق"?"الشرح التفصيلي وطريقة الاستعمال":(/قواعد|النحو/.test(topic.section)?"القواعد والشرح التفصيلي":"شرح الفكرة بالأمثلة"),
   "هنا توجد القواعد والخطوات مع أمثلة محللة؛ المقدمة لا تعيد الشرح.")+
   (lesson.grammarBlocks?.length?lesson.grammarBlocks.map(block=>
    '<div class="lesson-block"><h3>'+esc(block.title)+'</h3><p>'+esc(block.body)+'</p>'+examplesBlock(block.examples)+'</div>').join(""):
@@ -174,7 +174,8 @@ function buildQuestions(){
  shuffle(vocabulary).forEach((word,i)=>{
   if(i%3===0)qs.push({kind:"choice",prompt:"اختر المعنى العربي الصحيح:",display:word.de,answer:word.ar,options:findOpts(word,"ar")});
   else if(i%3===1)qs.push({kind:"choice",prompt:"اختر التعبير الألماني الذي يعني: "+word.ar,answer:word.de,options:findOpts(word,"de")});
-  else qs.push({kind:"listen",prompt:"استمع إلى الكلمة واختر معناها:",audio:word.de,answer:word.ar,options:findOpts(word,"ar")});
+  else if(window.DM_AUDIO_MAP?.[word.de])qs.push({kind:"listen",prompt:"استمع إلى الكلمة واختر معناها:",audio:word.de,answer:word.ar,options:findOpts(word,"ar")});
+  else qs.push({kind:"choice",prompt:"اختر معنى الكلمة المكتوبة:",display:word.de,answer:word.ar,options:findOpts(word,"ar")});
  });
  if(lesson.examples[0]){
   const sentence=lesson.examples[0][0].trim();
@@ -184,10 +185,7 @@ function buildQuestions(){
   const w=vocabulary.find(x=>/^[A-Za-zÄÖÜäöüß][A-Za-zÄÖÜäöüß\s-]+$/.test(x.de));
   if(w)qs.push({kind:"type",prompt:"اكتب بالألمانية: "+w.ar,answer:w.de});
  }
- if(lesson.reading&&lesson.translation){
-  const distractorTranslations=shuffle(material.filter(x=>x.id!==lesson.id&&x.level===lesson.level).map(x=>x.translation).filter(x=>x&&x!==lesson.translation)).slice(0,3);
-  if(distractorTranslations.length>=2)qs.push({kind:"reading",prompt:"اختر الترجمة المطابقة للنص الألماني:",reading:lesson.reading,answer:lesson.translation,options:shuffle([lesson.translation,...distractorTranslations])});
- }
+ // Assess reading via authored, topic-specific comprehension questions only.
  if(Array.isArray(lesson.readingQuestions)){
   for(const rq of lesson.readingQuestions){
    const [prompt,answer,...wrong]=rq;
@@ -227,10 +225,8 @@ if(!good){
  return;
 }
 if(!wrongOnThis)first++;
-feedback.innerHTML='<div class="feedback">✓ صحيح. '+(q.kind==="order"||q.kind==="type"?esc(q.answer):"أحسنت!")+'</div>';
 $$("button",$("#quizSurface")).forEach(b=>b.disabled=true);
-const s=++serial;
-setTimeout(()=>{if(tab!=="exercise"||s!==serial)return;pos++;drawQuestion()},850);
+feedback.innerHTML='<div class="feedback">✓ صحيح. '+(q.kind==="order"||q.kind==="type"?esc(q.answer):"راجع الإجابة ثم انتقل للسؤال التالي.")+'<div class="controls"><button type="button" class="primary" data-next-question>'+(pos+1===questions.length?"إظهار النتيجة ←":"السؤال التالي ←")+'</button></div></div>';
 }
 function finishQuiz(){
 const attempt={first,total:questions.length,errors:miss,ts:Date.now()};
@@ -302,6 +298,7 @@ if(exportButton){
 const writing=e.target.closest("[data-savewriting]");
 if(writing){try{localStorage.setItem(KEY+"-writing-"+id,$("#writingDraft").value);notify("حُفظت مسودة الكتابة محلياً.")}catch(err){notify("تعذر حفظ المسودة.")}return}
 if(tab!=="exercise")return;
+if(e.target.closest("[data-next-question]")){pos++;drawQuestion();return}
 const btn=e.target.closest("[data-answer]");
 if(btn){checkAnswer(questions[pos].options[Number(btn.dataset.answer)],btn);return}
 if(e.target.closest("[data-checktype]")){checkAnswer($("#typedAnswer").value);return}
