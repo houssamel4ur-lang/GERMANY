@@ -118,10 +118,17 @@ if(message.length>1500){setStatus("الرسالة طويلة؛ الحد الأق
 if(message.includes("\u0000"))return;
 stopPlaying();busy=true;applyControls();
 body.querySelector(".ai-intro")?.remove();
-append("user",message);
+const sentBubble=append("user",message);
+body.querySelectorAll(".ai-request-error").forEach(n=>n.remove());
 textBox.value="";resizeInput();
 const pending=append("assistant","•••","pending");pending.setAttribute("aria-label","جاري إعداد الجواب");pending.querySelector("span:last-child")?.classList.add("ai-pending-dots");
-setStatus("كيتم إعداد رد ألماني مناسب لمستوى "+pick("#levelSelect")+"...");
+setStatus("Qwen3 4B كيوجد الجواب محلياً...");
+const startedAt=Date.now();
+const progressTimer=setInterval(()=>{
+ if(!busy)return;
+ const seconds=Math.floor((Date.now()-startedAt)/1000);
+ setStatus(seconds<12?"Qwen3 4B كيوجد الجواب محلياً… ("+seconds+" ثواني)":"Qwen3 4B باقي كيعالج الجواب على PC ديالك… ("+seconds+" ثواني). السرعة كتختلف حسب المعالج والذاكرة.");
+},1500);
 const current={role:"user",content:message};
 try{
  const reply=await call("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
@@ -133,13 +140,17 @@ try{
  if(!text)throw new Error("الردّ فيه تفكير داخلي أو فارغ، ولذلك ما تعرضش. حاول مجدداً.");
  pending.remove();append("assistant",text);
  turns.push(current,{role:"assistant",content:text});turns=turns.slice(-(maxTurns*2));
- setStatus(speechReady?"المحادثة مستمرة. تقدر تسمع الرد أو تكمل الكتابة.":"المحادثة مستمرة مع Qwen3 4B المحلي. اكتب جوابك بالألمانية.");
+ setStatus("جاوب Qwen3 4B فـ "+(data.elapsed_seconds??Math.max(1,Math.round((Date.now()-startedAt)/1000)))+" ثانية. تقدر تكمل المحادثة.");
  if($("#autoSpeak").checked)speak(text);
 }catch(e){
- pending.remove();
- append("assistant","Verbindung fehlgeschlagen. Bitte versuche es später noch einmal.");
- setStatus("تعذر استلام رد AI: "+errorMessage(e)+". يمكنك إعادة إرسال رسالتك.");
-}finally{busy=false;applyControls();textBox.focus()}
+ pending.remove();sentBubble.remove();
+ const reason=errorMessage(e);
+ const notice=document.createElement("div");notice.className="ai-alert ai-request-error";notice.setAttribute("role","alert");notice.dir="rtl";
+ notice.textContent="تعذر جواب Qwen3: "+reason+" — الرسالة رجعات لخانة الكتابة باش تقدر تعاود المحاولة.";
+ body.appendChild(notice);body.scrollTop=body.scrollHeight;
+ textBox.value=message;resizeInput();
+ setStatus("فشل الطلب: "+reason);
+}finally{clearInterval(progressTimer);busy=false;applyControls();textBox.focus()}
 }
 function stopPlaying(){if(playing){playing.pause();playing.src="";playing=null}if(playURL){URL.revokeObjectURL(playURL);playURL=null}}
 async function speak(text){
