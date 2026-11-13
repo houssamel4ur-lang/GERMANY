@@ -146,3 +146,18 @@ body[data-page="german-coach"] .top{border-bottom:1px solid #e1e9e8;box-shadow:0
 #liveOutput[controls]{width:100%;height:34px}
 .ai-voice-test-result{color:#197a5d}
 @media(max-width:760px){.ai-voice-heading{padding:9px 11px 0}.ai-live{padding:8px 11px 10px!important}.ai-voice-actions{width:100%}.ai-voice-actions button{flex:1 1 120px;padding:8px 6px}}
+
+/* Spoken dictation always retains a real audio playback control. */
+.ai-reply-audio{display:flex;align-items:center;gap:9px;padding:2px 16px 8px;flex-wrap:wrap;font-size:11px;color:#317466}
+.ai-reply-audio audio:not([hidden]){display:block;flex:1 1 230px;min-width:160px;max-width:650px;height:36px}
+.ai-reply-audio audio[hidden],#liveOutput[hidden]{display:none!important}
+.ai-transcription-review{margin:9px 17px;padding:12px;background:#edf9f4;border:1px solid #c2e2d4;border-radius:12px}
+.ai-transcription-review[hidden]{display:none!important}
+.ai-transcription-review label{display:block;margin:0 0 7px;font-size:12px;font-weight:800;color:#185f4d}
+.ai-transcription-review textarea{width:100%;resize:vertical;min-height:52px;max-height:135px;border:1px solid #aed5c5;border-radius:8px;padding:8px;font-size:14px;direction:ltr;text-align:left}
+.ai-transcription-review .review-buttons{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:8px}
+.ai-transcription-review button{font-size:11px;border-radius:8px;padding:8px 13px}
+.ai-transcription-review small{display:block;font-size:10px;color:#567f70;margin-top:7px}
+.ai-review-option{display:inline-flex;gap:6px;align-items:center;font-size:11px;color:#3c786b;cursor:pointer;font-weight:750}
+.ai-review-option input{width:15px;height:15px;accent-color:#087b60}
+@media(max-width:600px){.ai-reply-audio{padding:1px 10px 6px}.ai-transcription-review{margin:7px 10px;padding:10px}}
