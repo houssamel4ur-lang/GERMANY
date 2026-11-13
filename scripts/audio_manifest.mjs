@@ -42,7 +42,8 @@ if(mode==="all"){
  "data/advanced-merge.js",
  "data/foundation-a1.js",
  "data/foundation-a2.js",
- "data/foundation-merge.js"
+ "data/foundation-merge.js",
+ "data/structured-a1-pronunciation.js"
  ];
  for(const path of sources)runInNewContext(readFileSync(path,"utf8"),{window:w});
  for(const lesson of w.DM_PRIMARY_LESSONS||[]){
@@ -50,6 +51,34 @@ if(mode==="all"){
   for(const x of lesson.examples)add(x[0]);
   for(const x of lesson.dialogue)add(x[0]);
   add(lesson.reading);
+  // Independently authored pronunciation lessons contain additional German
+  // examples that the ordinary vocabulary arrays do not include.
+  for(const block of lesson.grammarBlocks||[])
+    for(const pair of block.examples||[])add(pair[0]);
+  for(const part of lesson.pronunciation||[])
+    for(const word of part.words||[])add(word);
+  for(const row of lesson.alphabet||[]){
+    add(row[3]); // the German example word, not the IPA transcription
+    add(row[0]+" wie "+row[3]);
+  }
+ }
+ // The standalone practice packs are shown in separate pages. Their audio
+ // must be inventoried too, not only the newer focused lessons.
+ const packs=[
+  ...(w.DM_COURSE_A1_PART1||[]),...(w.DM_COURSE_A1_PART2||[]),
+  ...(w.DM_COURSE_A2_PART1||[]),...(w.DM_COURSE_A2_PART2||[])
+ ];
+ for(const pack of packs){
+  for(const part of pack.parts||[])add(part[1]);
+  for(const word of pack.words||[])add(word[0]);
+  for(const dialogue of pack.dialogue||[])add(dialogue[0]);
+  if(pack.reading)add(pack.reading[0]);
+ }
+ // Earlier independent authored lessons used by the alternative curriculum UI.
+ for(const lesson of Object.values(w.DM_CURRICULUM_LESSONS||{})){
+  for(const row of lesson.examples||[])add(row.de);
+  for(const row of lesson.dialogue||[])add(row.de);
+  if(lesson.reading)add(lesson.reading.de);
  }
 }
 
