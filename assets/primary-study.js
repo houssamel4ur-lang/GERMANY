@@ -33,7 +33,7 @@ function speaker(text){const phrase=String(text||"").trim(),available=!!window.D
 function savedKey(word){return lesson.id+"::"+word.de}
 function wordCard(word,i,listenOnly){
 const key=savedKey(word),saved=!!state.cards[key];
-return '<div class="wordrow wordrow-vocab"><div class="wordrow-text">'+iso(word.de)+'<small>'+esc(word.ar)+'</small></div><div class="rowactions">'+speaker(word.de)+(listenOnly?"":'<button class="outline" data-saveword="'+i+'" type="button" aria-label="احفظ للمراجعة">'+(saved?"★ محفوظة":"☆ احفظ")+'</button>')+'</div></div>';
+return '<div class="wordrow wordrow-vocab"><div class="wordrow-text"><div class="wordrow-german">'+iso(word.de)+speaker(word.de)+'</div><small>'+esc(word.ar)+'</small></div>'+(listenOnly?"":'<div class="rowactions"><button class="outline" data-saveword="'+i+'" type="button" aria-label="احفظ للمراجعة">'+(saved?"★ محفوظة":"☆ احفظ")+'</button></div>')+'</div>';
 }
 const tabs=[["intro","01 · خطة الدرس"],["vocab","02 · المفردات"],["audio","03 · النطق والاستماع"],["grammar","04 · الشرح والقواعد"],["conversation","05 · المحادثة"],["reading","06 · القراءة والكتابة"],["exercise","07 · التمارين"],["result","08 · التقييم"]];
 function detailPage(){
