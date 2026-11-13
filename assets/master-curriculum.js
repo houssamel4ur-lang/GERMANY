@@ -1,64 +1,73 @@
-/* Primary curriculum index: 452 entries from the approved user PDF. No invented lesson completions. */
+/* Unified, accessible A1-B2 curriculum: 89 coherent study modules preserve all 452 PDF topics. */
 (function(){
 "use strict";
 const root=document.getElementById("curriculumMount");
 const master=window.DM_MASTER_CURRICULUM;
-if(!root||!master){if(root)root.textContent="تعذر تحميل الفهرس الرئيسي.";return;}
-const levels=["A1","A2","B1","B2"];
+const modules=window.DM_LEARNING_MODULES||[];
+if(!root||!master||!modules.length){if(root)root.textContent="تعذر تحميل الوحدات الدراسية.";return}
 const labels={A1:"المبتدئ",A2:"الأساسي المتقدم",B1:"المتوسط",B2:"فوق المتوسط"};
-const drafts=new Set((window.DM_PRIMARY_LESSONS||[]).map(x=>x.id));
+const valid=["A1","A2","B1","B2"];
+const drafted=new Set((window.DM_PRIMARY_LESSONS||[]).map(x=>x.id));
 const completed=(()=>{try{return new Set(Object.keys(JSON.parse(localStorage.getItem("deutsch-mastery-primary-v2")||"{}").passed||{}))}catch(e){return new Set()}})();
-let query="",sectionFilter="all";
-const params=new URLSearchParams(location.search);
-let level=levels.includes(params.get("level"))?params.get("level"):"A1";
-const topicId=params.get("topic");
-const legacyUnit=params.get("unit");
-const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const topicMap=new Map(master.topics.map(t=>[t.id,t]));
+const moduleMap=new Map(modules.map(m=>[m.id,m]));
+const queryParams=new URLSearchParams(location.search);
+let level=valid.includes(queryParams.get("level"))?queryParams.get("level"):"A1";
+let textFilter="",sectionFilter="all";
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const norm=s=>String(s||"").normalize("NFKC").toLowerCase().replace(/[\u064b-\u065f]/g,"").replace(/[أإآ]/g,"ا").replace(/\s+/g," ").trim();
-const findTopic=id=>master.topics.find(x=>x.id===id);
-const href=x=>drafts.has(x.id)?"course.html?topic="+encodeURIComponent(x.id):"syllabus.html?level="+encodeURIComponent(x.level)+"&topic="+encodeURIComponent(x.id);
-const levelHref=lv=>"syllabus.html?level="+lv;
+const lessonHref=t=>drafted.has(t.id)?"course.html?topic="+encodeURIComponent(t.id):"syllabus.html?level="+t.level+"&topic="+t.id;
+const moduleHref=m=>"module.html?module="+encodeURIComponent(m.id);
+const byLevel=l=>modules.filter(m=>m.level===l);
+const stats=m=>({ready:m.topicIds.filter(id=>drafted.has(id)).length,done:m.topicIds.filter(id=>completed.has(id)).length,count:m.topicIds.length});
+function modulesOfSection(s){return byLevel(level).filter(m=>m.sectionId===s.id)}
 function levelCards(){
-return '<div class="levelgrid">'+master.levels.map(x=>'<a class="levelcard '+(x.level===level?"active":"")+'" href="'+levelHref(x.level)+'"><span class="lv">'+x.level+'</span><h3>'+labels[x.level]+'</h3><p>'+x.count+' موضوعاً ضمن '+x.sections.length+' أقسام</p><small>تصفح المستوى ←</small></a>').join("")+'</div>';
+return '<div class="module-levels">'+master.levels.map(l=>'<a class="module-level-link '+(l.level===level?'active':'')+'" href="syllabus.html?level='+l.level+'"><b>'+l.level+'</b><small>'+byLevel(l.level).length+' وحدات دراسية • '+labels[l.level]+'</small></a>').join("")+'</div>';
 }
-function renderOverview(){
-const data=master.topics.filter(x=>x.level===level);
-const levelData=master.levels.find(x=>x.level===level);
-root.innerHTML='<div class="pagehead"><span class="overline">DEUTSCH MASTERY · MASTER CURRICULUM</span><h1>الفهرس الرئيسي لتعلّم الألمانية</h1><p>النسخة المعتمدة من ملفك الجديد: '+master.total_topics+' موضوعاً عبر A1 وA2 وB1 وB2. نتبع ترتيب المصدر كما هو، دون احتساب هذه العناوين دروساً مكتملة.</p></div>'+
-'<div class="statgrid" style="margin:20px 0"><div class="panel"><strong>452</strong><span>موضوعاً في الفهرس</span></div><div class="panel"><strong>4</strong><span>مستويات متدرجة</span></div><div class="panel"><strong>16</strong><span>صفحة في ملف المرجع</span></div><div class="panel"><strong>'+levelData.sections.length+'</strong><span>أقسام مستوى '+level+'</span></div></div>'+
-levelCards()+
-'<section class="section" style="padding-top:32px"><span class="overline">المنهج المعتمد — '+level+'</span><h2>'+level+' · '+labels[level]+'</h2><p class="sub">افتح عنوان أي موضوع لمشاهدة موقعه في الفهرس، أو ابحث باسم القاعدة أو المهارة.</p>'+
-'<div class="searchrow"><label for="masterSearch">البحث:</label><input id="masterSearch" type="search" autocomplete="off" placeholder="ابحث داخل '+level+'..." value="'+esc(query)+'"><label for="masterSection">القسم:</label><select id="masterSection"><option value="all">جميع الأقسام</option>'+levelData.sections.map(s=>'<option value="'+esc(s.name)+'" '+(sectionFilter===s.name?"selected":"")+'>'+esc(s.name)+'</option>').join("")+'</select></div><div id="masterSections"></div></section>'+
-'<div class="notice">هذه خطة التعلم الرئيسية. المواضيع ذات التدريب الأولي قابلة للاستعمال، لكن تحتاج إلى توسيع ومراجعة. <a href="journey.html">لوحة التقدم الجديدة</a>.</div>';
-document.getElementById("masterSearch").addEventListener("input",e=>{query=e.target.value;renderSections()});
-document.getElementById("masterSection").addEventListener("change",e=>{sectionFilter=e.target.value;renderSections()});
-renderSections();
+function moduleCard(m,matched){
+const count=stats(m),pts=m.topicIds.map(id=>topicMap.get(id));
+const visible=matched?pts.filter(t=>norm(t.title).includes(norm(textFilter))||norm(m.title).includes(norm(textFilter))):pts;
+return '<article class="module-card"><div class="module-number">'+m.level+' · القسم '+m.sectionIndex+' · الوحدة '+String(m.index).padStart(2,"0")+'</div><a href="'+moduleHref(m)+'"><h3>'+esc(m.title)+'</h3><p>'+esc(pts.slice(0,3).map(t=>t.title).join(" • "))+(pts.length>3?"…":"")+'</p><span class="module-cta">فتح الوحدة المتكاملة ←</span></a>'+
+'<div class="module-meta"><span>'+count.count+' نقاط مترابطة</span><span>'+count.ready+' شروح متوفرة</span><span>'+count.done+' اجتزتها</span></div>'+
+'<details class="module-topics" '+(matched?'open':'')+'><summary>عرض نقاط الوحدة بالتفصيل ('+pts.length+')</summary><ol class="module-topic-list">'+visible.map(t=>'<li><a href="'+lessonHref(t)+'"><span>'+String(t.number).padStart(2,"0")+'</span><span>'+esc(t.title)+'</span><small class="'+(drafted.has(t.id)?"":"is-planned")+'">'+(drafted.has(t.id)?(completed.has(t.id)?"✓":"تدريب"):"فهرس")+'</small></a></li>').join("")+'</ol></details></article>';
 }
 function renderSections(){
-const target=document.getElementById("masterSections");
-const sections=master.levels.find(x=>x.level===level).sections;
-const search=norm(query);
-let shown=0;
-target.innerHTML=sections.filter(s=>sectionFilter==="all"||s.name===sectionFilter).map(s=>{
-const xs=master.topics.filter(x=>x.level===level&&x.section===s.name&&(!search||norm(x.title).includes(search)||norm(s.name).includes(search)));
-shown+=xs.length;
-if(!xs.length)return "";
-return '<details class="panel" '+(search||sectionFilter!=="all"?"open":"open")+'><summary style="cursor:pointer;font-weight:850;font-size:18px"><span class="badge">'+xs.length+' / '+s.count+'</span> '+esc(s.name)+'</summary><div class="divider"></div><div class="lessongrid">'+xs.map(x=>'<a class="lessoncard" href="'+href(x)+'" style="min-height:114px"><span class="kicker">'+level+' · القسم '+x.section_number+' · الموضوع '+String(x.number).padStart(2,"0")+'</span><h3>'+esc(x.title)+'</h3><small>'+(drafts.has(x.id)?(completed.has(x.id)?'✓ اجتزت التدريب':'فتح التدريب التفاعلي الأولي'):'عنوان بالفهرس دون درس تفاعلي')+' ←</small></a>').join("")+'</div></details>';
-}).join("")||'<div class="notice">لم يُعثر على موضوع مطابق. جرّب كتابة أخرى.</div>';
-const count=document.getElementById("visibleTopics");
-if(count)count.textContent=String(shown);
+const target=document.getElementById("moduleSections");
+if(!target)return;
+const term=norm(textFilter),sections=master.levels.find(l=>l.level===level).sections;
+const parts=sections.filter(s=>sectionFilter==="all"||sectionFilter===s.id).map((s,i)=>{
+const groups=modulesOfSection(s).filter(m=>!term||norm(m.title).includes(term)||norm(s.name).includes(term)||m.topicIds.some(id=>norm(topicMap.get(id).title).includes(term)));
+if(!groups.length)return "";
+const ready=groups.reduce((sum,m)=>sum+stats(m).ready,0);
+return '<details class="module-section" '+(term||sectionFilter!=="all"||i===0?'open':'')+'><summary><span><span class="overline">'+level+' · القسم '+(i+1)+'</span><h2>'+esc(s.name)+'</h2><span class="sectioncaption">'+groups.length+' وحدات مترابطة · '+s.count+' نقطة في الفهرس · '+ready+' شروح أولية</span></span><span class="badge">'+groups.length+' وحدات</span></summary>'+
+'<div class="module-list">'+groups.map(m=>moduleCard(m,Boolean(term))).join("")+'</div></details>';
+}).join("");
+target.innerHTML=parts||'<div class="notice">لم تجد الوحدة أو الموضوع المطلوب. جرب كلمة أخرى.</div>';
 }
-function renderDetail(topic){
-const same=master.topics.filter(x=>x.level===topic.level);
-const i=same.findIndex(x=>x.id===topic.id);
-const prev=i>0?same[i-1]:null,next=i+1<same.length?same[i+1]:null;
-document.title=topic.title+' · '+topic.level+' | Deutsch Mastery';
-root.innerHTML='<div class="crumb"><a href="index.html">الرئيسية</a> / <a href="'+levelHref(topic.level)+'">منهج '+topic.level+'</a> / '+esc(topic.section)+'</div>'+
-'<div class="lessonhero"><span class="eyebrow">'+topic.level+' · القسم '+topic.section_number+' · الموضوع '+String(topic.number).padStart(2,"0")+'</span><h1>'+esc(topic.title)+'</h1><p>موضوع مقرر حسب الفهرس الذي اخترته مرجعاً رئيسياً — الصفحة '+topic.page+' من ملف PDF.</p></div>'+
-'<div class="panel article"><h2>مكان هذا الموضوع في خطة التعلم</h2><p>المستوى: <b>'+topic.level+'</b> — '+labels[topic.level]+'</p><p>القسم: <b>'+esc(topic.section)+'</b></p><p>المرجع: <b>'+esc(master.source)+'</b>، الصفحة '+topic.page+'</p><div class="notice">عنوان من الفهرس المعتمد. حالة هذا الموضوع موضحة في الرابط التالي.</div>'+
-(drafts.has(topic.id)?'<a class="primary" href="course.html?topic='+topic.id+'">فتح التدريب التفاعلي الأولي ←</a>':'<p class="tiny">هذا الموضوع لم يكتمل تأليفه؛ لا يوجد له درس تفاعلي بعد.</p>')+
-'</div><div class="controls" style="justify-content:space-between;flex-wrap:wrap"><a class="outline" href="'+levelHref(topic.level)+'">العودة إلى جميع موضوعات '+topic.level+'</a><div class="controls">'+(prev?'<a class="outline" href="'+href(prev)+'">الموضوع السابق</a>':"")+(next?'<a class="primary" href="'+href(next)+'">الموضوع التالي ←</a>':"")+'</div></div>';
+function renderOverview(){
+const l=master.levels.find(x=>x.level===level),count=byLevel(level).length;
+root.innerHTML='<div class="pagehead"><span class="overline">DEUTSCH MASTERY · LEARNING PATH</span><h1>تعلم الألمانية عبر وحدات متكاملة</h1><p>عوض ما تتشتت بين '+master.total_topics+' عنوان صغير، جمعنا النقاط المتقاربة فمسار من '+modules.length+' وحدة واضحة. حافظنا على جميع بنود PDF وعلى ترتيبها الأصلي.</p></div>'+
+levelCards()+
+'<div class="module-hero"><span class="eyebrow">'+level+' · '+labels[level]+'</span><h1>'+count+' وحدات تعليمية منظمة</h1><p>'+l.count+' نقطة أصلية موزعة على '+l.sections.length+' أقسام. افتح الوحدة، وتابع الشرح والأمثلة والتدريبات من نفس المكان.</p><p class="module-audio-msg">المحتوى غير المكتمل كيبان بوضوح؛ عدد الوحدات ما كيعنيش أنها كلها جاهزة.</p><a class="btn light" href="'+moduleHref(byLevel(level)[0])+'">ابدأ أول وحدة ←</a></div>'+
+'<div class="module-overview"><h2 style="margin:0">مسار مستوى '+level+'</h2><div class="searchrow"><label for="masterSearch">بحث</label><input type="search" id="masterSearch" value="'+esc(textFilter)+'" placeholder="بحث في الوحدات والنقاط..."><label for="masterSection">القسم</label><select id="masterSection"><option value="all">جميع الأقسام</option>'+l.sections.map(s=>'<option value="'+s.id+'" '+(sectionFilter===s.id?'selected':'')+'>'+esc(s.name)+'</option>').join("")+'</select></div></div>'+
+'<div id="moduleSections"></div>'+
+'<div class="module-hint">كل بطاقة تمثل وحدة تعليمية كبيرة، وبداخلها نقاط الفهرس الأصلية. يمكنك فتح الوحدة مباشرة أو إظهار عناوين الأجزاء. <a href="journey.html">شوف تقدمك هنا</a>.</div>';
+root.querySelector("#masterSearch").oninput=e=>{textFilter=e.target.value;renderSections()};
+root.querySelector("#masterSection").onchange=e=>{sectionFilter=e.target.value;renderSections()};
+renderSections();
 }
-const topic=findTopic(topicId)||(legacyUnit&&level==="A1"?master.topics.find(x=>x.level==="A1"&&x.section_number===1&&x.number===1):null);
+function renderDetail(t){
+const module=moduleMap.get(window.DM_MODULE_BY_TOPIC[t.id]);
+const prevNext=master.topics.filter(x=>x.level===t.level);
+const index=prevNext.findIndex(x=>x.id===t.id);
+const prev=prevNext[index-1],next=prevNext[index+1];
+root.innerHTML='<div class="crumb"><a href="index.html">الرئيسية</a> / <a href="syllabus.html?level='+t.level+'">'+t.level+'</a> / '+esc(t.section)+'</div>'+
+'<div class="module-hero"><span class="eyebrow">'+t.level+' · الموضوع '+t.number+'</span><h1>'+esc(t.title)+'</h1><p>هاد العنوان جزء من الوحدة المتكاملة «'+esc(module?.title||t.section)+'»، ماشي وحدة مستقلة إضافية.</p></div>'+
+'<div class="panel article"><h2>تعلم هذا الموضوع في سياقه</h2><p>عوض تتنقل بين صفحات صغيرة، من الأفضل تمشي للوحدة اللي كتجمع هاد النقطة مع النقاط اللي مرتبطة بها.</p>'+
+(module?'<p><a class="primary" href="'+moduleHref(module)+'#'+t.id+'">فتح الوحدة المتكاملة ←</a></p>':"")+
+(drafted.has(t.id)?'<p><a class="outline" href="'+lessonHref(t)+'">التدريب التفصيلي لهذا الجزء ←</a></p>':'<p class="module-empty">شرح هاد النقطة مازال قيد الإعداد، ولكن عنوانها محفوظ فالفهرس المعتمد.</p>')+'</div>'+
+'<div class="module-bottom-nav">'+(prev?'<a href="'+lessonHref(prev)+'">النقطة السابقة</a>':'<span></span>')+'<a href="syllabus.html?level='+t.level+'">جميع الوحدات</a>'+(next?'<a href="'+lessonHref(next)+'">النقطة التالية</a>':'<span></span>')+'</div>';
+}
+const topicId=queryParams.get("topic");const topic=topicMap.get(topicId);
 if(topic)renderDetail(topic);else renderOverview();
 })();
