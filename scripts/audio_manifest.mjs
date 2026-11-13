@@ -34,7 +34,10 @@ if(mode==="all"){
  "data/primary-lesson-links.js",
  "data/primary-phonetics.js",
  "data/curriculum-lessons-2026.js",
- "data/curated-primary-2026.js"
+ "data/curated-primary-2026.js",
+ "data/advanced-grammar-b1.js",
+ "data/advanced-grammar-b2.js",
+ "data/advanced-merge.js"
  ];
  for(const path of sources)runInNewContext(readFileSync(path,"utf8"),{window:w});
  for(const lesson of w.DM_PRIMARY_LESSONS||[]){
