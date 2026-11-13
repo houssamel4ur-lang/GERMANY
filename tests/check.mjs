@@ -79,7 +79,7 @@ for(const [level,counts] of Object.entries(masterCounts)){
  for(let i=0;i<groups.length;i++){
   const xs=master.topics.filter(x=>x.level===level&&x.section===groups[i].name);
   assert.equal(xs.length,counts[i],level+' topic count mismatch: '+groups[i].name);
-  assert.deepEqual(xs.map(x=>x.number),Array.from({length:counts[i]},(_,j)=>j+1),level+' topic order mismatch');
+  assert.deepEqual(Array.from(xs,x=>x.number),Array.from({length:counts[i]},(_,j)=>j+1),level+' topic order mismatch');
  }
 }
 assert.ok(master.topics.every(x=>x.status==='outlined'&&x.page>=2&&x.page<=15),'index topics cannot be mislabeled as completed lessons');
