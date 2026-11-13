@@ -17,6 +17,8 @@ on:
       - 'data/curated-primary-2026.js'
       - 'data/advanced-grammar-b1.js'
       - 'data/advanced-grammar-b2.js'
+      - 'data/advanced-grammar-b1-more.js'
+      - 'data/advanced-grammar-b2-more.js'
       - 'data/advanced-merge.js'
       - 'tests/browser-smoke.mjs'
       - 'tests/browser-smoke.mjs'
