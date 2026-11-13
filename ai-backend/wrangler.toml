@@ -9,6 +9,8 @@ AI_MODEL = "gpt-4.1-mini"
 TTS_MODEL = "gpt-4o-mini-tts"
 STT_MODEL = "gpt-4o-mini-transcribe"
 TTS_VOICE = "marin"
+REALTIME_MODEL = "gpt-realtime-2.1-mini"
+REALTIME_VOICE = "marin"
 ALLOW_LOCAL_DEV = "false"
 
 # Store OPENAI_API_KEY and AI_ACCESS_CODE using "npx wrangler secret put".
