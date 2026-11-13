@@ -96,13 +96,33 @@ async function transcribe(req,env,headers){
  const data=await upstream.json();
  return json({text:String(data.text||"").slice(0,1500)},200,headers);
 }
+async function createRealtimeSecret(req,env,headers){
+ let payload;try{payload=await req.json()}catch(_){return json({error:"طلب المكالمة غير صحيح."},400,headers)}
+ const level=String(payload.level||"").toUpperCase(),scenario=String(payload.scenario||"free"),correct=payload.correct;
+ if(!LEVEL_RULES[level]||!SCENARIOS[scenario]||typeof correct!=="boolean")return json({error:"مستوى أو موضوع المكالمة غير صحيح."},400,headers);
+ const session={
+  type:"realtime",
+  model:env.REALTIME_MODEL||"gpt-realtime-2.1-mini",
+  instructions:buildInstructions(level,scenario,correct)+"\nThis is LIVE SPEECH. Speak naturally, warmly and fluently in Standard German, not English or Arabic; adjust speech speed and vocabulary to CEFR "+level+". Allow the learner time to finish, and accept interruptions naturally. The voice is synthetic and should never claim to be a human.",
+  audio:{output:{voice:env.REALTIME_VOICE||"marin"}},
+  max_output_tokens:250
+ };
+ const upstream=await fetch("https://api.openai.com/v1/realtime/client_secrets",{
+  method:"POST",headers:{"Authorization":"Bearer "+env.OPENAI_API_KEY,"Content-Type":"application/json"},
+  body:JSON.stringify({session}),signal:AbortSignal.timeout(20000)
+ });
+ if(!upstream.ok){console.log("Realtime token creation failed",upstream.status);return json({error:"تعذر فتح المكالمة حالياً؛ تحقق من صلاحية نموذج Realtime في حساب API."},502,headers)}
+ const data=await upstream.json();
+ if(!data.value||typeof data.value!=="string")return json({error:"المكالمة لم ترجع رمزاً مؤقتاً صالحاً."},502,headers);
+ return json({value:data.value,expires_at:data.expires_at||null,model:session.model},200,headers);
+}
 export default {
  async fetch(req,env){
   const url=new URL(req.url),origin=req.headers.get("Origin")||"";
   const headers=cors(origin,env);
   if(origin&&!headers)return json({error:"المصدر غير مسموح."},403);
   if(req.method==="OPTIONS")return new Response(null,{status:204,headers:headers||{}});
-  if(!["/api/health","/api/chat","/api/speak","/api/transcribe"].includes(url.pathname))return json({error:"الرابط غير موجود."},404,headers||{});
+  if(!["/api/health","/api/chat","/api/speak","/api/transcribe","/api/realtime-token"].includes(url.pathname))return json({error:"الرابط غير موجود."},404,headers||{});
   if(!checkCode(req,env))return json({error:"رمز الدخول غير صحيح أو لم يتم تفعيل الرمز في الخادم."},401,headers||{});
   if(url.pathname==="/api/health"&&req.method==="GET")return json({ready:Boolean(env.OPENAI_API_KEY),model:"conversation",message:"German AI partner API"},200,headers||{});
   if(req.method!=="POST")return json({error:"الطريقة غير مسموحة."},405,headers||{});
@@ -111,6 +131,7 @@ export default {
    if(url.pathname==="/api/chat")return await talk(req,env,headers||{});
    if(url.pathname==="/api/speak")return await speech(req,env,headers||{});
    if(url.pathname==="/api/transcribe")return await transcribe(req,env,headers||{});
+   if(url.pathname==="/api/realtime-token")return await createRealtimeSecret(req,env,headers||{});
   }catch(e){
    console.log("German coach backend error",String(e.message||"server").slice(0,100));
    return json({error:"تعذر الاتصال بمزود الذكاء الاصطناعي حالياً؛ جرّب لاحقاً."},502,headers||{});
