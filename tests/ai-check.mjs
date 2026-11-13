@@ -43,7 +43,7 @@ assert.match(read("selfhost-ai/local_bridge.py"),/def _transcription\(/,"local G
 assert.match(read("selfhost-ai/local_bridge.py"),/payload\["think"\] = False/,"disable Qwen3 native model thinking");
 assert.match(read("selfhost-ai/local_bridge.py"),/"keep_alive": "30m"/,"avoid cold-start model load every few minutes");
 assert.match(read("selfhost-ai/local_bridge.py"),/llama3\.2:3b/,"stable non-thinking German model must be supported");
-assert.match(read("selfhost-ai/local_bridge.py"),/BRIDGE_VERSION = "2026.11.13.4"/,"versioned local bridge prevents stale Python code");
+assert.match(read("selfhost-ai/local_bridge.py"),/BRIDGE_VERSION = "2026.11.13.5"/,"versioned local bridge prevents stale Python code");
 assert.match(read("selfhost-ai/local_bridge.py"),/def _fast_greeting\(/,"local greeting should never leak reasoning");
 assert.match(read("selfhost-ai/local_bridge.py"),/def _generate_final\(/,"repair invalid Qwen output once");
 assert.match(read("assets/ai-chat.js"),/data.bridge_version!==requiredBridge/,"website should detect stale Windows bridge");
@@ -52,7 +52,17 @@ assert.match(read("selfhost-ai/local_bridge.py"),/"num_ctx": 1536/,"compact CPU 
 assert.doesNotMatch(read("selfhost-ai/local_bridge.py"),/"format": \{"type": "object"/,"avoid structured decoding overhead on local CPU");
 assert.doesNotMatch(read("assets/ai-chat.js"),/Ich denke nach|Verbindung fehlgeschlagen/,"chat should show neither thinking nor repetitive generic errors");
 assert.match(read("assets/ai-chat.js"),/ai-request-error/,"show the actual failure and let users retry");
-assert.match(read("ai.html"),/ai-voice-details/,"optional voice controls should be available");
+assert.match(read("ai.html"),/ai-voice-details/,"German voice controls must be visible");
+for(const id of ["voiceTest","finishLiveTurn","startLive","endLive","recordBtn"]){
+ assert.match(read("ai.html"),new RegExp('id="'+id+'"'),"audio control missing: "+id);
+}
+assert.match(read("assets/ai-live.js"),/coach-voice-readiness/,"voice buttons must react to installed speech engines");
+assert.match(read("selfhost-ai/local_bridge.py"),/\.piper-ready/,"Piper must be validated before enabled");
+assert.match(read("selfhost-ai/local_bridge.py"),/\.whisper-ready/,"Whisper must be validated before enabled");
+assert.match(read("selfhost-ai/START-VOICE-AI.cmd"),/INSTALL-VOICE\.cmd/,"one-click voice launcher missing");
+assert.match(read("selfhost-ai/PREPARE-VOICE.py"),/transcribe/,"voice installer must check real speech recognition");
+assert.match(read("selfhost-ai/tests/test_local_voice.py"),/test_mic_endpoint_accepts_browser_multipart/,"voice upload test missing");
+
 
 assert.doesNotMatch(read("assets/ai-config.js"),/sk-[A-Za-z0-9]{10}/,"no secrets in public config");
 const compose=read("selfhost-ai/compose.yaml");
