@@ -22,7 +22,7 @@ for(const unit of lessons){
   assert.ok(Array.isArray(unit.dialogue)&&unit.dialogue.length>=2,unit.id+' dialogue missing');
   for(const w of unit.words)assert.ok(w.de?.trim()&&w.ar?.trim(),unit.id+' invalid vocabulary');
 }
-for(const file of ['index.html','lesson.html','dashboard.html','review.html','assessment.html','quality.html']){
+for(const file of ['legacy.html','lesson.html','dashboard.html','review.html','assessment.html','quality.html']){
   const html=read(file);
   for(const asset of ['assets/style.css','assets/app.js','data/lessons.js'])assert.ok(html.includes(asset),file+' missing '+asset);
   assert.ok(html.includes('lang="ar"')&&html.includes('dir="rtl"'),file+' missing Arabic locale');
@@ -88,4 +88,42 @@ assert.ok(read('syllabus.html').includes('assets/master-curriculum.js'),'syllabu
 assert.ok(!read('syllabus.html').includes('data/syllabus.js'),'archived 64-topic index must not be active on syllabus page');
 assert.ok(read('index.html').includes('452 موضوعاً'),'homepage must identify main 452-topic source');
 
-console.log('PASS: 452 primary topics, 64 archived topics, German-only speech policy, MP3 audio sources, and '+lessons.length+' unique lessons, '+lessons.reduce((n,x)=>n+x.words.length,0)+' vocabulary entries, 4 levels, HTML assets and data structure.');
+assert.ok(read('index.html').includes('assets/primary-home.js'),'new landing page must run primary curriculum UI');
+for(const [page,rootId] of [['course.html','primaryStudyMount'],['journey.html','primaryStudyMount'],['review-primary.html','primaryStudyMount']]){
+ const body=read(page);
+ assert.ok(body.includes('data/master-curriculum.js')&&body.includes('data/primary-lesson-links.js')&&body.includes('data/primary-phonetics.js'),page+' missing authored data dependencies');
+ assert.ok(body.includes('assets/primary-study.js')&&body.includes(rootId),page+' missing interactive study controller');
+ assert.ok(body.includes('assets/german-player.js')&&body.includes('data/audio-index.js'),page+' must use MP3 audio');
+}
+assert.ok(read('syllabus.html').includes('data/primary-lesson-links.js')&&read('syllabus.html').includes('data/primary-phonetics.js'),'primary syllabus must load active lessons');
+const draftWin={};
+for(const path of [
+ 'data/master-curriculum.js','data/lessons.js',
+ 'data/course-a1-grammar.js','data/course-a1-skills.js',
+ 'data/course-a2-grammar.js','data/course-a2-skills.js',
+ 'data/primary-lesson-links.js','data/primary-phonetics.js'
+])runInNewContext(read(path),{window:draftWin});
+const draftLessons=draftWin.DM_PRIMARY_LESSONS;
+assert.equal(draftLessons.length,138,'expected 138 accurately mapped initial lessons');
+assert.equal(new Set(draftLessons.map(x=>x.id)).size,draftLessons.length,'duplicate authored lesson ID');
+for(const [level,count] of Object.entries({A1:50,A2:44,B1:23,B2:21})){
+ assert.equal(draftLessons.filter(x=>x.level===level).length,count,level+' draft coverage mismatch');
+}
+for(const l of draftLessons){
+ const t=master.topics.find(t=>t.id===l.id);
+ assert.ok(t&&t.level===l.level&&t.title===l.title,'lesson must match exact approved PDF topic: '+l.id);
+ assert.ok(l.explanation?.trim().length>=60,'insufficient authored explanation: '+l.id);
+ assert.ok(l.examples?.length>=1,'missing original German examples: '+l.id);
+ assert.ok(l.vocabulary?.length>=8,'too few vocabulary examples: '+l.id);
+ assert.ok(typeof l.reading==='string'&&l.reading.length>=12,'reading should be original German text: '+l.id);
+ assert.ok(typeof l.translation==='string'&&l.translation.length>=12,'missing Arabic reading translation: '+l.id);
+ assert.ok(l.dialogue?.length>=2,'missing sample German dialogue: '+l.id);
+ assert.ok(l.questions?.length>=1,'missing formative exercise: '+l.id);
+ assert.ok(l.status==='draft_interactive','draft cannot claim completeness: '+l.id);
+}
+assert.match(read('assets/primary-study.js'),/first\/questions\.length/,'quiz must use real first-attempt scoring');
+assert.match(read('assets/primary-study.js'),/JSON\.stringify\(\{version:KEY,progress:state\}/,'progress export must produce backup');
+assert.ok(!read('assets/primary-study.js').includes('speechSynthesis'),'primary curriculum must never fallback to wrong-language speech');
+
+
+console.log('PASS: 452 primary topics, 138 initial interactive lesson drafts, 64 archived topics, German-only speech policy, MP3 audio sources, and '+lessons.length+' unique lessons, '+lessons.reduce((n,x)=>n+x.words.length,0)+' vocabulary entries, 4 levels, HTML assets and data structure.');
