@@ -116,7 +116,7 @@ def _clean(reply):
     reply = re.sub(r"(?is)^\s*Thinking\.{3}[\s\S]{0,4000}?\.{3}\s*done thinking\.\s*", "", reply)
     reply = re.sub(r"(?i)^\s*(?:Thinking\s*\.{3}|\.{3}\s*done thinking\.?|\[analysis\]|analysis:)\s*", "", reply)
     reply = reply.strip()
-    if re.match(r"(?i)^(?:Okay[,]? the user|The user (?:wants|asks|said)|I (?:need|should|must) to|Let me (?:think|plan)|Final plan:|First, I (?:need|should)|Wait, (?:the user|they said)|\*checks requirements)", reply):
+    if re.search(r"(?i)(?:^Okay[,]? the (?:user|learner)|^The (?:user|learner) (?:wants|asks|said)|^I (?:need|should|must) to|^Let me (?:think|plan)|^Final plan:|^First, I (?:need|should)|^Wait, (?:the user|they said)|^\*checks requirements|\b(?:the learner said|the user said|the instruction says|I should respond|Let me think|the prompt says|one or two sentences)\b)", reply):
         return ""
     return reply[:1400]
 
@@ -235,7 +235,8 @@ class Handler(BaseHTTPRequestHandler):
                                                                         "num_ctx": 4096, "num_predict": 180 if level == "A1" else 270}}, timeout=150)
             reply = _clean(answer.get("message", {}).get("content", ""))
             if not reply:
-                self._response(502, {"error": "Local model returned an empty response"})
+                # Fail closed: malformed reasoning must never be sent to a learner.
+                self._response(502, {"error": "الموديل ما رجّعش جواب نهائي آمن. جرب تعاود السؤال."})
                 return
             self._response(200, {"reply": reply, "level": level, "provider": "self-hosted"})
         except (URLError, HTTPError, TimeoutError, ValueError, KeyError):
