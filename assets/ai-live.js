@@ -68,7 +68,7 @@ function stopOutput(){
  output.controls=false;
 }
 function stopSession(){
- if(!active)return;
+ const wasActive=active;
  active=false;busy=false;
  controller?.abort();controller=null;
  stopRecorder();recorder=null;parts=[];
@@ -76,7 +76,7 @@ function stopSession(){
  if(ctx){ctx.close().catch(()=>{});ctx=null}
  analyser=null;micSource=null;stopOutput();
  history=[];broadcast(false);
- status("المكالمة تسالات، والميكروفون توقف.");
+ if(wasActive)status("المكالمة تسالات، والميكروفون توقف.");
 }
 function volume(){
  if(!analyser)return 0;
@@ -174,6 +174,7 @@ async function processTurn(blob,type){
 }
 start.addEventListener("click",async()=>{
  if(active||!ready())return;
+ stopOutput();
  if($("recordBtn")?.classList.contains("recording")){
   status("وقف التسجيل القصير قبل المكالمة.");return
  }
@@ -188,8 +189,8 @@ start.addEventListener("click",async()=>{
   active=true;busy=false;history=[];sessionStarted=Date.now();
   broadcast(true);listen();
  }catch(e){
-  status("ما قدرناش نشغلو الميكروفون. عطِ الإذن للمتصفح: "+String(e.message||"تعذر التسجيل"));
   stopSession();
+  status("ما قدرناش نشغلو الميكروفون. عطِ الإذن للمتصفح: "+String(e.message||"تعذر التسجيل"));
  }
 });
 finish.addEventListener("click",()=>{
@@ -206,8 +207,13 @@ test.addEventListener("click",async()=>{
   })});
   const blob=await resp.blob();if(!blob.size)throw Error("صوت فارغ.");
   stopOutput();mediaURL=URL.createObjectURL(blob);output.src=mediaURL;output.controls=true;
-  await output.play();
-  status("الصوت الألماني خدام. تقدر تشغل الميكروفون أو تبدأ المكالمة.");
+  try{
+   await output.play();
+   status("الصوت الألماني خدام. تقدر تشغل الميكروفون أو تبدأ المكالمة.");
+  }catch(_){
+   output.controls=true;
+   status("الصوت تولّد، ولكن المتصفح منع التشغيل التلقائي. ضغط Play على مشغل الصوت.");
+  }
  }catch(e){status("الصوت ما خدمش: "+String(e.message||"خطأ محلي").slice(0,180))}
  finally{testBusy=false;flags()}
 });
