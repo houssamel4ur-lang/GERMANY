@@ -40,8 +40,12 @@ assert.match(read("selfhost-ai/local_bridge.py"),/127\.0\.0\.1/,"bridge must sta
 assert.match(read("selfhost-ai/local_bridge.py"),/def _voice_available\(/,"voice readiness detection should exist");
 assert.match(read("selfhost-ai/local_bridge.py"),/def _speech\(/,"local German TTS endpoint should exist");
 assert.match(read("selfhost-ai/local_bridge.py"),/def _transcription\(/,"local German Whisper endpoint should exist");
-assert.match(read("selfhost-ai/local_bridge.py"),/"format": \{"type": "object"/,"local Ollama replies should be constrained to JSON");
-assert.doesNotMatch(read("assets/ai-chat.js"),/Ich denke nach/,"chat must not show model thinking as a message");
+assert.match(read("selfhost-ai/local_bridge.py"),/"think": False/,"disable native model thinking");
+assert.match(read("selfhost-ai/local_bridge.py"),/"keep_alive": "30m"/,"avoid cold-start model load every few minutes");
+assert.match(read("selfhost-ai/local_bridge.py"),/"num_ctx": 1536/,"compact CPU context window");
+assert.doesNotMatch(read("selfhost-ai/local_bridge.py"),/"format": \{"type": "object"/,"avoid structured decoding overhead on local CPU");
+assert.doesNotMatch(read("assets/ai-chat.js"),/Ich denke nach|Verbindung fehlgeschlagen/,"chat should show neither thinking nor repetitive generic errors");
+assert.match(read("assets/ai-chat.js"),/ai-request-error/,"show the actual failure and let users retry");
 assert.match(read("ai.html"),/ai-voice-details/,"optional voice controls should be available");
 
 assert.doesNotMatch(read("assets/ai-config.js"),/sk-[A-Za-z0-9]{10}/,"no secrets in public config");
