@@ -13,6 +13,9 @@ on:
       - 'data/advanced-grammar-b1-more.js'
       - 'data/advanced-grammar-b2-more.js'
       - 'data/advanced-merge.js'
+      - 'data/foundation-a1.js'
+      - 'data/foundation-a2.js'
+      - 'data/foundation-merge.js'
   workflow_dispatch:
     inputs:
       mode:
