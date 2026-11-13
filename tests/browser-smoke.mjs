@@ -86,7 +86,10 @@ assert.equal(await page.locator("#scenarioSelect option").count(),8,"AI chat mus
 assert.equal(await page.locator("#recordBtn").isDisabled(),true,"voice must not pretend to work without a backend");
 assert.equal(await page.locator("#startLive").isDisabled(),true,"realtime mic must not start before API setup");
 assert.equal(await page.locator("#endLive").isDisabled(),true,"realtime end control must start disabled");
-assert.ok((await page.locator("#connectionBadge").innerText()).includes("غير مفعّل"),"offline AI must clearly disclose missing backend");
+assert.match(await page.locator("#connectionBadge").innerText(),/غير مفعّل|تعذر الاتصال|غير جاهز/,"offline local AI must clearly disclose missing backend");
+assert.equal(await page.locator("#messages .ai-bubble.bot").count(),1,"welcome must render as an accessible bot bubble");
+assert.ok(await page.locator(".ai-compose").isVisible(),"chat composer should be visible");
+assert.ok(await page.locator("#newChat").isVisible(),"new conversation control should be visible");
 await page.selectOption("#levelSelect","B2");
 assert.equal(await page.locator("#sessionLevel").innerText(),"B2");
 await page.selectOption("#scenarioSelect","job");
