@@ -104,7 +104,7 @@ async function createRealtimeSecret(req,env,headers){
   type:"realtime",
   model:env.REALTIME_MODEL||"gpt-realtime-2.1-mini",
   instructions:buildInstructions(level,scenario,correct)+"\nThis is LIVE SPEECH. Speak naturally, warmly and fluently in Standard German, not English or Arabic; adjust speech speed and vocabulary to CEFR "+level+". Allow the learner time to finish, and accept interruptions naturally. The voice is synthetic and should never claim to be a human.",
-  audio:{output:{voice:env.REALTIME_VOICE||"marin"}},
+  audio:{input:{turn_detection:{type:"semantic_vad"}},output:{voice:env.REALTIME_VOICE||"marin"}},
   max_output_tokens:250
  };
  const upstream=await fetch("https://api.openai.com/v1/realtime/client_secrets",{
