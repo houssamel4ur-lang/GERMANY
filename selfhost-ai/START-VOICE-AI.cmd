@@ -24,7 +24,7 @@ if errorlevel 1 (
  echo Failed to download updated files. Check internet connection.
  goto :failed
 )
-findstr /C:"2026.11.13.5" local_bridge.py >nul
+findstr /C:"2026.11.13.6" local_bridge.py >nul
 if errorlevel 1 (
  echo GitHub scripts are not the latest version. Do not run an outdated bridge.
  goto :failed
@@ -43,8 +43,9 @@ if errorlevel 1 (
  if errorlevel 1 goto :failed
 )
 echo.
-echo [4/5] Checking local Whisper + German Piper setup...
-if exist "voices\.piper-ready" if exist "voices\.whisper-ready" goto :speechready
+echo [4/5] Checking ACCURATE multilingual German Whisper-small + Piper setup...
+set "DEUTSCH_STT_MODEL=small"
+if exist "voices\.piper-ready" if exist "voices\.whisper-small-ready" goto :speechready
 call "%~dp0INSTALL-VOICE.cmd" --no-pause
 if errorlevel 1 (
  echo.

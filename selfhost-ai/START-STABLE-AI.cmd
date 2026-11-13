@@ -26,7 +26,7 @@ if %errorlevel% NEQ 0 (
  echo Check internet connection or antivirus and retry.
  goto :end
 )
-findstr /C:"2026.11.13.5" local_bridge.py >nul
+findstr /C:"2026.11.13.6" local_bridge.py >nul
 if %errorlevel% NEQ 0 (
  echo ERROR: the GitHub bridge has not updated yet. Retry later.
  goto :end

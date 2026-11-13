@@ -3,7 +3,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#123934"><meta name="description" content="تحدث بالألمانية مع شريك محادثة بالذكاء الاصطناعي يتكيف مع مستواك A1 حتى B2">
 <title>محادثة ألمانية بالذكاء الاصطناعي | Deutsch Mastery</title>
-<link rel="stylesheet" href="assets/style.css"><link rel="stylesheet" href="assets/ai-chat.css?v=20261113-voice">
+<link rel="stylesheet" href="assets/style.css"><link rel="stylesheet" href="assets/ai-chat.css?v=20261113-voice3">
 </head>
 <body data-page="german-coach">
 <a class="skip" href="#main">تجاوز إلى المحتوى</a>
@@ -36,7 +36,7 @@
 <div class="ai-chatbar"><div class="ai-bot-heading"><span class="ai-bot-mark" aria-hidden="true">✦</span><div><strong>Deutsch Partner</strong><span>مدربك الافتراضي بالألمانية · نموذج AI محلي</span></div></div><div class="ai-chatbar-actions"><span id="sessionLevel">A1</span><button type="button" class="ai-new-chat" id="newChat" title="محادثة جديدة">＋ <span>محادثة جديدة</span></button></div></div>
 <section class="ai-voice-details" aria-label="المحادثة الصوتية">
 <div class="ai-voice-heading">
-  <span class="ai-voice-title">🎧 استمع وتحدّث بالألمانية</span>
+  <span class="ai-voice-title">🎧 مكالمة AI صوتية بالألمانية</span>
   <span class="ai-voice-note" id="voiceCapabilities" role="status">جاري فحص Whisper وPiper المحليين…</span>
 </div>
 <div class="ai-live" aria-label="مكالمة تدريب صوتية">
@@ -47,11 +47,18 @@
     <button class="outline" id="endLive" type="button" disabled>إنهاء المكالمة</button>
     <button class="outline" id="voiceTest" type="button" disabled>🔊 جرّب الصوت</button>
   </div>
-  <audio id="liveOutput" autoplay playsinline></audio>
+  <audio id="liveOutput" autoplay playsinline controls hidden></audio>
   <span class="ai-live-status" id="liveStatus" role="status">الصوت كيتفعّل من بعد تثبيت Whisper وPiper المحليين.</span>
 </div></section>
 <div class="ai-messages" id="messages" role="log" aria-live="polite" aria-relevant="additions text"></div>
 <div class="ai-suggestions" id="suggestions" aria-label="جمل للبدء"></div>
+<div class="ai-transcription-review" id="transcriptionReview" hidden>
+<label for="transcriptEditor">🎧 هادشي اللي فهم Whisper من كلامك. صحّحو إلا كان فيه شي خطأ:</label>
+<textarea id="transcriptEditor" maxlength="1500" rows="2" dir="ltr"></textarea>
+<small>ما كنخمنوش شنو قلتي من كلمات متشابهة؛ تقدر تصلح النص قبل ما يجاوبك AI.</small>
+<div class="review-buttons"><button type="button" class="outline" id="cancelTranscript">عاود التسجيل</button><button type="button" class="primary" id="confirmTranscript">إرسال الجملة المصححة ↗</button></div>
+</div>
+<label class="ai-review-option" for="reviewTranscription"><input type="checkbox" id="reviewTranscription"> راجع الكلام اللي سمعه Whisper قبل ما يجاوب AI (مفيد إلا ما كيعرفش النطق ديالك)</label>
 <form id="chatForm" class="ai-compose">
 <label class="sr-only" for="userMessage">رسالتك بالألمانية</label>
 <textarea id="userMessage" rows="2" maxlength="1500" placeholder="Schreibe hier auf Deutsch …" dir="auto"></textarea>
@@ -60,7 +67,7 @@
 <small id="recordTimer" aria-live="polite"></small>
 <button class="primary" id="sendBtn" type="submit">إرسال <span aria-hidden="true">↗</span></button></div>
 </form>
-<p class="ai-footnote" id="chatStatus" role="status">الصوت الناتج اصطناعي. لا يتم تشغيل صوت متصفح بلغة أخرى.</p>
+<div class="ai-reply-audio"><span>🔊 نطق الجواب بالألمانية</span><audio id="chatAudioPlayer" controls hidden preload="none" aria-label="تشغيل جواب الأستاذ الألماني"></audio></div><p class="ai-footnote" id="chatStatus" role="status">المايك القصير كيولّي جوابه مسموع تلقائياً ملي Piper يكون جاهز. للمكالمة المتواصلة استعمل «بدء المكالمة» لفوق.</p>
 </section>
 </div>
 <div class="ai-notice">المحادثات لا تُستخدم لمنح شهادة لغوية، وقد يخطئ الذكاء الاصطناعي في بعض التصحيحات. الصوت كيتفعّل غير بعد تثبيت Whisper وPiper محلياً وإعادة تشغيل السيرفر؛ يمكن تكون الاستجابة بطيئة حسب قوة الجهاز.</div>
@@ -68,6 +75,6 @@
 <footer><div class="wrap foot"><b>Deutsch Mastery</b><span>تعلّم الألمانية بالتدرّج والممارسة</span><a href="quality.html">حدود المشروع</a></div></footer>
 <script src="data/master-curriculum.js"></script>
 <script src="assets/ai-config.js"></script>
-<script src="assets/ai-chat.js?v=20261113-voice"></script>
-<script src="assets/ai-live.js?v=20261113-voice"></script>
+<script src="assets/ai-chat.js?v=20261113-voice3"></script>
+<script src="assets/ai-live.js?v=20261113-voice3"></script>
 </body></html>

@@ -43,7 +43,7 @@ assert.match(read("selfhost-ai/local_bridge.py"),/def _transcription\(/,"local G
 assert.match(read("selfhost-ai/local_bridge.py"),/payload\["think"\] = False/,"disable Qwen3 native model thinking");
 assert.match(read("selfhost-ai/local_bridge.py"),/"keep_alive": "30m"/,"avoid cold-start model load every few minutes");
 assert.match(read("selfhost-ai/local_bridge.py"),/llama3\.2:3b/,"stable non-thinking German model must be supported");
-assert.match(read("selfhost-ai/local_bridge.py"),/BRIDGE_VERSION = "2026.11.13.5"/,"versioned local bridge prevents stale Python code");
+assert.match(read("selfhost-ai/local_bridge.py"),/BRIDGE_VERSION = "2026.11.13.6"/,"versioned local bridge prevents stale Python code");
 assert.match(read("selfhost-ai/local_bridge.py"),/def _fast_greeting\(/,"local greeting should never leak reasoning");
 assert.match(read("selfhost-ai/local_bridge.py"),/def _generate_final\(/,"repair invalid Qwen output once");
 assert.match(read("assets/ai-chat.js"),/data.bridge_version!==requiredBridge/,"website should detect stale Windows bridge");
@@ -58,7 +58,7 @@ for(const id of ["voiceTest","finishLiveTurn","startLive","endLive","recordBtn"]
 }
 assert.match(read("assets/ai-live.js"),/coach-voice-readiness/,"voice buttons must react to installed speech engines");
 assert.match(read("selfhost-ai/local_bridge.py"),/\.piper-ready/,"Piper must be validated before enabled");
-assert.match(read("selfhost-ai/local_bridge.py"),/\.whisper-ready/,"Whisper must be validated before enabled");
+assert.match(read("selfhost-ai/local_bridge.py"),/whisper-.*-ready/,"Selected Whisper model must be validated before enabled");
 assert.match(read("selfhost-ai/START-VOICE-AI.cmd"),/INSTALL-VOICE\.cmd/,"one-click voice launcher missing");
 assert.match(read("selfhost-ai/PREPARE-VOICE.py"),/transcribe/,"voice installer must check real speech recognition");
 assert.match(read("selfhost-ai/tests/test_local_voice.py"),/test_mic_endpoint_accepts_browser_multipart/,"voice upload test missing");
@@ -70,3 +70,7 @@ assert.match(compose,/ollama\/ollama/);
 assert.match(compose,/127\.0\.0\.1:8787:8787/);
 assert.doesNotMatch(compose,/\n\s*-\s*["']?11434:11434/,"Ollama must remain private");
 console.log("SELFHOST AI CHECK PASS: own Ollama LLM, private auth, German Piper and Whisper, no external inference API, local hands-free chat.");
+
+assert.match(read("ai.html"),/id="transcriptionReview"/,"editable transcription preview required");
+assert.match(read("assets/ai-chat.js"),/await respond\(reviewed,true\)/,"short mic should speak the answer after transcription");
+assert.match(read("selfhost-ai/local_bridge.py"),/beam_size=5/,"German Whisper decoder must use improved search");

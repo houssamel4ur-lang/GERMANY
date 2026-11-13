@@ -36,7 +36,7 @@ class SpeechSetupTests(unittest.TestCase):
                 self.assertFalse(bridge._voice_available())
                 self.assertFalse(bridge._stt_available())
                 (directory / ".piper-ready").write_text("ok")
-                (directory / ".whisper-ready").write_text("ok")
+                (directory / (".whisper-" + bridge.WHISPER_SIZE + "-ready")).write_text("ok")
                 self.assertTrue(bridge._voice_available())
                 self.assertTrue(bridge._stt_available())
 
@@ -74,6 +74,7 @@ class SpeechSetupTests(unittest.TestCase):
         self.assertIn("Hallo", text)
         self.assertEqual(seen["language"], "de")
         self.assertEqual(seen["short_speech"], False)
+        self.assertEqual(bridge.WHISPER_SIZE, "small")
         self.assertFalse(Path(seen["filename"]).exists())
 
 
