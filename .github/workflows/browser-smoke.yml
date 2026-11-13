@@ -20,7 +20,9 @@ on:
       - 'data/advanced-grammar-b1-more.js'
       - 'data/advanced-grammar-b2-more.js'
       - 'data/advanced-merge.js'
-      - 'tests/browser-smoke.mjs'
+      - 'data/foundation-a1.js'
+      - 'data/foundation-a2.js'
+      - 'data/foundation-merge.js'
       - 'tests/browser-smoke.mjs'
       - '.github/workflows/browser-smoke.yml'
   workflow_dispatch:
