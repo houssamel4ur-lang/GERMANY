@@ -5,6 +5,8 @@ on:
     paths:
       - '.github/workflows/german-audio.yml'
       - 'scripts/audio_manifest.mjs'
+      - 'scripts/check_audio_coverage.mjs'
+      - 'data/structured-a1-pronunciation.js'
       - 'scripts/german_audio.py'
       - 'data/curriculum-lessons-2026.js'
       - 'data/curated-primary-2026.js'
@@ -59,6 +61,8 @@ jobs:
         run: node scripts/audio_manifest.mjs "$AUDIO_MODE" > /tmp/german-manifest.json
       - name: Generate German audio
         run: python scripts/german_audio.py /tmp/german-manifest.json
+      - name: Verify every rendered German phrase has a valid MP3 file
+        run: node scripts/check_audio_coverage.mjs --strict
       - name: Commit generated MP3 files
         run: |
           git config user.name "github-actions[bot]"
