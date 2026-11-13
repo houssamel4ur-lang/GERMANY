@@ -49,6 +49,14 @@ root.innerHTML='<div class="crumb"><a href="index.html">الرئيسية</a> / <
 '<div class="module-bottom-nav">'+(prev?'<a href="'+unitLink(prev)+'">الوحدة السابقة: '+esc(prev.title)+'</a>':'<span></span>')+
 '<a href="syllabus.html?level='+unit.level+'">جميع وحدات '+unit.level+'</a>'+
 (next?'<a href="'+unitLink(next)+'">الوحدة التالية: '+esc(next.title)+' ←</a>':'<span></span>')+'</div>';
+function revealAnchoredPart(){
+ const id=decodeURIComponent((location.hash||"").slice(1));
+ if(!id||!unit.topicIds.includes(id))return;
+ const chapter=document.getElementById(id);
+ if(chapter){chapter.open=true;chapter.scrollIntoView({block:"start",behavior:"auto"})}
+}
+revealAnchoredPart();
+window.addEventListener("hashchange",revealAnchoredPart);
 function allQuestions(){
 const out=[];
 for(const row of topicRows){
