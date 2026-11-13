@@ -1,120 +1,167 @@
-/* Optional low-latency German speech conversation via WebRTC.
- * Server mints short-lived scoped credentials; the main API key never reaches JS.
+/* Self-hosted, hands-free conversation. Ollama + Whisper + Piper only.
+ * No OpenAI WebRTC endpoint or commercial model API is used.
+ * Silence after an utterance starts the next turn automatically.
  */
 (function(){
 "use strict";
 const start=document.getElementById("startLive"),end=document.getElementById("endLive");
 const indicator=document.getElementById("liveStatus"),output=document.getElementById("liveOutput");
-if(!start||!end||!indicator||!output)return;
 const badge=document.getElementById("connectionBadge");
-const api=String(window.DEUTSCH_AI_CONFIG?.apiBase||"").trim().replace(/\/+$/,"");
-let peer=null,channel=null,mic=null,starting=false,active=false,fetchAbort=null,endedByUser=false;
-const fields=["levelSelect","scenarioSelect","correctToggle"];
-const value=id=>document.getElementById(id)?.value||"";
-const updateStatus=text=>{indicator.textContent=text};
-function backendReady(){return badge?.classList.contains("ok")===true&&/^https:\/\//.test(api)}
-function refresh(){start.disabled=!backendReady()||starting||active;end.disabled=!(starting||active)}
-new MutationObserver(refresh).observe(badge,{attributes:true,attributeFilter:["class"]});
-function isRecorderActive(){return document.getElementById("recordBtn")?.classList.contains("recording")}
-function liveState(enabled){
- window.dispatchEvent(new CustomEvent("coach-live-state",{detail:{active:enabled}}));
- for(const id of fields){const node=document.getElementById(id);if(node)node.disabled=enabled}
- refresh();
+if(!start||!end||!indicator||!output||!badge)return;
+const base=String(window.DEUTSCH_AI_CONFIG?.apiBase||"").trim().replace(/\/+$/,"");
+const field=id=>document.getElementById(id);
+let active=false,busy=false,stream=null,recorder=null,chunkList=[],analyser=null,audioCtx=null,timer=null,controller=null,objectURL=null;
+let recordedSpeech=false,speechAt=0,startAt=0,consecutive=0,turns=[],sessionStarted=0;
+function status(value){indicator.textContent=value}
+function connected(){return badge.classList.contains("ok")&&/^(https:\/\/|http:\/\/localhost|http:\/\/127\.0\.0\.1)/.test(base)}
+function adjust(){start.disabled=active||!connected();end.disabled=!active}
+new MutationObserver(adjust).observe(badge,{attributes:true,attributeFilter:["class"]});
+function notifyLocked(locked){
+ window.dispatchEvent(new CustomEvent("coach-live-state",{detail:{active:locked}}));
+ for(const id of ["levelSelect","scenarioSelect","correctToggle"]){if(field(id))field(id).disabled=locked}
+ adjust();
 }
-function message(role,text){
- if(!text)return;
- const host=document.getElementById("messages");if(!host)return;
- const box=document.createElement("div");
- box.className="ai-bubble "+(role==="user"?"you":"bot")+" de-text";
- box.dir="ltr";
+function appendBubble(role,txt){
+ const host=field("messages"),box=document.createElement("div");
+ box.className="ai-bubble "+(role==="user"?"you":"bot")+" de-text";box.dir="ltr";
  const meta=document.createElement("span");meta.className="ai-meta";meta.textContent=role==="user"?"Du · Live":"Deutsch Partner · Live";
- const content=document.createElement("span");content.textContent=text;
+ const content=document.createElement("span");content.textContent=txt;
  box.append(meta,content);host.appendChild(box);host.scrollTop=host.scrollHeight;
 }
-function cleanup(){
- fetchAbort?.abort();fetchAbort=null;
- try{channel?.close()}catch(e){}
- channel=null;
- try{peer?.close()}catch(e){}
- peer=null;
- try{mic?.getTracks().forEach(t=>t.stop())}catch(e){}
- mic=null;
- try{output.pause()}catch(e){}
- output.srcObject=null;
- active=false;starting=false;
- liveState(false);
-}
-function handleEvent(event){
- let data;try{data=JSON.parse(event.data)}catch(_){return}
- switch(data.type){
- case "session.created":updateStatus("الجلسة الصوتية فتحت. تكلّم بالألمانية وانتظر الرد.");break;
- case "session.updated":updateStatus("تم ضبط اللغة والمستوى في الجلسة.");break;
- case "input_audio_buffer.speech_started":updateStatus("كنسمع ليك…");break;
- case "input_audio_buffer.speech_stopped":updateStatus("سمعتك. كنوجد الجواب بالألمانية…");break;
- case "conversation.item.input_audio_transcription.completed":
-   if(data.transcript)message("user",String(data.transcript).slice(0,1200));break;
- case "response.output_audio_transcript.done":
-   if(data.transcript)message("assistant",String(data.transcript).slice(0,1400));break;
- case "response.done":updateStatus("المحادثة متصلة. تقدر تجاوب وتكمل بلا ضغط متكرر.");break;
- case "error":
-   updateStatus("تنبيه من الجلسة: "+String(data.error?.message||"تعذر إتمام الدور").slice(0,200));break;
+async function endpoint(path,options){
+ const headers={"X-Coach-Access":field("accessCode")?.value||"",...(options.headers||{})};
+ controller=new AbortController();
+ let response;
+ try{response=await fetch(base+path,{...options,headers,signal:controller.signal})}
+ catch(e){throw new Error("الخادم المحلي ما جاوبش أو تقطع الاتصال.")}
+ if(!response.ok){
+  let body={};try{body=await response.json()}catch(e){}
+  throw new Error(body.error||"الخادم رجع خطأ: "+response.status);
  }
+ return response;
 }
-async function waitIce(pc){
- if(pc.iceGatheringState==="complete")return;
- await new Promise((resolve,reject)=>{
-  let timer=setTimeout(()=>{pc.removeEventListener("icegatheringstatechange",onChange);reject(Error("تعذر الحصول على اتصال WebRTC في الوقت المناسب."))},12000);
-  function onChange(){if(pc.iceGatheringState!=="complete")return;clearTimeout(timer);pc.removeEventListener("icegatheringstatechange",onChange);resolve()}
-  pc.addEventListener("icegatheringstatechange",onChange);onChange();
+function haltRecording(){
+ if(timer){clearInterval(timer);timer=null}
+ if(recorder?.state==="recording"){try{recorder.stop()}catch(e){}}
+}
+function stopAudio(){
+ output.pause();output.srcObject=null;output.removeAttribute("src");output.load();
+ if(objectURL){URL.revokeObjectURL(objectURL);objectURL=null}
+}
+function endSession(){
+ active=false;busy=false;
+ controller?.abort();controller=null;
+ haltRecording();
+ recorder=null;chunkList=[];
+ if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
+ if(audioCtx){audioCtx.close().catch(()=>{});audioCtx=null}
+ analyser=null;stopAudio();turns=[];
+ notifyLocked(false);
+ status("المكالمة سالات والميكروفون توقف.");
+}
+function audioLevel(){
+ if(!analyser)return 0;
+ let arr=new Uint8Array(analyser.fftSize);
+ analyser.getByteTimeDomainData(arr);
+ let sum=0;for(const x of arr){const n=(x-128)/128;sum+=n*n}
+ return Math.sqrt(sum/arr.length);
+}
+function beginTurn(){
+ if(!active||busy||!stream)return;
+ if(Date.now()-sessionStarted>15*60_000){status("انتهت جلسة 15 دقيقة حفاظاً على الموارد.");endSession();return}
+ if(typeof MediaRecorder==="undefined"){status("المتصفح لا يدعم تسجيل الصوت. استخدم الوضع الكتابي.");endSession();return}
+ const candidates=["audio/webm;codecs=opus","audio/mp4","audio/webm","audio/ogg;codecs=opus"];
+ const mime=candidates.find(x=>MediaRecorder.isTypeSupported(x));
+ try{recorder=new MediaRecorder(stream,mime?{mimeType:mime}:{})}
+ catch(e){status("تعذر فتح تسجيل الصوت في هذا المتصفح.");endSession();return}
+ chunkList=[];recordedSpeech=false;speechAt=0;consecutive=0;startAt=Date.now();
+ const thisRecorder=recorder;
+ thisRecorder.addEventListener("dataavailable",e=>{if(e.data.size>0)chunkList.push(e.data)});
+ thisRecorder.addEventListener("stop",async()=>{
+  if(timer){clearInterval(timer);timer=null}
+  if(!active||thisRecorder!==recorder)return;
+  const typ=thisRecorder.mimeType||"audio/webm";
+  const blob=new Blob(chunkList,{type:typ});chunkList=[];
+  recorder=null;
+  if(!recordedSpeech||blob.size<900){status("تقدر تهضر بالألمانية… كنسمع ليك.");beginTurn();return}
+  await processTurn(blob,typ);
  });
+ thisRecorder.start(300);
+ status("🎙️ هضر بشكل طبيعي. ملي تسكت غادي نفهم ونرد بالألمانية.");
+ timer=setInterval(()=>{
+  if(!active||recorder!==thisRecorder)return;
+  const now=Date.now(),rms=audioLevel();
+  if(rms>0.034)consecutive++;else consecutive=0;
+  if(consecutive>=2){recordedSpeech=true;speechAt=now}
+  if(recordedSpeech&&now-speechAt>1400&&now-startAt>900)haltRecording();
+  if(now-startAt>26000)haltRecording();
+ },120);
 }
-async function begin(){
- if(!backendReady()||active||starting){updateStatus("خاص أولاً تتصل بالخادم بالرمز الصحيح.");return}
- if(isRecorderActive()){updateStatus("وقف التسجيل القصير أولاً قبل بدء المكالمة المباشرة.");return}
- if(typeof RTCPeerConnection==="undefined"||!navigator.mediaDevices?.getUserMedia){
-  updateStatus("المتصفح لا يدعم مكالمة WebRTC أو الميكروفون. جرّب Chrome أو Edge عبر HTTPS.");return;
- }
- document.getElementById("stopAudio")?.click();
- endedByUser=false;starting=true;liveState(true);refresh();
- updateStatus("كنطلب الإذن بالميكروفون ونوجد اتصال آمن…");
+async function processTurn(blob,type){
+ if(!active||busy)return;
+ busy=true;status("كنحوّل صوتك إلى الألمانية ونوجد جواب من النموذج المحلي…");
  try{
-  mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
-  if(!starting||endedByUser){mic?.getTracks().forEach(t=>t.stop());return}
-  peer=new RTCPeerConnection();
-  peer.addEventListener("track",e=>{
-   output.srcObject=e.streams[0]||new MediaStream([e.track]);
-   output.play().catch(()=>{output.controls=true;updateStatus("ضغط على زر تشغيل الصوت أسفل أزرار المكالمة.")});
+  const file=new FormData();
+  file.append("audio",blob,"utterance."+(type.includes("mp4")?"mp4":type.includes("ogg")?"ogg":"webm"));
+  if(blob.size>5_000_000)throw new Error("التسجيل كبير بزاف. حاول بجملة أقصر.");
+  const transcriptResult=await endpoint("/api/transcribe",{method:"POST",body:file});
+  const transcript=String((await transcriptResult.json()).text||"").trim();
+  if(!active)return;
+  if(!transcript){
+   status("ما فهمتش الكلام. عاود هضر بهدوء وبوضوح.");
+   return;
+  }
+  appendBubble("user",transcript);
+  const user={role:"user",content:transcript};
+  const result=await endpoint("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+    level:field("levelSelect").value,scenario:field("scenarioSelect").value,
+    correct:field("correctToggle").checked,messages:[...turns,user].slice(-24)
+  })});
+  const reply=String((await result.json()).reply||"").trim();
+  if(!active)return;
+  if(!reply)throw new Error("النموذج المحلي ما عطاش جواب.");
+  appendBubble("assistant",reply);
+  turns.push(user,{role:"assistant",content:reply});turns=turns.slice(-24);
+  status("كنولّد النطق الألماني المحلي...");
+  const sound=await endpoint("/api/speak",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+    text:reply.slice(0,650),level:field("levelSelect").value
+  })});
+  const wav=await sound.blob();
+  if(!active)return;
+  objectURL=URL.createObjectURL(wav);
+  output.src=objectURL;
+  output.controls=false;
+  status("🔊 Deutsch Partner كيهضر بالألمانية؛ الميكروفون كيسمع من بعد ما يسالي.");
+  await new Promise(resolve=>{
+   let done=false;
+   const finish=()=>{if(done)return;done=true;output.onended=null;output.onerror=null;resolve()};
+   output.onended=finish;output.onerror=finish;
+   output.play().catch(()=>{output.controls=true;status("متصفحك منع التشغيل التلقائي. ضغط على تشغيل الصوت باش تكمل المكالمة.");});
   });
-  peer.addEventListener("connectionstatechange",()=>{
-   if(!peer)return;
-   if(peer.connectionState==="failed"||peer.connectionState==="closed"){
-    updateStatus("توقف اتصال المكالمة.");cleanup();
-   }
-  });
-  mic.getTracks().forEach(track=>peer.addTrack(track,mic));
-  channel=peer.createDataChannel("oai-events");
-  channel.addEventListener("message",handleEvent);
-  channel.addEventListener("open",()=>{updateStatus("متصل. هضر بالألمانية، وجاوب من بعد ما تسمع الرد.");active=true;starting=false;refresh()});
-  channel.addEventListener("close",()=>{if(active||starting){updateStatus("انتهت الجلسة الصوتية.");cleanup()}});
-  const offer=await peer.createOffer();
-  await peer.setLocalDescription(offer);await waitIce(peer);
-  const sdp=peer.localDescription?.sdp;if(!sdp)throw Error("لم تتوفر بيانات المكالمة.");
-  fetchAbort=new AbortController();
-  const secretRes=await fetch(api+"/api/realtime-token",{method:"POST",headers:{"Content-Type":"application/json","X-Coach-Access":value("accessCode")},body:JSON.stringify({level:value("levelSelect"),scenario:value("scenarioSelect"),correct:document.getElementById("correctToggle").checked}),signal:fetchAbort.signal});
-  if(!secretRes.ok){let error={};try{error=await secretRes.json()}catch(e){}throw Error(error.error||"تعذر فتح الجلسة: "+secretRes.status)}
-  const token=await secretRes.json();if(!token.value)throw Error("الخادم لم يوفر مفتاحاً مؤقتاً للمكالمة.");
-  const signal=fetchAbort.signal;
-  const remote=await fetch("https://api.openai.com/v1/realtime/calls",{method:"POST",headers:{"Authorization":"Bearer "+token.value,"Content-Type":"application/sdp"},body:sdp,signal});
-  if(!remote.ok)throw Error("مزود المكالمات رفض الجلسة: "+remote.status);
-  await peer.setRemoteDescription({type:"answer",sdp:await remote.text()});
-  updateStatus("اتصلنا بالخادم الصوتي. كنسناو افتتاح القناة…");
- }catch(error){
-  const msg=error.name==="AbortError"?"أُلغيت المكالمة.":String(error.message||"تعذر الاتصال بالمكالمة.");
-  cleanup();updateStatus(msg);
+  stopAudio();
+ }catch(e){
+  if(active)status("وقع مشكل فالمحادثة المحلية: "+String(e.message||"تعذر إتمام المكالمة"));
+ }finally{
+  busy=false;
+  if(active)beginTurn();
  }
 }
-start.addEventListener("click",begin);
-end.addEventListener("click",()=>{endedByUser=true;cleanup();updateStatus("ساليتي المكالمة. الميكروفون موقف.")});
-window.addEventListener("pagehide",()=>{endedByUser=true;cleanup()});
-refresh();
+start.addEventListener("click",async()=>{
+ if(active||!connected())return;
+ if(field("recordBtn")?.classList.contains("recording")){status("وقف التسجيل القصير أولاً.");return}
+ if(!navigator.mediaDevices?.getUserMedia){status("المتصفح لا يدعم الميكروفون هنا؛ خاص HTTPS وإذن التسجيل.");return}
+ try{
+  stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+  const AContext=window.AudioContext||window.webkitAudioContext;
+  if(!AContext)throw new Error("متصفحك لا يدعم قياس الصمت للردود.");
+  audioCtx=new AContext();await audioCtx.resume();
+  analyser=audioCtx.createAnalyser();analyser.fftSize=1024;
+  audioCtx.createMediaStreamSource(stream).connect(analyser);
+  turns=[];active=true;busy=false;sessionStarted=Date.now();notifyLocked(true);
+  beginTurn();
+ }catch(e){status("ما قدرناش نفتح الميكروفون: "+String(e.message||"تحقق من الإذن"));endSession()}
+});
+end.addEventListener("click",endSession);
+window.addEventListener("pagehide",endSession);
+adjust();
 })();
