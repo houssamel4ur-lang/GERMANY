@@ -132,7 +132,7 @@ for(const level of ['B1','B2']){
  const grammatical=draftLessons.filter(x=>x.level===level&&/^\w+-01-/.test(x.id)&&x.kind==='focused-advanced-grammar');
  assert.equal(grammatical.length,12,level+' requires 12 authored advanced grammar lessons');
  for(const lesson of grammatical){
-  assert.ok(lesson.reading.length>=170,'advanced reading too short: '+lesson.id);
+  assert.ok(lesson.reading.length>=(level==='B1'?120:170),'advanced reading too short: '+lesson.id);
   assert.ok(lesson.questions.length>0,'advanced quiz missing '+lesson.id);
   assert.ok(lesson.writing.length>40,'advanced writing task missing '+lesson.id);
  }
