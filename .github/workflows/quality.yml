@@ -46,11 +46,14 @@ jobs:
           node --check data/foundation-merge.js
           node --check assets/ai-chat.js
           node --check assets/ai-live.js
+          node --check selfhost-ai/export-curriculum.mjs
           node --check assets/ai-config.js
       - name: Validate curriculum and site
         run: node tests/check.mjs
       - name: Validate secure AI conversation backend
         run: node tests/ai-check.mjs
+      - name: Verify locally owned AI lessons context
+        run: node selfhost-ai/export-curriculum.mjs --check
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
