@@ -84,6 +84,8 @@ await go("ai.html");
 assert.equal(await page.locator("#levelSelect option").count(),4,"AI chat must offer all four levels");
 assert.equal(await page.locator("#scenarioSelect option").count(),8,"AI chat must offer varied scenarios");
 assert.equal(await page.locator("#recordBtn").isDisabled(),true,"voice must not pretend to work without a backend");
+assert.equal(await page.locator("#startLive").isDisabled(),true,"realtime mic must not start before API setup");
+assert.equal(await page.locator("#endLive").isDisabled(),true,"realtime end control must start disabled");
 assert.ok((await page.locator("#connectionBadge").innerText()).includes("غير مفعّل"),"offline AI must clearly disclose missing backend");
 await page.selectOption("#levelSelect","B2");
 assert.equal(await page.locator("#sessionLevel").innerText(),"B2");
