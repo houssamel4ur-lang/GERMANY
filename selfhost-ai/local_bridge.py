@@ -30,7 +30,7 @@ AVAILABLE_MODELS = {"qwen3:4b", "llama3.2:3b"}
 MODEL = os.getenv("DEUTSCH_AI_MODEL", "qwen3:4b").strip()
 if MODEL not in AVAILABLE_MODELS:
     MODEL = "qwen3:4b"
-BRIDGE_VERSION = "2026.11.13.4"
+BRIDGE_VERSION = "2026.11.13.5"
 VOICE_DIR = Path(__file__).resolve().parent / "voices"
 PIPER_PATH = VOICE_DIR / "de_DE-thorsten-high.onnx"
 WHISPER_SIZE = "base"
@@ -121,13 +121,16 @@ def _system(level, scenario, correct, lesson_id):
 
 
 def _voice_available():
+    # Installer performs a real Piper synthesis check before flagging ready.
     return (find_spec("piper") is not None
             and PIPER_PATH.is_file()
-            and PIPER_PATH.with_suffix(".onnx.json").is_file())
+            and PIPER_PATH.with_suffix(".onnx.json").is_file()
+            and (VOICE_DIR / ".piper-ready").is_file())
 
 
 def _stt_available():
-    return find_spec("faster_whisper") is not None
+    # A package alone is not proof that the Whisper model is downloaded.
+    return find_spec("faster_whisper") is not None and (VOICE_DIR / ".whisper-ready").is_file()
 
 
 def _wav_bytes(text):
@@ -151,7 +154,7 @@ def _recognize_audio(payload, suffix):
         if _STT is None:
             from faster_whisper import WhisperModel
             _STT = WhisperModel(WHISPER_SIZE, device="cpu", compute_type="int8")
-        segments, _ = _STT.transcribe(filename, language="de", beam_size=3, vad_filter=True)
+        segments, _ = _STT.transcribe(filename, language="de", beam_size=2, vad_filter=False, condition_on_previous_text=False)
         return " ".join(segment.text.strip() for segment in segments).strip()
     finally:
         if filename:
@@ -310,6 +313,7 @@ class Handler(BaseHTTPRequestHandler):
             present = False
         self._response(200, {"ready": present, "provider": "self-hosted", "model": MODEL,
                              "speech_ready": _voice_available(), "transcription_configured": _stt_available(),
+                             "voice_mode": "local-turn-taking",
                              "bridge_version": BRIDGE_VERSION,
                              "message": (MODEL + " local is ready") if present else ("Start Ollama and load " + MODEL)})
 
@@ -343,8 +347,9 @@ class Handler(BaseHTTPRequestHandler):
             with _AUDIO_LOCK:
                 rendered = _wav_bytes(text)
             self._binary("audio/wav", rendered)
-        except Exception:
-            self._response(503, {"error": "ما قدرناش نولدو الصوت الألماني محلياً."})
+        except Exception as exc:
+            print("[Deutsch AI] Piper failed:", type(exc).__name__, str(exc)[:160], flush=True)
+            self._response(503, {"error": "Piper ما قدرش يولّد الصوت. شوف النافذة الكحلة ديال السيرفر."})
 
     def _transcription(self):
         if not _stt_available():
@@ -381,8 +386,9 @@ class Handler(BaseHTTPRequestHandler):
             with _AUDIO_LOCK:
                 transcript = _recognize_audio(audio, suffix)
             self._response(200, {"text": transcript[:1500], "provider": "self-hosted"})
-        except Exception:
-            self._response(503, {"error": "Whisper ما قدرش يفهم الصوت. ممكن النموذج باقي كيتحمّل أول مرة."})
+        except Exception as exc:
+            print("[Deutsch AI] Whisper failed:", type(exc).__name__, str(exc)[:160], flush=True)
+            self._response(503, {"error": "Whisper ما قدرش يحوّل التسجيل لنص. راجع النافذة الكحلة."})
 
     def do_POST(self):
         if not self._allowed() or not self._limit():
