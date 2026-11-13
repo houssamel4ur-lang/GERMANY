@@ -28,6 +28,7 @@ jobs:
           node --check data/primary-phonetics.js
           node --check data/structured-a1-pronunciation.js
           node --check assets/primary-study.js
+          node --check assets/lesson-flow.js
           node --check assets/primary-home.js
           node --check data/curriculum-2026.js
           node --check data/curriculum-lessons-2026.js
@@ -50,6 +51,8 @@ jobs:
           node --check assets/ai-config.js
       - name: Validate curriculum and site
         run: node tests/check.mjs
+      - name: Verify pedagogical lesson-stage order for all PDF topics
+        run: node tests/stage-flow-check.mjs
       - name: Validate secure AI conversation backend
         run: node tests/ai-check.mjs
       - name: Verify locally owned AI lessons context
