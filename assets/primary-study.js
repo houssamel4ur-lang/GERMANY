@@ -51,53 +51,115 @@ root.innerHTML='<div class="crumb"><a href="syllabus.html?level='+topic.level+'"
 state.last=topic.id;store();
 }
 function title(title,sub){return '<span class="kicker">'+topic.level+' · '+esc(topic.section)+'</span><h2>'+esc(title)+'</h2><p class="sub">'+esc(sub)+'</p>'}
+function bulletList(items,klass="learning-list"){
+ return '<ul class="'+klass+'">'+items.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul>';
+}
+function panelHeading(heading,body){
+ return '<div class="lesson-block"><h3>'+esc(heading)+'</h3><p>'+esc(body)+'</p></div>';
+}
+function examplesBlock(items){
+ return (items||[]).filter(x=>x&&x[0]&&x[1]).map(x=>'<div class="story lesson-example">'+iso(x[0])+'<p>'+esc(x[1])+'</p>'+speaker(x[0])+'</div>').join("");
+}
 function render(){
-$$("[data-tab]",root).forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
-const view=$("#courseSection");if(!view)return;let html="";
-if(tab==="intro"){
-html=title(topic.title,"هدف الدرس: فهم عناصر الموضوع واستعمال الأمثلة والمفردات في سياق صحيح.")+
-'<div class="panel article"><h3>ماذا ستتعلم؟</h3><p>'+esc(lesson.explanation)+'</p></div>'+
-'<div class="story">'+iso(lesson.examples[0][0])+'<p>'+esc(lesson.examples[0][1])+'</p>'+speaker(lesson.examples[0][0])+'</div>'+
-'<p class="notice">'+esc(lesson.quality)+'</p><button class="primary" data-goto="vocab">ابدأ بالمفردات ←</button>';
-}
-if(tab==="vocab"){
-html=title("مفردات الدرس","استمع إلى كل كلمة، ثم احفظ الصعبة لإعادتها بالمراجعة المتباعدة.")+
-lesson.vocabulary.map((v,i)=>wordCard(v,i,false)).join("")+
-'<p class="tiny">احفظ الاسم مع أداته إن وجدت. لا تستبدل الاستماع الألماني بكتابة نطق تقريبي بالعربية.</p>';
-}
-if(tab==="audio"){
-const phrases=[...new Set([...lesson.vocabulary.map(w=>w.de),...lesson.examples.map(x=>x[0]),...lesson.dialogue.map(x=>x[0])])];
-html=title("الصوتيات","كلمات وجمل هذا الدرس فقط؛ التشغيل من ملفات ألمانية مسجلة لا من صوت المتصفح.")+
-speechControls()+
-phrases.map(de=>'<div class="wordrow">'+iso(de)+speaker(de)+'</div>').join("");
-}
-if(tab==="grammar"){
-html=title("شرح الموضوع","شرح عربي مباشر مع أمثلة ألمانية مرتبطة بالمحور.")+
-'<div class="panel article"><h3>'+esc(topic.title)+'</h3><p>'+esc(lesson.explanation)+'</p></div>'+
-lesson.examples.map(x=>'<div class="story">'+iso(x[0])+'<p>'+esc(x[1])+'</p>'+speaker(x[0])+'</div>').join("")+
-'<button class="primary" data-goto="exercise">تطبيق القاعدة ←</button>';
-}
-if(tab==="conversation"){
-html=title("المحادثة","استمع للجمل ورددها؛ الحوار تمرين قرائي وصوتي وليس تقييماً تلقائياً لنطقك.")+speechControls()+
-lesson.dialogue.map((x,i)=>'<div class="wordrow"><div><small>المتحدث '+(i%2?"ب":"أ")+'</small>'+iso(x[0])+'<small>'+esc(x[1])+'</small></div>'+speaker(x[0])+'</div>').join("")+
-'<p class="notice">للتمرين: أغلق الترجمة بصرياً، استمع وأعد الجملة بصوتك، ثم قارن فهمك بالمعنى.</p>';
-}
-if(tab==="reading"){
-html=title("القراءة والفهم","اقرأ النص أولاً، ثم استمع إذا كان ملف MP3 متوفراً.")+speechControls()+
-'<div class="story">'+iso(lesson.reading)+'<div class="controls">'+speaker(lesson.reading)+'</div></div>'+
-'<details class="panel"><summary>أظهر الترجمة العربية</summary><p>'+esc(lesson.translation)+'</p></details>'+
-'<div class="panel"><h3>تدريب كتابة</h3><p>'+esc(lesson.writing)+'</p><textarea id="writingDraft" rows="4" style="width:100%;max-width:100%" placeholder="اكتب محاولتك هنا..."></textarea><p class="tiny">لا يوجد مصحح آلي موثوق للكتابة الحرة. يمكنك حفظ مسودتك محلياً.</p><button class="outline" data-savewriting>حفظ المسودة</button></div>';
-}
-if(tab==="exercise")html=title("التمارين المتسلسلة","سؤال واحد في كل مرة مع تصحيح فوري، وتغيير ترتيب الأسئلة عند الإعادة.")+'<div id="quizSurface"></div>';
-if(tab==="result"){
-const attempts=state.attempts[id]||[],last=attempts[attempts.length-1];
-html=title("نتيجة الدرس","النتائج حقيقية من إجاباتك المخزنة محلياً.")+
-(last?'<div class="panel"><h3>آخر تدريب</h3><p>صحيح من أول محاولة: <strong>'+last.first+' / '+last.total+'</strong></p><p>محاولات خاطئة قبل التصحيح: '+last.errors+'</p><p>التاريخ: '+new Date(last.ts).toLocaleString("ar")+'</p><p>'+(state.passed[id]?"✓ اجتزت التدريب المصغر بنسبة 80% أو أكثر":"أعد التمارين لتحسين فهمك")+'</p></div>':'<div class="notice">لم تنه التمارين بعد.</div>')+
-'<button class="primary" data-goto="exercise">إعادة التدريب ←</button>';
-}
-view.innerHTML=html;
-if(tab==="exercise"){questions=buildQuestions();pos=0;first=0;miss=0;drawQuestion()}
-if(tab==="reading"){const v=(()=>{try{return localStorage.getItem(KEY+"-writing-"+id)||""}catch(e){return ""}})();$("#writingDraft",view).value=v}
+ $$("[data-tab]",root).forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
+ const view=$("#courseSection");if(!view)return;
+ const expanded=!!lesson.objectives?.length;
+ const lessonObjectives=expanded?lesson.objectives:[
+  "التعرّف على فكرة "+topic.title+" ومفرداتها الأساسية.",
+  "فهم الأمثلة المكتوبة واستعمالها في سياق الموضوع.",
+  "تطبيق ما تعلمته في التمارين القصيرة."
+ ];
+ let html="";
+ if(tab==="intro"){
+  html=title("خريطة الدرس: "+topic.title,"هذه الصفحة للتوجيه وخطوات الدراسة؛ الشرح التفصيلي يوجد في قسمه الخاص ولا يتكرر هنا.")+
+  '<div class="lesson-block"><h3>بعد هذا الدرس تستطيع أن...</h3>'+bulletList(lessonObjectives)+'</div>'+
+  '<div class="lesson-block"><h3>تسلسل التعلم</h3><ol class="learning-list"><li>افهم الهدف والمصطلحات الرئيسية.</li><li>تعلّم المفردات في سياقها ثم استمع للأصوات.</li><li>ادرس القاعدة والأمثلة التطبيقية دون استعجال.</li><li>طبّق في الحوار والقراءة والكتابة.</li><li>أنجز تمارين المراجعة ثم راجع الأخطاء.</li></ol></div>'+
+  '<div class="lesson-highlights"><span>المستوى '+esc(topic.level)+'</span><span>المحور '+esc(topic.section_number)+'.'+String(topic.number).padStart(2,"0")+'</span><span>'+(expanded?esc(lesson.estimatedMinutes||45)+' دقيقة مقترحة':'مسودة قيد التوسيع')+'</span></div>'+
+  '<p class="notice">'+esc(lesson.quality||"محتوى تدريب أولي، يحتاج مراجعة وتطويراً.")+'</p><button class="primary" data-goto="vocab">انتقل إلى المفردات ←</button>';
+ }
+ if(tab==="vocab"){
+  html=title("مفردات وتعبيرات الدرس","هذا القسم لتعلّم المعنى والاستعمال وحفظ الكلمات؛ تدريب الأذن وحده في قسم الصوتيات.")+
+  '<div class="lesson-block"><h3>كيف تحفظ الكلمة بشكل صحيح؟</h3><p>اقرأ الكلمة الألمانية ومعناها، استمع إن توفر تسجيل MP3، ثم كوّن جملة قصيرة بها واحفظ الكلمات الصعبة للمراجعة. احفظ الأسماء مع der أو die أو das عندما تكون الأداة مذكورة.</p></div>'+
+  '<p class="tiny">عدد العناصر: '+lesson.vocabulary.length+'</p>'+
+  lesson.vocabulary.map((v,i)=>wordCard(v,i,false)).join("")+
+  '<div class="lesson-block"><h3>تطبيق عملي للمفردات</h3><p>اختر خمس كلمات من هذه الصفحة، واكتب لها جملاً جديدة من عندك. حاول استرجاع معنى الكلمة دون النظر إلى العربية قبل حفظها للمراجعة.</p></div>';
+ }
+ if(tab==="audio"){
+  const availablePhrases=[...new Set([...lesson.vocabulary.map(w=>w.de),...lesson.examples.map(x=>x[0]),...lesson.dialogue.map(x=>x[0])])].filter(x=>window.DM_AUDIO_MAP?.[x]);
+  const uniqueIPA=(lesson.pronunciation||[]);
+  html=title(topic.section==="الحروف والنطق"?"الحروف والنطق والتمييز السمعي":"الاستماع والنطق",
+  "تدرّب على مخارج الأصوات والتمييز السمعي؛ الكلمات هنا أمثلة للاستماع، وليس قائمة مفردات مكررة.")+
+  speechControls();
+  if(Array.isArray(lesson.alphabet)&&lesson.alphabet.length){
+   html+='<div class="lesson-block"><h3>جدول الأبجدية الكامل: 26 حرفاً</h3><p>اسم الحرف عند التهجئة قد يختلف عن صوته داخل الكلمة. رموز IPA مساعدة للتعلم، ولا تعوّض التسجيل الألماني.</p>'+
+   '<div class="table-scroll"><table class="alphabet-table"><thead><tr><th>الحرف</th><th>اسم الحرف</th><th>النطق IPA</th><th>مثال</th><th>المعنى</th></tr></thead><tbody>'+
+   lesson.alphabet.map(a=>'<tr><td><strong lang="de" dir="ltr">'+esc(a[0])+'</strong></td><td><span lang="de" dir="ltr">'+esc(a[1])+'</span></td><td dir="ltr">'+esc(a[2])+'</td><td>'+iso(a[3])+' '+speaker(a[3])+'</td><td>'+esc(a[4])+'</td></tr>').join("")+
+   '</tbody></table></div></div>';
+  }
+  if(uniqueIPA.length){
+   html+=uniqueIPA.map((part,i)=>'<div class="lesson-block"><h3>'+(i+1)+'. '+esc(part.title)+'</h3><p>'+esc(part.how)+'</p>'+
+   (part.words?.length?'<div class="pron-words">'+part.words.map(word=>'<div class="wordrow">'+iso(word)+speaker(word)+'</div>').join("")+'</div>':"")+
+   '<p class="practice-task"><strong>طبّق:</strong> '+esc(part.task||"استمع ثم كرّر.")+'</p></div>').join("");
+  }
+  if(availablePhrases.length){
+   html+='<div class="lesson-block"><h3>تمرين الأذن: استمع قبل كشف النص</h3><p>شغّل الصوت، حاول كتابة ما سمعت، ثم افتح العبارة للتحقق من نفسك. التسجيلات غير المتوفرة لا تُشغّل بلغة أخرى.</p>'+
+   availablePhrases.slice(0,18).map((phrase,i)=>'<div class="wordrow"><div><strong>المقطع '+(i+1)+'</strong> <details><summary>اكشف النص بعد الاستماع</summary>'+iso(phrase)+'</details></div>'+speaker(phrase)+'</div>').join("")+'</div>';
+  } else if(!uniqueIPA.length)html+='<p class="notice">لا تتوفر حالياً تسجيلات صوتية لهذا الدرس. لا يظهر هنا صوت بديل بلغة أخرى.</p>';
+ }
+ if(tab==="grammar"){
+  html=title(topic.section==="الحروف والنطق"?"الشرح التفصيلي وطريقة الاستعمال":"القواعد والشرح التفصيلي",
+  "هنا توجد القواعد والخطوات مع أمثلة محللة؛ المقدمة لا تعيد الشرح.")+
+  (lesson.grammarBlocks?.length?lesson.grammarBlocks.map(block=>
+   '<div class="lesson-block"><h3>'+esc(block.title)+'</h3><p>'+esc(block.body)+'</p>'+examplesBlock(block.examples)+'</div>').join(""):
+   '<div class="lesson-block"><h3>الفكرة الرئيسية</h3><p>'+esc(lesson.explanation)+'</p></div>'+examplesBlock(lesson.examples)+
+   '<p class="notice">هذا الشرح مختصر وما زال مسودة تعليمية؛ يحتاج أمثلة مفسرة وخطوات إضافية قبل اعتباره درساً مكتملاً.</p>')+
+  (lesson.commonMistakes?.length?'<div class="lesson-block"><h3>أخطاء يجب تجنبها</h3>'+bulletList(lesson.commonMistakes)+'</div>':"")+
+  '<button class="primary" data-goto="conversation">طبّق في المحادثة ←</button>';
+ }
+ if(tab==="conversation"){
+  const genuineDialogue=(lesson.dialogue||[]).length>=3&&
+   !lesson.dialogue.every(x=>lesson.examples.some(e=>e[0]===x[0]));
+  html=title("المحادثة وتوظيف اللغة","اقرأ الأدوار بصوت مرتفع ثم بدل الأسماء والمعلومات، وجرّب الدورين دون الترجمة.")+
+  speechControls();
+  if(genuineDialogue){
+   html+='<div class="lesson-block"><h3>حوار مرتبط بموضوع الدرس</h3>'+
+    lesson.dialogue.map((x,i)=>'<div class="dialogue-turn"><span class="speaker-label">المتحدث '+(i%2?"ب":"أ")+'</span><div>'+iso(x[0])+'<small>'+esc(x[1])+'</small></div>'+speaker(x[0])+'</div>').join("")+'</div>';
+  }else{
+   html+='<p class="notice">هذا المحور لا يتوفر بعد على حوار أصلي متدرج خاص به. نتجنب تكرار جمل المفردات على أنها محادثة كاملة.</p>';
+  }
+  html+='<div class="lesson-block"><h3>تدرّب على الكلام بنفسك</h3>'+
+   bulletList(lesson.rolePlay?.length?lesson.rolePlay:[
+    "حوّل المثال الأول إلى سؤال مناسب، ثم جاوب عنه بجملة ألمانية جديدة.",
+    "حاول شرح فكرة هذا المحور شفهياً بالألمانية لمدة نصف دقيقة ثم زد التفاصيل."
+   ])+'<p class="tiny">لا نقيس دقة النطق آلياً في هذا القسم. يمكنك استعمال شريك المحادثة في الصفحة المخصصة عند توفر اتصال AI.</p></div>';
+ }
+ if(tab==="reading"){
+  const longReading=(lesson.reading||"").trim().split(/\s+/).length>=18;
+  html=title("القراءة والفهم ثم الكتابة","هذا القسم للنص المتكامل، وأسئلة الفهم، والإنتاج الكتابي. لا تُعرض الترجمة إلا عندما تختار إظهارها.")+
+  (longReading?'<div class="lesson-block"><h3>النص الألماني</h3><p class="tiny">اقرأ دون ترجمة أولاً وحدد الكلمات التي تعرفها.</p><div class="story reading-text">'+iso(lesson.reading)+'<div class="controls">'+speaker(lesson.reading)+'</div></div>'+
+  '<details><summary>أظهر الترجمة بعد محاولة الفهم</summary><p>'+esc(lesson.translation)+'</p></details></div>':
+  '<p class="notice">النص الحالي قصير ولا يشكل نشاط قراءة متكاملاً بعد؛ يحتاج إلى فقرة أطول وأسئلة فهم أصلية.</p>'+
+  '<div class="story">'+iso(lesson.reading)+'<p>'+esc(lesson.translation)+'</p></div>')+
+  (lesson.readingQuestions?.length?'<div class="lesson-block"><h3>أسئلة فهم النص</h3>'+lesson.readingQuestions.map((q,i)=>'<details class="reading-question"><summary>'+(i+1)+'. '+esc(q[0])+'</summary><p>الجواب: '+esc(q[1])+'</p></details>').join("")+'</div>':"")+
+  '<div class="lesson-block"><h3>الكتابة: أنتج نصك الخاص</h3><p>'+esc(lesson.writing)+'</p>'+
+  '<textarea id="writingDraft" rows="6" style="width:100%;max-width:100%" lang="de" dir="ltr" placeholder="Schreibe hier deine Antwort ..."></textarea>'+
+  (lesson.writingModel?'<details><summary>افتح نموذج إجابة بعد أن تكتب</summary><p lang="de" dir="ltr">'+esc(lesson.writingModel)+'</p></details>':"")+
+  '<p class="tiny">يمكنك حفظ المسودة على هذا الجهاز. حفظ النص لا يعني تصحيحه تلقائياً.</p><button class="outline" data-savewriting>حفظ المسودة</button></div>';
+ }
+ if(tab==="exercise"){
+  html=title("التطبيق واختبار الفهم","أسئلة موضوعية ثم مفردات واستماع وترتيب وكتابة قصيرة؛ الأسئلة التي أُلّفت خصيصاً لهذا الدرس تظهر أولاً.")+
+  '<div class="lesson-block"><h3>قبل الاختبار</h3><p>طبّق القواعد دون الرجوع إلى الشرح أثناء الإجابة، ثم راجع الأخطاء. النجاح هنا للتدريب فقط وليس شهادة CEFR.</p></div><div id="quizSurface"></div>';
+ }
+ if(tab==="result"){
+  const attempts=state.attempts[id]||[],last=attempts[attempts.length-1];
+  html=title("نتيجة التمرين وخطتك للمراجعة","هذه النتائج مبنية على أجوبتك المخزنة على جهازك وليست تقييماً نهائياً للمهارات الأربع.")+
+  (last?'<div class="lesson-block"><h3>نتيجة آخر محاولة</h3><p>صحيح من أول محاولة: <strong>'+last.first+' / '+last.total+'</strong></p><p>الإجابات الخاطئة قبل التصحيح: '+last.errors+'</p><p>التاريخ: '+new Date(last.ts).toLocaleString("ar")+'</p><p>'+(state.passed[id]?"✓ بلغت عتبة 80% في التدريب القصير.":"راجع أخطاءك ثم أعد المحاولة.")+'</p></div>':'<div class="notice">لم تنه التمارين بعد.</div>')+
+  '<div class="lesson-block"><h3>ماذا بعد؟</h3><p>إذا أخطأت في الكلمات فارجع للمفردات، وإذا أخطأت في القاعدة فراجع الشرح، ثم اقرأ النص أو حاول المحادثة مرة أخرى.</p></div>'+
+  '<button class="primary" data-goto="exercise">إعادة التدريب ←</button>';
+ }
+ view.innerHTML=html;
+ if(tab==="exercise"){questions=buildQuestions();pos=0;first=0;miss=0;drawQuestion()}
+ if(tab==="reading"){const v=(()=>{try{return localStorage.getItem(KEY+"-writing-"+id)||""}catch(e){return ""}})();$("#writingDraft",view).value=v}
 }
 function choices(correct,pool,max=4){
  const vals=[correct],used=new Set([norm(correct)]);
