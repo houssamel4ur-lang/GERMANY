@@ -5,6 +5,7 @@
 const $=s=>document.querySelector(s),body=$("#messages"),base=String(window.DEUTSCH_AI_CONFIG?.apiBase||"").trim().replace(/\/+$/,"");
 const maxTurns=Math.max(4,Math.min(20,Number(window.DEUTSCH_AI_CONFIG?.maxTurns)||12));
 const textBox=$("#userMessage"),sendBtn=$("#sendBtn"),micBtn=$("#recordBtn"),status=$("#chatStatus"),badge=$("#connectionBadge");
+let liveActive=false;
 let turns=[],connected=false,busy=false,recorder=null,chunks=[],recTimer=null,recStarted=0,recordStream=null,playing=null,playURL=null,requestController=null;
 const pick=s=>$(s)?.value||"";
 const previews={
@@ -48,8 +49,8 @@ const subject=pick("#scenarioSelect"),level=pick("#levelSelect");
 const phrases=previews[subject]?.[level]||previews[subject]?.A2||previews.free[level]||previews.free.A1;
 $("#suggestions").innerHTML=phrases.map(p=>'<button type="button" data-prompt="'+esc(p)+'" lang="de" dir="ltr">'+esc(p)+'</button>').join("");
 }
-function isLocked(){return busy||!connected}
-function applyControls(){sendBtn.disabled=isLocked();micBtn.disabled=isLocked()&&!recorder;$("#newChat").disabled=busy;$("#testConnection").disabled=busy;$("#sessionLevel").textContent=pick("#levelSelect")}
+function isLocked(){return busy||!connected||liveActive}
+function applyControls(){sendBtn.disabled=isLocked();micBtn.disabled=isLocked()&&!recorder;$("#newChat").disabled=busy||liveActive;$("#testConnection").disabled=busy;$("#sessionLevel").textContent=pick("#levelSelect")}
 async function call(path,options={}){
 const controller=options.signal?null:new AbortController();
 const headers={...(options.headers||{})};if(getCode())headers["X-Coach-Access"]=getCode();
@@ -161,6 +162,7 @@ try{
  recorder.start(250);recTimer=setTimeout(()=>{if(recorder?.state==="recording")recorder.stop()},30000);
 }catch(e){recordStream?.getTracks().forEach(t=>t.stop());recordStream=null;setStatus("ما قدرناش نستعمل الميكروفون. تأكد من إذن المتصفح.");}
 }
+window.addEventListener("coach-live-state",event=>{liveActive=Boolean(event.detail?.active);applyControls()});
 $("#chatForm").addEventListener("submit",e=>{e.preventDefault();respond(textBox.value)});
 textBox.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();respond(textBox.value)}});
 micBtn.addEventListener("click",microphone);
