@@ -20,5 +20,13 @@ jobs:
           node --check assets/master-curriculum.js
           node --check data/phonetics.js
           node --check assets/phonetics.js
+          node --check data/course-a1-grammar.js
+          node --check data/course-a1-skills.js
+          node --check data/course-a2-grammar.js
+          node --check data/course-a2-skills.js
+          node --check data/primary-lesson-links.js
+          node --check data/primary-phonetics.js
+          node --check assets/primary-study.js
+          node --check assets/primary-home.js
       - name: Validate curriculum and site
         run: node tests/check.mjs
