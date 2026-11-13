@@ -6,6 +6,8 @@ on:
       - '.github/workflows/german-audio.yml'
       - 'scripts/audio_manifest.mjs'
       - 'scripts/german_audio.py'
+      - 'data/curriculum-lessons-2026.js'
+      - 'data/curated-primary-2026.js'
   workflow_dispatch:
     inputs:
       mode:
