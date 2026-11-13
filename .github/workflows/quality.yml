@@ -43,5 +43,9 @@ jobs:
           node --check data/foundation-a1.js
           node --check data/foundation-a2.js
           node --check data/foundation-merge.js
+          node --check assets/ai-chat.js
+          node --check ai-backend/src/worker.js
       - name: Validate curriculum and site
         run: node tests/check.mjs
+      - name: Validate secure AI conversation backend
+        run: node tests/ai-check.mjs
