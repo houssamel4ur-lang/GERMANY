@@ -41,7 +41,7 @@ jobs:
           python -m pip install --disable-pip-version-check edge-tts
       - name: Create German-only text manifest
         env:
-          AUDIO_MODE: ${{ inputs.mode || 'smoke' }}
+          AUDIO_MODE: ${{ inputs.mode || 'all' }}
         run: node scripts/audio_manifest.mjs "$AUDIO_MODE" > /tmp/german-manifest.json
       - name: Generate German audio
         run: python scripts/german_audio.py /tmp/german-manifest.json
