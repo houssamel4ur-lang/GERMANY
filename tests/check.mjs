@@ -97,9 +97,9 @@ for(const [page,rootId] of [['course.html','primaryStudyMount'],['journey.html',
 }
 assert.ok(read('syllabus.html').includes('data/primary-lesson-links.js')&&read('syllabus.html').includes('data/primary-phonetics.js'),'primary syllabus must load active lessons');
 for(const p of ['index.html','syllabus.html','course.html','journey.html','review-primary.html'])assert.ok(read(p).includes('data/curated-primary-2026.js'),'page missing new A1 enrichment: '+p);
-assert.ok(read('curriculum.html').includes('data/curriculum-2026.js'),'supplemental PDF topic explorer missing');
+assert.ok(read('curriculum.html').includes('syllabus.html'),'curriculum alias must route to canonical source');
 assert.ok(read('practice.html').includes('assets/curriculum-app.js'),'supplemental practice engine missing');
-assert.ok(read('study.html').includes('assets/curriculum-app.js'),'new topic practice engine missing');
+assert.ok(read('study.html').includes('course.html?topic='),'topic alias must route to canonical lesson engine');
 const draftWin={};
 for(const path of [
  'data/master-curriculum.js','data/lessons.js',
