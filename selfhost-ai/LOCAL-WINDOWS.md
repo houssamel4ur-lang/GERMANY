@@ -15,11 +15,19 @@ This setup needs no Docker, AI API key, or subscription. It binds only to 127.0.
 - Generated written conversations for German A1/A2/B1/B2
 - Learner-level controls and optional gentle corrections
 - Topic selection and lesson context (when curriculum-context.json is adjacent to the bridge)
-- Thinking mode disabled for Ollama responses
+- Thinking mode disabled for Ollama responses; an extra output filter rejects accidental plain-language thinking.
 - No paid AI or cloud inference
 
-Voice, microphone, videos, and live Internet search are NOT enabled by this text-only launcher. The separately documented FastAPI + Whisper + Piper stack is a later optional voice route. Browser local-network protections may affect localhost requests from GitHub Pages; this is not yet verified on the user's Windows machine.
+Voice and microphone can now run on the same PC **without paid APIs**, but require a one-time installation:
+1. Close the running START-DEUTSCH-AI.cmd window.
+2. Double-click INSTALL-VOICE.cmd to install faster-whisper and Piper and download the free de_DE-thorsten-high German voice.
+3. Restart START-DEUTSCH-AI.cmd. The site can then activate German TTS and microphone dictation, plus turn-taking voice chat. Whisper's free base model downloads on first use.
+This needs extra RAM/disk space, and naturalness/accuracy depends on the PC and speech models. If voice isn't installed or fails, text chat still works. Videos and live Internet search are NOT enabled by this launcher. Browser local-network protections may affect localhost requests from GitHub Pages; this is not yet verified on the user's Windows machine.
 
 If Python isn't found, install from https://www.python.org/downloads/windows/ and double-click again. If the site says it cannot connect, check Ollama and use the page's connection test. Do NOT expose localhost ports to the public Internet.
 
 Software and inference API cost: $0. Hardware, electricity and existing Internet costs not included.
+
+## Updating an existing installation
+
+If you already have the earlier ZIP, **close its old black server window** and replace `local_bridge.py` plus the Windows command files from the updated archive. Reload the website with Ctrl+Shift+R. Keeping the old server window open means old model-output filtering and voice routes continue to be used.
