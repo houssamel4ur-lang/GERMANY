@@ -23,8 +23,17 @@ You need your **own Cloudflare account**, a separately billed **OpenAI API accou
 
 The access code is for **personal/private practice**. If you want this feature available to every public visitor, implement stronger authentication, per-user quotas, abuse prevention and billing limits **before** removing the access-code check. An access code that is shared widely is not a sufficient cost-control mechanism.
 
+## Real-time hands-free German voice calls
+
+The **بدء المكالمة** button establishes a separate low-latency WebRTC Realtime session using `gpt-realtime-2.1-mini`, with semantic turn detection. The student explicitly starts and ends the microphone. The assistant adapts its *spoken* sentence length and vocabulary to A1/A2/B1/B2, and continues an open-ended conversation.
+
+The Worker mints a short-lived temporary token using `POST /api/realtime-token` and keeps the permanent OpenAI key secret. The browser then negotiates a WebRTC connection directly with the Realtime API. Your `AI_ACCESS_CODE` is required to mint the token, just as for chat/transcription. Realtime sessions may incur different or higher audio costs than push-to-talk; impose account spending limits.
+
+This is synthetic AI audio, *not* a human conversation. The feature is dependent on browser WebRTC and mic permission, and cannot be live-tested against a paid provider without valid account credentials.
+
 ## Endpoint contracts
 
+- `POST /api/realtime-token`: JSON `{level:"B1",scenario:"free",correct:true}` → ephemeral Realtime WebRTC credential (sensitive, short-lived).
 - `GET /api/health` + `X-Coach-Access`: returns `{ready:true|false}`.
 - `POST /api/chat` + access header: JSON `{level:"A1",scenario:"free",correct:true,messages:[{role:"user",content:"Hallo"}]}` → `{reply:"..." }`
 - `POST /api/speak`: JSON `{text:"Hallo!",level:"A1"}` → MP3 audio.
