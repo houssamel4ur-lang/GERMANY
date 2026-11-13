@@ -52,4 +52,15 @@ assert.match(application,/\.filter\(isGermanVoice\)/,'audio must filter German v
 assert.match(application,/if\(!voice\)\{/,'audio must reject missing German voice');
 assert.match(application,/function initSyllabus\(/,'curriculum page should be interactive');
 
-console.log('PASS: 64 PDF syllabus units, German-only speech policy, and '+lessons.length+' unique lessons, '+lessons.reduce((n,x)=>n+x.words.length,0)+' vocabulary entries, 4 levels, HTML assets and data structure.');
+for(const page of ['index.html','lesson.html','alphabet.html','syllabus.html']){
+  assert.ok(read(page).includes('assets/german-player.js'),page+' must load German MP3 player');
+  assert.ok(read(page).includes('data/audio-index.js'),page+' must load audio index');
+}
+const audioMapWin={};
+runInNewContext(read('data/audio-index.js'),{window:audioMapWin});
+const audioMap=audioMapWin.DM_AUDIO_MAP||{};
+assert.ok(Object.keys(audioMap).length>=100,'at least 100 verified German MP3 clips');
+for(const path of Object.values(audioMap))assert.ok(existsSync(new URL(path,root)),'recorded MP3 file missing: '+path);
+assert.match(read('assets/german-player.js'),/new Audio\(/,'German player must use MP3');
+assert.match(read('assets/german-player.js'),/stopImmediatePropagation/,'German player must override old browser speech handlers');
+console.log('PASS: 64 PDF syllabus units, German-only speech policy, MP3 audio sources, and '+lessons.length+' unique lessons, '+lessons.reduce((n,x)=>n+x.words.length,0)+' vocabulary entries, 4 levels, HTML assets and data structure.');
