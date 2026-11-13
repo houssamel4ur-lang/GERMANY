@@ -1,0 +1,34 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    # Expose Ollama only on the internal Docker network; never on the Internet.
+  coach:
+    build: .
+    restart: unless-stopped
+    init: true
+    environment:
+      OLLAMA_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3:8b}
+      COACH_ACCESS_CODE: ${COACH_ACCESS_CODE:?Set your own private access code in .env}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://houssamel4ur-lang.github.io}
+      PIPER_VOICE_PATH: /opt/voices/de_DE-thorsten-high.onnx
+      WHISPER_MODEL: ${WHISPER_MODEL:-small}
+      WHISPER_DEVICE: cpu
+      WHISPER_COMPUTE_TYPE: int8
+    ports:
+      - "127.0.0.1:8787:8787"
+    volumes:
+      - ./voices:/opt/voices
+      - whisper_data:/root/.cache/huggingface
+    depends_on:
+      - ollama
+    deploy:
+      resources:
+        limits:
+          memory: 7g
+volumes:
+  ollama_data:
+  whisper_data:
