@@ -40,7 +40,7 @@ assert.match(read("selfhost-ai/local_bridge.py"),/127\.0\.0\.1/,"bridge must sta
 assert.match(read("selfhost-ai/local_bridge.py"),/def _voice_available\(/,"voice readiness detection should exist");
 assert.match(read("selfhost-ai/local_bridge.py"),/def _speech\(/,"local German TTS endpoint should exist");
 assert.match(read("selfhost-ai/local_bridge.py"),/def _transcription\(/,"local German Whisper endpoint should exist");
-assert.match(read("selfhost-ai/local_bridge.py"),/"think": False/,"disable native model thinking");
+assert.match(read("selfhost-ai/local_bridge.py"),/payload\["think"\] = False/,"disable Qwen3 native model thinking");
 assert.match(read("selfhost-ai/local_bridge.py"),/"keep_alive": "30m"/,"avoid cold-start model load every few minutes");
 assert.match(read("selfhost-ai/local_bridge.py"),/llama3\.2:3b/,"stable non-thinking German model must be supported");
 assert.match(read("selfhost-ai/local_bridge.py"),/BRIDGE_VERSION = "2026.11.13.4"/,"versioned local bridge prevents stale Python code");
