@@ -37,3 +37,7 @@ If you already have the earlier ZIP, **close its old black server window** and r
 The November 13 fast patch keeps the existing Qwen3 4B model but lowers CPU memory/context work, avoids strict JSON decoding, limits reply length, and keeps the model loaded for 30 minutes to reduce cold starts. The website now shows the server's actual error message instead of repeating generic German text. Keep in mind response speed still depends on your Windows PC's CPU/GPU and available RAM; this update cannot guarantee instant answers.
 
 **Important:** Close the old black `START-DEUTSCH-AI.cmd` window; replace `local_bridge.py` with the new file, start the batch file again, then reload the AI webpage with Ctrl+Shift+R. A GitHub change does not automatically update the running Python file on your computer.
+
+## Fix for HALLO showing rejected thinking (November 13)
+
+Updated bridge **2026.11.13.3** handles elementary greetings instantly in application code, and uses Qwen3 for actual free conversation. If Ollama returns an empty answer or an analysis-like transcript, the bridge makes **one** shorter retry, never displaying model reasoning. The website checks `bridge_version` so you can tell if it is still talking to an older local bridge. Keep the Windows `START-DEUTSCH-AI.cmd` window closed while replacing files; GitHub Pages cannot update software installed on your PC. Install/finish Whisper and Piper separately; background downloads may slow the PC temporarily.
