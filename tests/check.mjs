@@ -153,4 +153,25 @@ assert.match(read('assets/primary-study.js'),/JSON\.stringify\(\{version:KEY,pro
 assert.ok(!read('assets/primary-study.js').includes('speechSynthesis'),'primary curriculum must never fallback to wrong-language speech');
 
 
+
+// Organized modules keep all 452 approved PDF topics intact.
+const modulesWin={};
+runInNewContext(read('data/master-curriculum.js'),{window:modulesWin});
+runInNewContext(read('data/learning-modules.js'),{window:modulesWin});
+const organized=modulesWin.DM_LEARNING_MODULES;
+assert.equal(organized.length,89,'expect 89 coherent learning modules');
+assert.deepEqual(
+ Object.fromEntries(levels.map(l=>[l,organized.filter(m=>m.level===l).length])),
+ {A1:20,A2:16,B1:21,B2:32},
+ 'incorrect module distribution'
+);
+assert.deepEqual(organized.flatMap(m=>m.topicIds),master.topics.map(t=>t.id),'module grouping must preserve all 452 approved PDF entries in sequence');
+assert.ok(organized.every(m=>m.topicIds.length>=2&&m.topicIds.length<=8),'module size should be manageable');
+assert.equal(Object.keys(modulesWin.DM_MODULE_BY_TOPIC).length,452,'every topic needs a module parent');
+assert.ok(read('syllabus.html').includes('assets/modules.css')&&read('syllabus.html').includes('data/learning-modules.js'),'syllabus must load grouped navigation');
+assert.ok(read('course.html').includes('data/learning-modules.js'),'course must connect to parent module');
+for(const file of ['module.html','assets/module-study.js','assets/modules.css'])assert.ok(existsSync(new URL(file,root)),file+' missing');
+assert.ok(read('module.html').includes('id="moduleMount"')&&read('module.html').includes('assets/german-player.js'),'module must use existing German MP3 player');
+assert.ok(read('assets/module-study.js').includes('data-start-module-review'),'module must include quiz review');
+
 console.log('PASS: 452 primary topics, 230 interactive lesson drafts, 64 archived topics, German-only speech policy, MP3 audio sources, and '+lessons.length+' unique lessons, '+lessons.reduce((n,x)=>n+x.words.length,0)+' vocabulary entries, 4 levels, HTML assets and data structure.');
