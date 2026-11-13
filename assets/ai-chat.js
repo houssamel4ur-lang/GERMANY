@@ -6,7 +6,7 @@ const maxTurns=Math.max(4,Math.min(20,Number(window.DEUTSCH_AI_CONFIG?.maxTurns)
 const focusId=String(new URLSearchParams(location.search).get("lesson")||"").trim();
 const lessonFocus=window.DM_MASTER_CURRICULUM?.topics?.find(t=>t.id===focusId)||null;
 const textBox=$("#userMessage"),sendBtn=$("#sendBtn"),micBtn=$("#recordBtn"),status=$("#chatStatus"),badge=$("#connectionBadge");
-let speechReady=false,transcriptionReady=false;window.DEUTSCH_AI_VOICE_READY=false;
+let speechReady=false,transcriptionReady=false;let modelLabel="AI المحلي";window.DEUTSCH_AI_VOICE_READY=false;
 let liveActive=false;
 let turns=[],connected=false,busy=false,recorder=null,chunks=[],recTimer=null,recStarted=0,recordStream=null,playing=null,playURL=null,requestController=null;
 const pick=s=>$(s)?.value||"";
@@ -96,7 +96,7 @@ if(!configured()){
 }
  try{
  const res=await call("/api/health",{method:"GET"});const data=await res.json();
- const requiredBridge="2026.11.13.3";
+ const requiredBridge="2026.11.13.4";
  if(window.DEUTSCH_AI_CONFIG?.localOnly&&data.bridge_version!==requiredBridge){
   connected=false;speechReady=false;transcriptionReady=false;window.DEUTSCH_AI_VOICE_READY=false;
   statusBadge(false,"خاص تحديث برنامج AI المحلي");
@@ -105,13 +105,14 @@ if(!configured()){
   applyControls();return;
  }
  connected=data.ready===true;
+ modelLabel=String(data.model||"AI المحلي").slice(0,40);
  speechReady=connected&&data.speech_ready===true;
  transcriptionReady=connected&&data.transcription_configured===true;
  window.DEUTSCH_AI_VOICE_READY=speechReady&&transcriptionReady;
  if(!speechReady){$("#autoSpeak").checked=false;$("#autoSpeak").disabled=true;}else{$("#autoSpeak").disabled=false;}
  statusBadge(connected,connected?"متصل · AI جاهز":"غير جاهز");
  $("#configHint").textContent=connected?"السيرفر الخاص جاهز. الاتصال كيدوز بينك وبين النموذج المحلي على جهازك أو سيرفرك.":"السيرفر موجود، ولكن نموذج Ollama المحلي أو رمز الدخول مازال ما تفعّلوش.";
- setStatus(connected?(transcriptionReady?"مستعد. اكتب أو استعمل الميكروفون.":"Qwen3 4B متصل محلياً. المحادثة الكتابية جاهزة؛ الصوت غادي نضيفوه في المرحلة المقبلة."):"الخادم لم يصبح جاهزاً للمحادثة بعد.");
+ setStatus(connected?(transcriptionReady?"مستعد. اكتب أو استعمل الميكروفون.":"الموديل المحلي متصل: "+modelLabel+". المحادثة الكتابية واجدة."):"الخادم لم يصبح جاهزاً للمحادثة بعد.");
  }catch(e){
  connected=false;speechReady=false;transcriptionReady=false;window.DEUTSCH_AI_VOICE_READY=false;statusBadge(false,"تعذر الاتصال");
  $("#configHint").textContent=errorMessage(e);
@@ -130,12 +131,12 @@ const sentBubble=append("user",message);
 body.querySelectorAll(".ai-request-error").forEach(n=>n.remove());
 textBox.value="";resizeInput();
 const pending=append("assistant","•••","pending");pending.setAttribute("aria-label","جاري إعداد الجواب");pending.querySelector("span:last-child")?.classList.add("ai-pending-dots");
-setStatus("Qwen3 4B كيوجد الجواب محلياً...");
+setStatus(modelLabel+" كيوجد الجواب محلياً...");
 const startedAt=Date.now();
 const progressTimer=setInterval(()=>{
  if(!busy)return;
  const seconds=Math.floor((Date.now()-startedAt)/1000);
- setStatus(seconds<12?"Qwen3 4B كيوجد الجواب محلياً… ("+seconds+" ثواني)":"Qwen3 4B باقي كيعالج الجواب على PC ديالك… ("+seconds+" ثواني). السرعة كتختلف حسب المعالج والذاكرة.");
+ setStatus(seconds<12?modelLabel+" كيوجد الجواب محلياً… ("+seconds+" ثواني)":modelLabel+" باقي كيعالج الجواب على PC ديالك… ("+seconds+" ثواني). السرعة كتختلف حسب المعالج والذاكرة.");
 },1500);
 const current={role:"user",content:message};
 try{
@@ -148,7 +149,7 @@ try{
  if(!text)throw new Error("الردّ فيه تفكير داخلي أو فارغ، ولذلك ما تعرضش. حاول مجدداً.");
  pending.remove();append("assistant",text);
  turns.push(current,{role:"assistant",content:text});turns=turns.slice(-(maxTurns*2));
- setStatus(data.provider==="local-greeting"?"ردّ تحية سريع من التطبيق المحلي؛ باقي الحوار كيستعمل Qwen3 4B.":"جاوب Qwen3 4B فـ "+(data.elapsed_seconds??Math.max(1,Math.round((Date.now()-startedAt)/1000)))+" ثانية. تقدر تكمل المحادثة.");
+ setStatus(data.provider==="local-greeting"?"ردّ تحية سريع من التطبيق المحلي؛ باقي الحوار كيستعمل "+modelLabel+".":"جاوب "+modelLabel+" فـ "+(data.elapsed_seconds??Math.max(1,Math.round((Date.now()-startedAt)/1000)))+" ثانية. تقدر تكمل المحادثة.");
  if($("#autoSpeak").checked)speak(text);
 }catch(e){
  pending.remove();sentBubble.remove();

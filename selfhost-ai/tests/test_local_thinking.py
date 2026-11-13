@@ -42,8 +42,21 @@ class FinalOnlyReplyTests(unittest.TestCase):
 
     def test_model_still_local_and_nothink(self):
         self.assertEqual(bridge.MODEL, "qwen3:4b")
-        self.assertEqual(bridge.BRIDGE_VERSION, "2026.11.13.3")
+        self.assertEqual(bridge.BRIDGE_VERSION, "2026.11.13.4")
         self.assertIn("/no_think", bridge._system("A1", "free", True, None))
+
+    def test_nonthinking_model_omits_no_think_and_native_think_flag(self):
+        from unittest.mock import patch
+        with patch.object(bridge, "MODEL", "llama3.2:3b"):
+            prompt = bridge._system("A1", "free", True, None)
+            self.assertNotIn("/no_think", prompt)
+            with patch.object(bridge, "_ollama", return_value={"message":{"content":"Hallo! Wie heißt du?"}}) as mock:
+                reply = bridge._generate_final([
+                    {"role":"system","content":prompt},
+                    {"role":"user","content":"Ich lerne Deutsch."}], "A1")
+            self.assertEqual(reply, "Hallo! Wie heißt du?")
+            self.assertNotIn("think", mock.call_args.args[1])
+
 
 
 if __name__ == "__main__":

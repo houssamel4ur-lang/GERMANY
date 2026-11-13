@@ -26,8 +26,11 @@ from urllib.request import Request, urlopen
 HOST = "127.0.0.1"
 PORT = 8787
 OLLAMA = "http://127.0.0.1:11434"
-MODEL = "qwen3:4b"
-BRIDGE_VERSION = "2026.11.13.3"
+AVAILABLE_MODELS = {"qwen3:4b", "llama3.2:3b"}
+MODEL = os.getenv("DEUTSCH_AI_MODEL", "qwen3:4b").strip()
+if MODEL not in AVAILABLE_MODELS:
+    MODEL = "qwen3:4b"
+BRIDGE_VERSION = "2026.11.13.4"
 VOICE_DIR = Path(__file__).resolve().parent / "voices"
 PIPER_PATH = VOICE_DIR / "de_DE-thorsten-high.onnx"
 WHISPER_SIZE = "base"
@@ -99,7 +102,6 @@ def _lesson(lesson_id, level):
 def _system(level, scenario, correct, lesson_id):
     # Compact, level-appropriate prompt: fewer prompt tokens on a CPU-only PC.
     rules = [
-        "/no_think",
         "Du bist Deutsch Partner, ein freundlicher KI-Deutschlehrer.",
         "Antworte NUR direkt mit der endgültigen Antwort auf Deutsch. Keine Analyse, kein Thinking, kein JSON.",
         "Schreibe natürliches, korrektes Hochdeutsch. Verwende keine englischen Wörter.",
@@ -111,6 +113,8 @@ def _system(level, scenario, correct, lesson_id):
          else "Korrigiere nicht, außer wenn ausdrücklich darum gebeten wird."),
         "Erfinde keine persönlichen Details über den Lernenden.",
     ]
+    if MODEL.startswith("qwen3"):
+        rules.insert(0, "/no_think")
     if isinstance(lesson_id, str) and lesson_id in TOPICS:
         rules.append(_lesson(lesson_id, level))
     return "\n".join(rules)
@@ -208,9 +212,11 @@ def _generate_final(query, level):
     options = {"temperature": 0.55, "top_p": 0.9,
                "num_ctx": 1536 if level in ("A1", "A2") else 2048,
                "num_predict": {"A1": 90, "A2": 115, "B1": 150, "B2": 180}[level]}
-    result = _ollama("/api/chat", {"model": MODEL, "messages": query,
-                                   "think": False, "stream": False,
-                                   "keep_alive": "30m", "options": options}, timeout=240)
+    payload = {"model": MODEL, "messages": query, "stream": False,
+               "keep_alive": "30m", "options": options}
+    if MODEL.startswith("qwen3"):
+        payload["think"] = False
+    result = _ollama("/api/chat", payload, timeout=240)
     first = _model_content(result)
     if first:
         return first
@@ -219,16 +225,20 @@ def _generate_final(query, level):
     print("[Deutsch AI] Rejected empty/reasoning-only output; retrying once.", flush=True)
     retry = [
         {"role": "system", "content":
-         "/no_think\nDu bist Deutsch Partner. Antworte direkt und ausschließlich "
+         ("/no_think\n" if MODEL.startswith("qwen3") else "") +
+         "Du bist Deutsch Partner. Antworte direkt und ausschließlich "
          "mit 1 bis 3 kurzen, korrekten deutschen Sätzen. "
          "Keine Analyse, keine Erklärung deines Vorgehens."},
-        {"role": "user", "content": "/no_think\n" + query[-1]["content"]},
+        {"role": "user", "content":
+         ("/no_think\n" if MODEL.startswith("qwen3") else "") + query[-1]["content"]},
     ]
-    result = _ollama("/api/chat", {"model": MODEL, "messages": retry,
-                                   "think": False, "stream": False,
-                                   "keep_alive": "30m",
-                                   "options": {"temperature": 0.35, "num_ctx": 1024,
-                                               "num_predict": 100}}, timeout=160)
+    retry_payload = {"model": MODEL, "messages": retry, "stream": False,
+                     "keep_alive": "30m",
+                     "options": {"temperature": 0.35, "num_ctx": 1024,
+                                 "num_predict": 100}}
+    if MODEL.startswith("qwen3"):
+        retry_payload["think"] = False
+    result = _ollama("/api/chat", retry_payload, timeout=160)
     return _model_content(result)
 
 
@@ -301,7 +311,7 @@ class Handler(BaseHTTPRequestHandler):
         self._response(200, {"ready": present, "provider": "self-hosted", "model": MODEL,
                              "speech_ready": _voice_available(), "transcription_configured": _stt_available(),
                              "bridge_version": BRIDGE_VERSION,
-                             "message": "Qwen3 local is ready" if present else "Start Ollama and load qwen3:4b"})
+                             "message": (MODEL + " local is ready") if present else ("Start Ollama and load " + MODEL)})
 
     def _binary(self, mime, payload):
         self.send_response(200)
@@ -438,7 +448,7 @@ class Handler(BaseHTTPRequestHandler):
             self._response(504, {"error": "Qwen3 تأخر بزاف على PC. سدّ البرامج الثقيلة وعاود المحاولة."})
         except (URLError, ValueError, KeyError, OSError) as exc:
             print("[Deutsch AI] Ollama request error:", str(exc)[:300], flush=True)
-            self._response(503, {"error": "تعذر الاتصال بـOllama المحلي. تأكد أن Ollama خدام وأن الموديل qwen3:4b محمّل."})
+            self._response(503, {"error": "تعذر الاتصال بـOllama المحلي. تأكد أن Ollama خدام وأن الموديل "+MODEL+" محمّل."})
 
     def log_message(self, fmt, *args):
         print("[Deutsch AI] " + (fmt % args))
@@ -446,7 +456,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def main():
     print("=" * 54)
-    print("Deutsch Mastery AI - 100% LOCAL - Qwen3 4B")
+    print("Deutsch Mastery AI - 100% LOCAL - " + MODEL)
     print("No commercial AI API. No public network server.")
     print("Local address: http://127.0.0.1:8787/api/health")
     print("Site: https://houssamel4ur-lang.github.io/GERMANY/ai.html")

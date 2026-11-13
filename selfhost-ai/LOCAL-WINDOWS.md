@@ -41,3 +41,9 @@ The November 13 fast patch keeps the existing Qwen3 4B model but lowers CPU memo
 ## Fix for HALLO showing rejected thinking (November 13)
 
 Updated bridge **2026.11.13.3** handles elementary greetings instantly in application code, and uses Qwen3 for actual free conversation. If Ollama returns an empty answer or an analysis-like transcript, the bridge makes **one** shorter retry, never displaying model reasoning. The website checks `bridge_version` so you can tell if it is still talking to an older local bridge. Keep the Windows `START-DEUTSCH-AI.cmd` window closed while replacing files; GitHub Pages cannot update software installed on your PC. Install/finish Whisper and Piper separately; background downloads may slow the PC temporarily.
+
+## Stable no-thinking German AI (if Qwen3 returns no final text)
+
+If you still get 'no final answer' or a thinking-only response, use **START-STABLE-AI.cmd**. It downloads and launches a separate **Llama 3.2 3B** model (about 2GB once), which officially supports German and is not a thinking-oriented model. Your existing Qwen3:4b model is NOT deleted. The startup updates local_bridge.py from your own GitHub repository and sets the local model only for that window. Review the model's Meta Community License before public or commercial deployment. No paid AI API.
+
+Close the old black AI window FIRST (localhost port 8787 must be free), then double click START-STABLE-AI.cmd and keep that window open. Reload the website and test a conversation. You can run DIAGNOSE-AI.cmd to save a simple technical report: model and bridge version, localhost health, basic greeting and non-personal real German-model test. It doesn't save reasoning or chat history.
