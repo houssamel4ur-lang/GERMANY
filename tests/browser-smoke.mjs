@@ -11,7 +11,7 @@ async function go(path){await page.goto(url+path,{waitUntil:"load"});await page.
 try{
 await go("index.html");
 assert.ok((await page.locator("#homeStats .stat").count())>=3,"homepage stats are missing");
-assert.equal(await page.evaluate(()=>window.DM_PRIMARY_LESSONS?.length),144,"primary enriched lessons not loaded");
+assert.equal(await page.evaluate(()=>window.DM_PRIMARY_LESSONS?.length),168,"primary enriched lessons not loaded");
 checked++;
 await go("syllabus.html?level=A2");
 assert.ok((await page.locator("#curriculumMount").innerText()).includes("A2"),"syllabus unavailable");
@@ -35,6 +35,16 @@ await go("pack.html?level=A1&unit=2");
 await page.locator('[data-tab="quiz"]').click();
 assert.ok((await page.locator("#curriQuiz .curri-answer").count())>=3,"pack quiz options missing");
 checked++;
+await go("course.html?topic=B1-01-04");
+assert.ok((await page.locator("#courseSection").innerText()).includes("Plusquamperfekt"),"B1 grammar lesson unavailable");
+await page.locator('[data-tab="exercise"]').click();
+assert.ok((await page.locator("#quizSurface .choice").count())>=3,"B1 grammar quiz missing");
+checked++;
+await go("course.html?topic=B2-01-02");
+assert.ok((await page.locator("#courseSection").innerText()).includes("Futur II"),"B2 advanced lesson unavailable");
+await page.locator('[data-tab="audio"]').click();
+assert.ok((await page.locator("#courseSection [data-say]").count())>=2,"B2 German audio content missing");
+checked++;
 await go("journey.html");
 assert.ok((await page.locator("#primaryStudyMount").innerText()).length>30,"dashboard unavailable");
 checked++;
@@ -42,6 +52,6 @@ await go("review-primary.html");
 assert.ok((await page.locator("#primaryStudyMount").innerText()).length>30,"primary review unavailable");
 checked++;
 assert.deepEqual(errors,[],"JavaScript errors: "+errors.join("; "));
-console.log("BROWSER PASS: "+checked+" pages; 144 lessons; audio controls, quiz, practice, progress and navigation.");
+console.log("BROWSER PASS: "+checked+" pages; 168 lessons; audio controls, quiz, practice, progress and navigation.");
 }catch(e){console.error("BROWSER FAILURE:",e.stack);console.error("JavaScript errors:",errors);process.exitCode=1}
 finally{await browser.close()}
