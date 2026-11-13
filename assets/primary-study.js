@@ -29,11 +29,11 @@ function allWords(){return material.flatMap(l=>l.vocabulary.map(v=>({de:v.de,ar:
 function speechControls(){
 return '<div class="controls"><label for="speed">سرعة MP3</label><select id="speed"><option value=".75">بطيئة ×0.75</option><option value="1" selected>طبيعية ×1</option><option value="1.15">أسرع ×1.15</option></select><label for="repeat">التكرار</label><select id="repeat"><option value="1">مرة</option><option value="2">مرتان</option><option value="3">3 مرات</option></select><button class="outline" data-stop type="button">■ إيقاف الصوت</button></div><p class="tiny" id="audioStatus" role="status">ملفات MP3 ألمانية مستقلة. إذا كان التسجيل غير متوفر لن يُستخدم صوت بلغة أخرى.</p>';
 }
-function speaker(text){const available=!!window.DM_AUDIO_MAP?.[text];return '<button class="speak" type="button" '+(available?'data-say="'+esc(text)+'"':'disabled title="تسجيل ألماني غير متوفر لهذه العبارة"')+' aria-label="استمع للألمانية">'+(available?"🔊":"🔇")+'</button>'}
+function speaker(text){const phrase=String(text||"").trim(),available=!!window.DM_AUDIO_MAP?.[phrase];return '<button class="speak" type="button" '+(available?'data-say="'+esc(phrase)+'" title="اسمع النطق الألماني"':'disabled title="هذا التسجيل الألماني قيد التحضير"')+' aria-label="'+(available?"استمع إلى "+esc(phrase):"تسجيل ألماني قيد التحضير")+'">'+(available?"🔊":"🔇")+'</button>'}
 function savedKey(word){return lesson.id+"::"+word.de}
 function wordCard(word,i,listenOnly){
 const key=savedKey(word),saved=!!state.cards[key];
-return '<div class="wordrow"><div>'+iso(word.de)+'<small>'+esc(word.ar)+'</small></div><div class="rowactions">'+speaker(word.de)+(listenOnly?"":'<button class="outline" data-saveword="'+i+'" type="button" aria-label="احفظ للمراجعة">'+(saved?"★ محفوظة":"☆ احفظ")+'</button>')+'</div></div>';
+return '<div class="wordrow wordrow-vocab"><div class="wordrow-text">'+iso(word.de)+'<small>'+esc(word.ar)+'</small></div><div class="rowactions">'+speaker(word.de)+(listenOnly?"":'<button class="outline" data-saveword="'+i+'" type="button" aria-label="احفظ للمراجعة">'+(saved?"★ محفوظة":"☆ احفظ")+'</button>')+'</div></div>';
 }
 const tabs=[["intro","01 · خطة الدرس"],["vocab","02 · المفردات"],["audio","03 · النطق والاستماع"],["grammar","04 · الشرح والقواعد"],["conversation","05 · المحادثة"],["reading","06 · القراءة والكتابة"],["exercise","07 · التمارين"],["result","08 · التقييم"]];
 function detailPage(){
@@ -92,8 +92,8 @@ function render(){
   speechControls();
   if(Array.isArray(lesson.alphabet)&&lesson.alphabet.length){
    html+='<div class="lesson-block"><h3>جدول الأبجدية الكامل: 26 حرفاً</h3><p>اسم الحرف عند التهجئة قد يختلف عن صوته داخل الكلمة. رموز IPA مساعدة للتعلم، ولا تعوّض التسجيل الألماني.</p>'+
-   '<div class="table-scroll"><table class="alphabet-table"><thead><tr><th>الحرف</th><th>اسم الحرف</th><th>النطق IPA</th><th>مثال</th><th>المعنى</th></tr></thead><tbody>'+
-   lesson.alphabet.map(a=>'<tr><td><strong lang="de" dir="ltr">'+esc(a[0])+'</strong></td><td><span lang="de" dir="ltr">'+esc(a[1])+'</span></td><td dir="ltr">'+esc(a[2])+'</td><td>'+iso(a[3])+' '+speaker(a[3])+'</td><td>'+esc(a[4])+'</td></tr>').join("")+
+   '<div class="table-scroll"><table class="alphabet-table"><thead><tr><th scope="col">الحرف</th><th scope="col">اسمه بالألمانية</th><th scope="col">IPA لاسم الحرف</th><th scope="col">كلمة مثال + الاستماع</th><th scope="col">المعنى</th></tr></thead><tbody>'+
+   lesson.alphabet.map(a=>'<tr><td><strong lang="de" dir="ltr">'+esc(a[0])+'</strong></td><td><span lang="de" dir="ltr">'+esc(a[1])+'</span></td><td dir="ltr">'+esc(a[2])+'</td><td><div class="alphabet-example">'+iso(a[3])+speaker(a[3])+'</div></td><td>'+esc(a[4])+'</td></tr>').join("")+
    '</tbody></table></div></div>';
   }
   if(uniqueIPA.length){
