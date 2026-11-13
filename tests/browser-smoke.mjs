@@ -1,0 +1,46 @@
+import {chromium} from "playwright";
+import assert from "node:assert/strict";
+const url="http://127.0.0.1:8765/";
+const browser=await chromium.launch({headless:true,args:["--no-sandbox"]});
+let checked=0;
+const context=await browser.newContext({viewport:{width:1280,height:820}});
+const page=await context.newPage();
+const errors=[];
+page.on("pageerror",e=>errors.push(e.message));
+async function go(path){await page.goto(url+path,{waitUntil:"load"});await page.waitForTimeout(400)}
+try{
+await go("index.html");
+assert.ok((await page.locator("#homeStats .stat").count())>=3,"homepage stats are missing");
+assert.equal(await page.evaluate(()=>window.DM_PRIMARY_LESSONS?.length),144,"primary enriched lessons not loaded");
+checked++;
+await go("syllabus.html?level=A2");
+assert.ok((await page.locator("#curriculumMount").innerText()).includes("A2"),"syllabus unavailable");
+checked++;
+await go("course.html?topic=A1-02-01");
+assert.ok((await page.locator("#courseSection").innerText()).includes("التحية"),"curated communication lesson not visible");
+await page.locator('[data-tab="audio"]').click();
+assert.ok((await page.locator("#courseSection [data-say]").count())>=3,"audio phrases missing");
+await page.locator('[data-tab="exercise"]').click();
+assert.ok((await page.locator("#quizSurface .choice").count())>=3,"quiz options missing");
+checked++;
+await go("course.html?topic=A1-01-03");
+await page.locator('[data-tab="grammar"]').click();
+assert.ok((await page.locator("#courseSection").innerText()).includes("الحركات"),"phonetics grammar missing");
+checked++;
+await go("practice.html?level=A1");
+assert.ok((await page.locator(".lessongrid .lessoncard").count())>=15,"practice pack cards missing");
+checked++;
+await go("pack.html?level=A1&unit=2");
+await page.locator('[data-tab="quiz"]').click();
+assert.ok((await page.locator("#curriQuiz .curri-answer").count())>=3,"pack quiz options missing");
+checked++;
+await go("journey.html");
+assert.ok((await page.locator("#primaryStudyMount").innerText()).length>30,"dashboard unavailable");
+checked++;
+await go("review-primary.html");
+assert.ok((await page.locator("#primaryStudyMount").innerText()).length>30,"primary review unavailable");
+checked++;
+assert.deepEqual(errors,[],"JavaScript errors: "+errors.join("; "));
+console.log("BROWSER PASS: "+checked+" pages; 144 lessons; audio controls, quiz, practice, progress and navigation.");
+}catch(e){console.error("BROWSER FAILURE:",e.stack);console.error("JavaScript errors:",errors);process.exitCode=1}
+finally{await browser.close()}
