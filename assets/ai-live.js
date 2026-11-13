@@ -11,7 +11,7 @@ if(!start||!end||!indicator||!output||!badge)return;
 const base=String(window.DEUTSCH_AI_CONFIG?.apiBase||"").trim().replace(/\/+$/,"");
 const field=id=>document.getElementById(id);
 let active=false,busy=false,stream=null,recorder=null,chunkList=[],analyser=null,audioCtx=null,timer=null,controller=null,objectURL=null;
-let recordedSpeech=false,speechAt=0,startAt=0,consecutive=0,turns=[],sessionStarted=0;
+let recordedSpeech=false,speechAt=0,startAt=0,consecutive=0,turns=[],sessionStarted=0,playbackResolve=null;
 function status(value){indicator.textContent=value}
 function connected(){return badge.classList.contains("ok")&&/^(https:\/\/|http:\/\/localhost|http:\/\/127\.0\.0\.1)/.test(base)}
 function adjust(){start.disabled=active||!connected();end.disabled=!active}
@@ -45,6 +45,7 @@ function haltRecording(){
  if(recorder?.state==="recording"){try{recorder.stop()}catch(e){}}
 }
 function stopAudio(){
+ if(playbackResolve){const resolve=playbackResolve;playbackResolve=null;resolve()}
  output.pause();output.srcObject=null;output.removeAttribute("src");output.load();
  if(objectURL){URL.revokeObjectURL(objectURL);objectURL=null}
 }
@@ -134,7 +135,8 @@ async function processTurn(blob,type){
   status("🔊 Deutsch Partner كيهضر بالألمانية؛ الميكروفون كيسمع من بعد ما يسالي.");
   await new Promise(resolve=>{
    let done=false;
-   const finish=()=>{if(done)return;done=true;output.onended=null;output.onerror=null;resolve()};
+   const finish=()=>{if(done)return;done=true;playbackResolve=null;output.onended=null;output.onerror=null;resolve()};
+   playbackResolve=finish;
    output.onended=finish;output.onerror=finish;
    output.play().catch(()=>{output.controls=true;status("متصفحك منع التشغيل التلقائي. ضغط على تشغيل الصوت باش تكمل المكالمة.");});
   });
