@@ -1,5 +1,4 @@
-/* German AI conversation tutor — live responses require a secure backend.
- * Never place the OpenAI API key in browser JavaScript. */
+/* Deutsch Mastery self-hosted AI frontend: only own Ollama + Whisper + Piper server. */
 (function(){
 "use strict";
 const $=s=>document.querySelector(s),body=$("#messages"),base=String(window.DEUTSCH_AI_CONFIG?.apiBase||"").trim().replace(/\/+$/,"");
@@ -27,7 +26,7 @@ B2:"Hallo! Ich freue mich auf unser Gespräch. Gibt es ein Thema, über das du h
 const esc=s=>String(s||"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 function setStatus(msg){status.textContent=msg}
 function statusBadge(ok,msg){badge.className="ai-status "+(ok?"ok":"off");badge.textContent=msg}
-function configured(){return /^https:\/\//i.test(base)||/^http:\/\/localhost(?::\d+)?$/i.test(base)}
+function configured(){return /^https:\/\//i.test(base)||/^http:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/i.test(base)}
 function getCode(){return String($("#accessCode").value||"").trim()}
 function errorMessage(err){if(err.name==="AbortError")return "العملية توقفت.";return err.message||"تعذر الاتصال بالخادم."}
 function append(role,text,kind){const wrapper=document.createElement("div");wrapper.className="ai-bubble "+(role==="assistant"?"bot":"you")+" de-text"+(kind==="pending"?" pending":"");wrapper.dir="ltr";
@@ -41,7 +40,7 @@ body.appendChild(wrapper);body.scrollTop=body.scrollHeight;return wrapper;
 function showWelcome(){
  body.innerHTML="";
  append("assistant",greetings[pick("#levelSelect")]||greetings.A1);
- const tip=document.createElement("div");tip.className="ai-alert";tip.dir="rtl";tip.textContent="جمل البداية للتدرب فقط. الردود الحرة تتطلب توصيل خدمة الذكاء الاصطناعي بالخادم. الصوت مولّد آلياً وليس صوت شخص حقيقي.";body.appendChild(tip);
+ const tip=document.createElement("div");tip.className="ai-alert";tip.dir="rtl";tip.textContent="جمل البداية للتدرب فقط. الردود الحرة كيولّدها نموذج ألماني محلي على السيرفر ديالك؛ الصوت اصطناعي وماشي ديال شخص حقيقي.";body.appendChild(tip);
  body.scrollTop=0;
 }
 function suggestions(){
@@ -63,14 +62,14 @@ return res;
 async function check(){
 if(!configured()){
  connected=false;statusBadge(false,"غير مفعّل");
- $("#configHint").textContent="ميزة AI جاهزة برمجياً، لكن عنوان الخادم غير مضبوط. يجب نشر backend وإضافة عنوانه في assets/ai-config.js.";
- setStatus("المحادثة الحرة غير مفعّلة حتى يتم ربط الخادم بمفتاح API محفوظ فيه.");applyControls();return;
+ $("#configHint").textContent="الواجهة واجدة، ولكن خاصك تشغّل selfhost-ai على جهازك أو سيرفرك وتضيف رابط HTTPS الخاص به في assets/ai-config.js.";
+ setStatus("المحادثة الحرة غير مفعّلة حتى يكون سيرفرنا الخاص خدام وعندو نموذج Qwen3 مثبت؛ ما كاين حتى API خارجي.");applyControls();return;
 }
  try{
  const res=await call("/api/health",{method:"GET"});const data=await res.json();
  connected=data.ready===true;
  statusBadge(connected,connected?"متصل · AI جاهز":"غير جاهز");
- $("#configHint").textContent=connected?"الخدمة جاهزة. الرمز يبقى داخل هذا المتصفح أثناء استعمال الصفحة.":"الخادم يعمل، لكن مفتاح AI أو رمز الدخول لم يُضبط بعد.";
+ $("#configHint").textContent=connected?"السيرفر الخاص جاهز. الاتصال كيدوز بينك وبين النموذج المحلي على جهازك أو سيرفرك.":"السيرفر موجود، ولكن نموذج Ollama المحلي أو رمز الدخول مازال ما تفعّلوش.";
  setStatus(connected?"مستعد. اكتب جملة ألمانية أو استعمل الميكروفون.":"الخادم لم يصبح جاهزاً للمحادثة بعد.");
  }catch(e){
  connected=false;statusBadge(false,"تعذر الاتصال");
