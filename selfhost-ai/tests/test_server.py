@@ -88,6 +88,14 @@ class SelfHostedCoachTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("audio/wav", response.headers["content-type"])
 
+    def test_curriculum_context_is_local(self):
+        data = server._curriculum()
+        self.assertEqual(len(data), 452)
+        self.assertIn("A1-01-01", data)
+        focused = server.lesson_context("A1-01-01", "A1")
+        self.assertIn("Tutor focus", focused)
+        self.assertEqual(server.lesson_context("A1-01-01", "B1"), "")
+
     def test_no_commercial_ai_url(self):
         text = Path(server.__file__).read_text(encoding="utf-8")
         for forbidden in ("https://api.openai.com", "https://api.anthropic.com", "https://generativelanguage.googleapis.com"):
