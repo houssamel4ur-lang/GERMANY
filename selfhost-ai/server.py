@@ -11,6 +11,7 @@ import hmac
 import io
 import json
 import os
+import re
 from pathlib import Path
 import tempfile
 import time
@@ -26,7 +27,7 @@ from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field
 
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434").rstrip("/")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3:8b")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3:4b")
 CODE = os.getenv("COACH_ACCESS_CODE", "")
 PIPER_VOICE_PATH = Path(os.getenv("PIPER_VOICE_PATH", "voices/de_DE-thorsten-high.onnx"))
 WHISPER_SIZE = os.getenv("WHISPER_MODEL", "small")
@@ -188,6 +189,20 @@ async def health(request: Request):
     }))
 
 
+def _final_answer_only(value: str) -> str:
+    """Return final German answer only; do not publish internal model reasoning."""
+    if not isinstance(value, str):
+        return ""
+    value = re.sub(r"<think\b[^>]*>[\s\S]*?</think\s*>", "", value, flags=re.I)
+    value = re.sub(r"<think\b[^>]*>[\s\S]*$", "", value, flags=re.I)
+    value = re.sub(r"</think\s*>", "", value, flags=re.I)
+    value = re.sub(r"(?is)^\s*Thinking\.{3}[\s\S]{0,4000}?\.{3}\s*done thinking\.\s*", "", value)
+    value = re.sub(r"(?i)^\s*(?:Thinking\s*\.{3}|\.{3}\s*done thinking\.?|\[analysis\]|analysis:)\s*", "", value).strip()
+    if re.match(r"(?i)^(?:Okay[,]? the user|The user (?:wants|asks|said)|I (?:need|should|must) to|Let me (?:think|plan)|Final plan:|First, I (?:need|should)|Wait, (?:the user|they said)|\*checks requirements)", value):
+        return ""
+    return value[:1400]
+
+
 async def _generate_local(messages: list[dict], level: str, scenario: str, correct: bool, lesson_id: str | None = None) -> str:
     body = {
         "model": OLLAMA_MODEL,
@@ -200,7 +215,7 @@ async def _generate_local(messages: list[dict], level: str, scenario: str, corre
         response = await client.post(OLLAMA_URL + "/api/chat", json=body)
         response.raise_for_status()
         output = response.json().get("message", {}).get("content", "")
-        return str(output or "").strip()
+        return _final_answer_only(output)
 
 
 @app.post("/api/chat")
